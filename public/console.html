@@ -198,6 +198,14 @@ ws.onmessage = (event) => {
 
 input.addEventListener("keydown", (event) => {
 
+    // Ctrl+C interrompe o comando atual
+    if (event.ctrlKey && (event.key === "c" || event.key === "C")) {
+        ws.send("__INTERRUPT__");
+        input.value = "";
+        event.preventDefault();
+        return;
+    }
+
     if(event.key !== "Enter")
         return;
 
