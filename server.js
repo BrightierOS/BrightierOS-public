@@ -45,7 +45,7 @@ wss.on('connection', (socket) => {
 
   socket.send(`BrightierOS Console
 
-Version 0.1-dev Connected to ${os.hostname()}
+Version 0.0.1-dev Connected to ${os.hostname()}
 
 Type "help" for available commands.`);
 
@@ -70,7 +70,7 @@ Other commands are executed by Windows.`);
         return;
 
       case 'version':
-        socket.send('BrightierOS v0.1-dev');
+        socket.send('BrightierOS v0.0.1-dev');
         return;
 
       case 'hostname':
