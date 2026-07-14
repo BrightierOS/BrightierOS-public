@@ -407,3 +407,80 @@ body {
         padding-bottom: 75px;
     }
 }
+
+
+@media (max-width: 720px) {
+    body {
+        padding: 20px;
+        padding-bottom: 88px;
+    }
+    main h1 {
+        font-size: 40px;
+    }
+    .dock {
+        gap: 2px;
+        padding: 6px 10px;
+        border-radius: 18px;
+    }
+    .dock-item {
+        padding: 6px 10px;
+        min-width: 44px;
+    }
+    .dock-icon {
+        font-size: 20px;
+    }
+    .dock-label {
+        font-size: 10px;
+    }
+    .box {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 16px;
+        padding-bottom: 80px;
+    }
+    main h1 {
+        font-size: 32px;
+    }
+    .dock {
+        gap: 0;
+        padding: 5px 6px;
+        border-radius: 14px;
+    }
+    .dock-item {
+        padding: 5px 8px;
+        min-width: 34px;
+    }
+    .dock-icon {
+        font-size: 18px;
+    }
+    .dock-label {
+        font-size: 9px;
+    }
+}
+
+@media (max-width: 520px) {
+  main h1 { font-size: 34px; }
+  .dock-item { min-width: 36px; }
+  .btn-row { gap: 8px; }
+  button { padding: 10px 14px; }
+  }
+/* ── Auto responsive ── */
+content { display:flex; flex-direction:column; width:100%; }
+main h1 { font-size: clamp(32px, 6vw, 48px); }
+main h2 { font-size: clamp(16px, 2.6vw, 18px); }
+.box, .store-section { width:100%; max-width:100%; box-sizing:border-box; }
+.table-wrap { width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+#filesTable { min-width:520px; width:100%; border-collapse:collapse; }
+#filesTable th, #filesTable td { padding:8px 10px; white-space:nowrap; }
+.box button, .store-section button { width:100%; text-align:center; margin:6px 0; }
+.login-card, .setup-card { width:min(100% - 24px, 480px); }
+#terminal { max-width:100%; }
+@media (max-width: 600px) {
+  .dock-label { display:none; }
+  main h1 { letter-spacing:-1px; }
+  button { white-space:nowrap; }
+}
