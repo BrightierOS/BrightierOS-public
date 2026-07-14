@@ -26,13 +26,19 @@ const handleStartupError = (err) => {
 };
 
 process.on('SIGINT', () => {
-  console.log('Stopping BrightierOS...');
+  console.log('\nStopping BrightierOS...');
+  // Fecha todos os WebSockets pra não travar o shutdown
+  wss.clients.forEach((client) => client.close());
   server.close(() => process.exit(0));
+  // Garantia: se travar, força saída depois de 3s
+  setTimeout(() => process.exit(1), 3000);
 });
 
 process.on('SIGTERM', () => {
   console.log('Stopping BrightierOS...');
+  wss.clients.forEach((client) => client.close());
   server.close(() => process.exit(0));
+  setTimeout(() => process.exit(1), 3000);
 });
 
 app.use(express.json());
@@ -62,9 +68,21 @@ Version ${pkg.version} Connected to ${os.hostname()}
 
 Type "help" for available commands.`);
 
+  let currentProcess = null;
+
   socket.on('message', async (message) => {
     const command = message.toString().trim();
     if (!command) return;
+
+    // Interrompe processo atual com Ctrl+C
+    if (command === '__INTERRUPT__') {
+      if (currentProcess) {
+        currentProcess.kill('SIGINT');
+        currentProcess = null;
+        socket.send('^C\n');
+      }
+      return;
+    }
 
     const args = command.split(/\s+/);
     const [first] = args;
@@ -110,7 +128,8 @@ Other commands are executed by Windows.`);
         return;
     }
 
-    exec(command, (error, stdout, stderr) => {
+    currentProcess = exec(command, (error, stdout, stderr) => {
+      currentProcess = null;
       if (error) return socket.send(error.message);
       if (stderr) return socket.send(stderr);
       socket.send(stdout || 'Done.');
