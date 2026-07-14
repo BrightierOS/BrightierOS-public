@@ -3,82 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BrightierOS Setup</title>
+  <title>BrightierOS — Configurar</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/dashboard.css">
-  <style>
-    :root { --bg:#0b0b0b; --panel:#111113; --line:#1f1f22; --text:#e6e6e6; --muted:#8a8a8a; --accent:#00d4ff; }
-    html, body { background:var(--bg); color:var(--text); font-family:"Inter",sans-serif; }
-    main { margin:0; }
-    h1 { font-family:"Doto",sans-serif; font-size:48px; color:var(--accent); letter-spacing:-2px; margin:0; }
-    h2 { font-family:"Inter",sans-serif; font-size:18px; font-weight:400; color:var(--muted); margin-top:6px; }
-    a { color:#fff; text-decoration:none; }
-    .header { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
-    .header-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .btn { display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px; background:linear-gradient(135deg,#00d4ff,#1f7cff); color:#fff; font-weight:600; }
-    .ghost { background:transparent; border:1px solid var(--line); color:#ddd; }
-    .box { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:18px; margin-bottom:14px; box-shadow:0 8px 24px rgba(0,0,0,0.35); }
-    .stack { display:flex; flex-direction:column; gap:14px; }
-    .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-    table { width:100%; border-collapse:collapse; font-size:14px; }
-    th, td { padding:10px 12px; text-align:left; border-bottom:1px solid #1b1b1b; }
-    th { color:var(--muted); font-weight:500; font-size:12px; letter-spacing:.3px; }
-    tbody tr:hover { background:#0f1014; }
-    .label { color:var(--muted); font-size:12px; }
-    .muted { color:var(--muted); font-size:13px; }
-    .nav { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); display:flex; gap:4px; padding:8px 12px; background:rgba(20,20,20,.7); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,.08); border-radius:20px; box-shadow:0 8px 32px rgba(0,0,0,.6); z-index:9999; }
-    .nav a { color:#aaa; font-size:11px; font-weight:500; padding:8px 14px; border-radius:12px; display:inline-flex; flex-direction:column; align-items:center; gap:4px; transition:.2s; position:relative; text-decoration:none; }
-    .nav a:hover { color:#fff; background:rgba(255,255,255,.06); transform:translateY(-4px); }
-    .nav a.active { color:#00d4ff; }
-    .dock-icon { font-size:22px; line-height:1; }
-    .dock-label { font-size:10px; opacity:.8; white-space:nowrap; }
-    .nav a.active::before { content:''; position:absolute; top:-4px; left:50%; transform:translateX(-50%); width:4px; height:4px; background:#00d4ff; border-radius:50%; }
-    @media (max-width: 720px) { body { padding:20px; padding-bottom:84px; } h1 { font-size:38px; } .box, table { max-width:100%; } }
-    @media (max-width: 520px) { body { padding:16px; padding-bottom:76px; } h1 { font-size:30px; } .nav { gap:0; padding:6px 8px; border-radius:16px; bottom:10px; } .nav a { padding:6px 10px; min-width:38px; } .dock-label { display:none; } .toolbar { gap:8px; } table { font-size:13px; } }
-  </style>
+  <link rel="stylesheet" href="assets/styles.css" />
 </head>
-<body>
-<main>
-  <div class="header">
-    <div>
-      <h1 style="margin:0">Setup</h1>
-      <h2 style="margin:6px 0 0">Crie seu usu—rio</h2>
+<body data-page="setup">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="brand">
+        <img src="assets/BrightierOS.png" alt="BrightierOS" style="width:38px;height:38px;border-radius:10px;" onerror="this.style.display='none'">
+        <span class="name">Brightier<b>OS</b></span>
+      </div>
+      <h1>Criar usuário</h1>
+      <p class="sub">Defina a conta administradora do sistema</p>
+      <form id="setupForm" class="stack">
+        <div>
+          <label for="username">Usuário</label>
+          <input id="username" name="username" placeholder="administrador" required autocomplete="username" />
+        </div>
+        <div>
+          <label for="password">Senha</label>
+          <input id="password" name="password" type="password" placeholder="uma senha segura" required autocomplete="new-password" />
+        </div>
+        <button class="btn block" type="submit">Criar usuário</button>
+      </form>
+      <p class="msg" id="message"></p>
+      <p class="alt">Já tem conta? <a href="/login.html">Fazer login</a></p>
     </div>
-    <div class="header-actions"></div>
   </div>
-</main>
-<content class="stack">
-  <div class="box" style="max-width:420px; margin:0 auto;">
-    <form id='setupForm' class='stack'>
-      <input id='username' name='username' placeholder='Usu—rio' required />
-      <input id='password' name='password' type='password' placeholder='Senha' required />
-      <button type='submit'>Criar usu—rio</button>
-    </form>
-    <p id='message' class="muted" style="margin-top:10px"></p>
-    <p class="muted">Se j— existir um usu—rio, voc— ser— redirecionado para o painel.</p>
-  </div>
-</content>
-<script>
-document.getElementById('setupForm').addEventListener('submit', async (event) => { event.preventDefault(); const message = document.getElementById('message'); const username = document.getElementById('username').value.trim(); const password = document.getElementById('password').value; if (!username || !password) { message.textContent = 'Informe usu—rio e senha.'; return; } try { const response = await fetch('/api/users/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, role: 'admin' }) }); const data = await response.json(); if (!response.ok) { message.textContent = data.error || 'N—o foi poss—vel criar o usu—rio.'; return; } message.textContent = 'Usu—rio criado com sucesso!'; window.location.href = '/index.html'; } catch (error) { message.textContent = 'Erro ao criar usu—rio.'; console.error(error); } });
-async function checkSetup(){ try { const response = await fetch("/api/users/setup"); const data = await response.json(); if (data && data.user) { window.location.href = "/login.html"; } } catch (e) { console.error(e); } }
-checkSetup();
-</script>
-<nav class="nav">
-  <a href="/" class="dock-item" data-page="dashboard"><span class="dock-icon">🏠</span><span class="dock-label">Dashboard</span></a>
-  <a href="/files.html" class="dock-item" data-page="files"><span class="dock-icon">🏠</span><span class="dock-label">Files</span></a>
-  <a href="/console.html" class="dock-item" data-page="console"><span class="dock-icon">🏠</span><span class="dock-label">Console</span></a>
-  <a href="/store.html" class="dock-item" data-page="store"><span class="dock-icon">🏠</span><span class="dock-label">Store</span></a>
-</nav>
-<script>
-  document.querySelectorAll('.dock-item').forEach(function(item) {
-    var href = item.getAttribute('href');
-    var current = window.location.pathname;
-    if (href === current || (href === '/' && (current === '/index.html' || current === '/'))) {
-      item.classList.add('active');
-    }
-  });
-</script>
+
+  <script src="assets/api.js"></script>
+  <script src="assets/auth.js"></script>
 </body>
 </html>

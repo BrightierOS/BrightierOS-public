@@ -20,9 +20,10 @@ const express = require('express');
  */
 module.exports = (app) => {
   const pluginsRoot = path.join(__dirname, '..', 'data', 'plugins');
+  // Always register the plugins API. Create the directory if it does not
+  // exist yet so listing/installing/uninstalling works out of the box.
   if (!fs.existsSync(pluginsRoot)) {
-    console.warn('[PluginLoader] Plugins directory not found:', pluginsRoot);
-    return;
+    fs.mkdirSync(pluginsRoot, { recursive: true });
   }
 
   const pluginDirs = fs.readdirSync(pluginsRoot, { withFileTypes: true })
