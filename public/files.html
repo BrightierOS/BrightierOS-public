@@ -105,21 +105,25 @@ document.getElementById("logoutButton")?.addEventListener("click", () => {
     window.location.href = "/login.html";
 });
 
-(async () => {
-    try {
-        if (localStorage.getItem('brightieros-user')) {
-            return;
+// Ensure user is authenticated before accessing files page
+if (!localStorage.getItem('brightieros-user')) {
+    (async () => {
+        try {
+            const response = await fetch('/api/users/setup');
+            const data = await response.json();
+            if (!data || !data.user) {
+                // No account yet, go to setup
+                window.location.href = '/setup.html';
+            } else {
+                // Account exists but not logged in, go to login
+                window.location.href = '/login.html';
+            }
+        } catch (e) {
+            console.error(e);
+            window.location.href = '/login.html';
         }
-
-        const response = await fetch("/api/users/setup");
-        const data = await response.json();
-        if (!data || !data.user) {
-            window.location.href = "/login.html";
-        }
-    } catch (error) {
-        console.error(error);
-    }
-})();
+    })();
+}
 </script>
 
 <script src="assets/files.js"></script>

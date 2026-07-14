@@ -121,22 +121,29 @@
 
 
 <script>
-async function ensureUserAccess(){
+// Redirect to login if not authenticated
+(async () => {
     try {
-        const storedUser = localStorage.getItem('brightieros-user');
-        if (storedUser) {
+        // If already logged in, stay on dashboard
+        if (localStorage.getItem('brightieros-user')) {
             return;
         }
-
-        const response = await fetch("/api/users/setup");
+        const response = await fetch('/api/users/setup');
         const data = await response.json();
+        // No account exists -> go to setup
         if (!data || !data.user) {
-            window.location.href = "/login.html";
+            window.location.href = '/setup.html';
+        } else {
+            // Account exists but not logged in -> go to login
+            window.location.href = '/login.html';
         }
     } catch (error) {
         console.error(error);
     }
-}
+})();
+
+// existing ensureUserAccess
+// Authentication redirect handled above; no need for ensureUserAccess function
 
 async function loadCurrentUser(){
     try {
@@ -238,7 +245,7 @@ async function updateStats(){
 
 
 
-ensureUserAccess();
+
 loadCurrentUser();
 updateStats();
 

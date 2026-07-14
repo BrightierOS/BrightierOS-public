@@ -32,17 +32,7 @@
   </div>
 
   <script>
-    async function checkSetup() {
-      try {
-        const response = await fetch('/api/users/setup');
-        const data = await response.json();
-        if (data && data.user) {
-          window.location.href = '/index.html';
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    }
+
 
     document.getElementById('setupForm').addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -76,6 +66,18 @@
       }
     });
 
+    // If an account already exists, redirect to login
+    async function checkSetup(){
+        try {
+            const response = await fetch("/api/users/setup");
+            const data = await response.json();
+            if (data && data.user) {
+                window.location.href = "/login.html";
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
     checkSetup();
   </script>
 </body>

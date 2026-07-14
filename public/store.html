@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Community Store</title>
+  <link rel="stylesheet" href="assets/dashboard.css">
+</head>
+<body>
+  <h1>Community App Store</h1>
+  <section id="add-store">
+    <h2>Adicionar nova loja</h2>
+    <form id="store-form">
+      <label>ID: <input type="text" name="id" required></label><br>
+      <label>Nome: <input type="text" name="name" required></label><br>
+      <label>URL (HTTPS): <input type="url" name="url" placeholder="https://github.com/..." required></label><br>
+      <button type="submit">Adicionar</button>
+    </form>
+    <p id="store-msg"></p>
+  </section>
+  <section id="stores-list">
+    <h2>Lojas registradas</h2>
+    <ul id="stores"></ul>
+  </section>
+  <section id="apps-list" style="display:none;">
+    <h2>Plugins da loja <span id="current-store-name"></span></h2>
+    <ul id="apps"></ul>
+    <button id="back-to-stores">Voltar às lojas</button>
+  </section>
+  <script src="assets/store.js"></script>
+</body>
+</html>

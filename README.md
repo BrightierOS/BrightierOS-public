@@ -1,2 +1,2 @@
 # BrightierOS-private
-O repositório privado do BrightierOS. Tome cuidado para não vazer, caso contrário, **haverá consequências**.
+🔒 Repositório privado do BrightierOS. Se você está vendo isso sem autorização... provavelmente alguma coisa deu muito errado.

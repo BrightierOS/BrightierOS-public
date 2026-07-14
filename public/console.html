@@ -149,19 +149,23 @@
 (async () => {
     try {
         const storedUser = localStorage.getItem('brightieros-user');
-
         if (!storedUser) {
-            const response = await fetch("/api/users/setup");
+            const response = await fetch('/api/users/setup');
             const data = await response.json();
             if (!data || !data.user) {
-                window.location.href = "/login.html";
-                return;
+                // No account yet, go to setup
+                window.location.href = '/setup.html';
+            } else {
+                // Account exists but not logged in, go to login
+                window.location.href = '/login.html';
             }
+            return;
         }
     } catch (error) {
         console.error(error);
+        window.location.href = '/login.html';
     }
-
+})();
 document.getElementById("logoutButton")?.addEventListener("click", () => {
     localStorage.removeItem("brightieros-user");
     window.location.href = "/login.html";

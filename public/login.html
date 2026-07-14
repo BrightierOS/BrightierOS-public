@@ -30,27 +30,44 @@
     <p id='message' class='message'></p>
     <p class='hint'><a href='/setup.html'>Primeiro acesso?</a></p>
   </div>
-
   <script>
+    async function ensureUserAccess(){
+      try {
+        // if already logged in, go to dashboard
+        if (localStorage.getItem('brightieros-user')) {
+          window.location.href = '/index.html';
+          return;
+        }
+        const response = await fetch("/api/users/setup");
+        const data = await response.json();
+        // if no account exists, go to setup page
+        if (!data || !data.user) {
+          window.location.href = '/setup.html';
+          return;
+        }
+        // otherwise stay on login page
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    ensureUserAccess();
+
     document.getElementById('loginForm').addEventListener('submit', async (event) => {
       event.preventDefault();
       const message = document.getElementById('message');
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
-
       try {
         const response = await fetch('/api/users/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
         });
-
         const data = await response.json();
         if (!response.ok) {
           message.textContent = data.error || 'Falha ao entrar.';
           return;
         }
-
         localStorage.setItem('brightieros-user', JSON.stringify(data.user));
         window.location.href = '/index.html';
       } catch (error) {
