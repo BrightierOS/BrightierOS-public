@@ -5,7 +5,6 @@
 O **BrightierOS** é uma plataforma de gerenciamento de servidores criada para transformar serviços, arquivos, aplicações e ferramentas em uma experiência simples, organizada e acessível através de uma interface web moderna.
 
 Inspirado em sistemas como painéis de gerenciamento doméstico e plataformas self-hosted, o BrightierOS busca unir facilidade de uso com flexibilidade, permitindo que usuários controlem seus próprios ambientes sem depender de soluções complexas.
-
 ---
 
 # Visão
@@ -22,7 +21,6 @@ Em vez de acessar diversos sistemas separados, o usuário pode administrar tudo 
 * informações do sistema.
 
 O BrightierOS não pretende substituir um sistema operacional tradicional, mas funcionar como uma camada inteligente de gerenciamento sobre servidores e ambientes pessoais.
-
 ---
 
 # Principais recursos
@@ -38,7 +36,6 @@ Permite visualizar informações importantes do servidor, incluindo:
 * usuário conectado;
 * aplicações instaladas;
 * informações gerais do ambiente.
-
 ---
 
 ## Sistema de usuários
@@ -53,7 +50,6 @@ Recursos:
 * proteção de páginas;
 * logout;
 * gerenciamento de usuários.
-
 ---
 
 ## Gerenciador de arquivos
@@ -68,7 +64,6 @@ Possibilidades:
 * visualização de arquivos;
 * gerenciamento através da interface;
 * integração com outros componentes do sistema.
-
 ---
 
 # Sistema de plugins UGC
@@ -98,7 +93,6 @@ data/
 ```
 
 O BrightierOS detecta plugins automaticamente e permite que a comunidade desenvolva novas experiências sem modificar o núcleo do sistema.
-
 ---
 
 # Community App Store
@@ -113,7 +107,6 @@ Usuários poderão adicionar catálogos públicos hospedados em serviços Git, c
 * criação de ecossistemas independentes.
 
 A ideia é criar uma comunidade onde desenvolvedores possam distribuir suas próprias extensões.
-
 ---
 
 # Arquitetura
@@ -141,7 +134,6 @@ O BrightierOS utiliza uma arquitetura baseada em tecnologias web modernas:
 * estrutura modular.
 
 A arquitetura foi pensada para ser simples, transparente e fácil de modificar.
-
 ---
 
 # Filosofia do projeto
@@ -163,7 +155,6 @@ Projetos independentes podem crescer juntos.
 ## Controle
 
 O usuário deve possuir controle sobre seus próprios dados e serviços.
-
 ---
 
 # Desenvolvimento
@@ -178,7 +169,6 @@ O projeto possui foco em:
 * aprendizado;
 * experimentação;
 * criação de novas tecnologias.
-
 ---
 
 # Roadmap
@@ -207,7 +197,9 @@ Próxima evolução:
 Expansão:
 
 * suporte aprimorado para Linux;
-* suporte para macOS.
+* suporte para macOS;
+* scripts de inicialização multiplataforma;
+* compatibilidade entre sistemas operacionais.
 
 ## Futuro
 
@@ -218,7 +210,6 @@ Possíveis melhorias:
 * melhorias no sistema de plugins;
 * evolução da Community App Store;
 * novos recursos para servidores pessoais.
-
 ---
 
 # Licença e comunidade
@@ -226,7 +217,6 @@ Possíveis melhorias:
 O BrightierOS é um projeto experimental focado em tecnologia, desenvolvimento e criação de um ecossistema próprio.
 
 Desenvolvedores e usuários podem participar criando plugins, sugerindo melhorias e explorando novas possibilidades para a plataforma.
-
 ---
 
 **BrightierOS**

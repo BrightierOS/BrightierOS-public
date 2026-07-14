@@ -93,7 +93,7 @@ Type "help" for available commands.`);
 
 help about version hostname time stats clear exit
 
-Other commands are executed by Windows.`);
+Other commands are executed by the operating system.`);
         return;
 
       case 'about':
