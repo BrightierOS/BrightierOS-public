@@ -358,9 +358,8 @@
         }
 
         loadPlugins();
-
-
         // ─── Sistema de Atualizações v0.2.0 ─────────────────────────
+
         async function checkUpdates() {
             const statusEl = document.getElementById("update-status");
             const actionsEl = document.getElementById("update-actions");
@@ -412,18 +411,9 @@
                 actionsEl.style.display = "block";
             }
 
-            // Carrega histórico também
             loadUpdateHistory();
         }
 
-
-
-
-
-    </script>
-
-
-</body>
 
         async function loadUpdateHistory() {
             try {
@@ -446,14 +436,17 @@
                         </div>`;
                     }).join("");
                 }
-        // Botão de verificar novamente
+            } catch {
+                // histórico é opcional
+            }
+        }
+
         document.getElementById("checkUpdateBtn")?.addEventListener("click", () => {
             document.getElementById("update-status").innerHTML = "<p>Verificando atualizações...</p>";
             document.getElementById("applyUpdateBtn").style.display = "none";
             checkUpdates();
         });
 
-        // Botão de aplicar atualização
         document.getElementById("applyUpdateBtn")?.addEventListener("click", async () => {
             if (!confirm("Tem certeza que deseja atualizar o BrightierOS? O servidor será reiniciado após a atualização.")) {
                 return;
@@ -483,8 +476,6 @@
                         </p>
                     `;
                     applyBtn.style.display = "none";
-
-                    // Recarrega o histórico
                     loadUpdateHistory();
                 } else {
                     statusEl.innerHTML = `<p style="color:#f88;">${data.error || "Falha ao atualizar."}</p>`;
@@ -498,14 +489,10 @@
             }
         });
 
-        // Verifica atualizações ao carregar a página
         checkUpdates();
 
+    </script>
 
-            } catch {
-                // histórico é opcional, falha silenciosa
-            }
-        }
-
+</body>
 
 </html>
