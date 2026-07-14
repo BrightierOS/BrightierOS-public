@@ -1,136 +1,93 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>BrightierOS Files</title>
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/dashboard.css">
-
+    <style>
+        .header-row { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+        .toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+        .filter-chip { padding:8px 12px; border-radius:999px; background:#111; border:1px solid #222; color:#ddd; font-family:"Inter",sans-serif; font-size:13px; cursor:pointer; transition:.2s; }
+        .filter-chip:hover,.filter-chip.active { border-color:#00d4ff; color:#fff; }
+        .table-card { overflow:hidden; }
+        table.data-table { width:100%; border-collapse:collapse; font-family:"Inter",sans-serif; font-size:14px; color:#e6e6e6; }
+        table.data-table thead { position:sticky; top:0; z-index:2; }
+        table.data-table th, table.data-table td { padding:10px 12px; text-align:left; white-space:nowrap; border-bottom:1px solid #1f1f1f; }
+        table.data-table th { background:#0c0c0c; color:#9a9a9a; font-weight:500; font-size:12px; letter-spacing:.3px; }
+        table.data-table tbody tr.row:hover { background:#0f1014; }
+        .file-icon { width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; background:#111; border:1px solid #232323; font-size:17px; margin-right:10px; vertical-align:middle; }
+        .row-name { color:#fff; font-weight:500; }
+        .row-meta { color:#8a8a8a; font-size:12px; }
+    </style>
 </head>
-
 <body>
-
 <main>
-
-    <h1>BrightierOS</h1>
-    <h2>Files</h2>
-    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-        <a href="/">Voltar</a>
-        <button id="logoutButton" type="button">Sair</button>
-    </div>
-</main>
-
-<content>
-
-    <p id="breadcrumb">
-        Home
-    </p>
-
-    <div class="box">
-
-        <button id="backButton">
-            ← Back
-        </button>
-
-        <button id="newFolderButton">
-            📁 New Folder
-        </button>
-
-        <button id="newFileButton">
-            📄 New File
-        </button>
-
-        <button id="uploadButton">
-            ⬆ Upload
-        </button>
-
-        <button id="uploadFolderButton">
-            📦 Upload Folder
-        </button>
-
-        <input
-            type="file"
-            id="uploadInput"
-            hidden
-        >
-
-        <input
-            type="file"
-            id="uploadFolderInput"
-            webkitdirectory
-            directory
-            hidden
-        >
-
+    <div class="header-row">
+        <div>
+            <h1 style="margin:0;">BrightierOS</h1>
+            <h2 style="margin:6px 0 0;">Files</h2>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a href="/" class="button" style="text-decoration:none; display:inline-flex; align-items:center;">← Dashboard</a>
+            <a href="/trash.html" class="button" style="text-decoration:none; display:inline-flex; align-items:center;">🗑️ Lixeira</a>
+            <button id="logoutButton" type="button" style="background: transparent; border:1px solid #2a2a2a;">Sair</button>
+        </div>
     </div>
 
-    <div class="box">
+    <content class="stack">
+        <div class="box">
+            <label style="color:#8a8a8a; font-size:12px; margin:0 0 8px; display:block;">Pasta atual</label>
+            <p id="breadcrumb" style="margin:0; font-weight:600;">Home</p>
+        </div>
 
-        <table id="filesTable">
+        <div class="box">
+            <div class="toolbar">
+                <button id="newFolderButton" type="button">📁 New Folder</button>
+                <button id="newFileButton" type="button">📄 New File</button>
+                <button id="uploadButton" type="button">⬆ Upload</button>
+                <button id="uploadFolderButton" type="button">📦 Upload Folder</button>
+                <button id="backButton" type="button" style="background: transparent; border:1px solid #2a2a2a;">← Back</button>
+            </div>
+            <input type="file" id="uploadInput" hidden>
+            <input type="file" id="uploadFolderInput" webkitdirectory directory hidden>
+        </div>
 
-            <thead>
-
-                <tr>
-
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Size</th>
-
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-</content>
+        <div class="box table-card">
+            <table id="filesTable" class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width:44%">Name</th>
+                        <th style="width:20%">Type</th>
+                        <th style="width:18%">Size</th>
+                        <th style="width:18%">Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </content>
 
 <script>
-document.getElementById("logoutButton")?.addEventListener("click", () => {
+document.getElementById("logoutButton").addEventListener("click", () => {
     localStorage.removeItem("brightieros-user");
     window.location.href = "/login.html";
 });
 
-// Ensure user is authenticated before accessing files page
 (async () => {
     try {
-        const response = await fetch('/api/users/setup');
-        const data = await response.json();
-        
-        // Se a conta não existe mais no backend, limpa o storage e vai pro setup
-        if (!data || !data.user) {
-            localStorage.removeItem('brightieros-user');
-            window.location.href = '/setup.html';
-            return;
-        }
-
-        // Se a conta existe, verifica se está logado
-        if (!localStorage.getItem('brightieros-user')) {
-            window.location.href = '/login.html';
-        }
-    } catch (e) {
-        console.error(e);
-        window.location.href = '/login.html';
-    }
+        const r = await fetch('/api/users/setup');
+        const d = await r.json();
+        if (!d?.user) { localStorage.removeItem('brightieros-user'); window.location.href = '/setup.html'; return; }
+        if (!localStorage.getItem('brightieros-user')) { window.location.href = '/login.html'; }
+    } catch (e) { console.error(e); window.location.href = '/login.html'; }
 })();
 </script>
 
 <script src="assets/files.js"></script>
-
 
 <nav class="dock">
     <a href="/" class="dock-item" data-page="dashboard">
@@ -161,5 +118,4 @@ document.getElementById("logoutButton")?.addEventListener("click", () => {
     });
 </script>
 </body>
-
 </html>
