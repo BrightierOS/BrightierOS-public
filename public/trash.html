@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrightierOS Lixeira</title>
+    <link rel="stylesheet" href="assets/dashboard.css">
+</head>
+<body>
+    <main>
+        <h1>Lixeira</h1>
+        <h2>Itens excluídos recentemente</h2>
+    </main>
+
+    <content>
+        <div class="box" id="stats-box">
+            <p id="trash-stats">Carregando...</p>
+            <button id="emptyTrash" type="button" style="margin-top:10px;display:none;">Esvaziar lixeira</button>
+        </div>
+
+        <div class="box">
+            <div id="trash-list"></div>
+        </div>
+    </content>
+
+    <nav class="dock">
+        <a href="/" class="dock-item" data-page="dashboard"><span class="dock-icon">🏠</span><span class="dock-label">Dashboard</span></a>
+        <a href="/files.html" class="dock-item" data-page="files"><span class="dock-icon">📁</span><span class="dock-label">Files</span></a>
+        <a href="/console.html" class="dock-item" data-page="console"><span class="dock-icon">💻</span><span class="dock-label">Console</span></a>
+        <a href="/store.html" class="dock-item" data-page="store"><span class="dock-icon">🛒</span><span class="dock-label">Store</span></a>
+    </nav>
+
+    <script>
+        async function loadTrash() {
+            const list = document.getElementById('trash-list');
+            const stats = document.getElementById('trash-stats');
+            const emptyBtn = document.getElementById('emptyTrash');
+
+            const res = await Promise.all([
+                fetch('/api/files/trash').then(r => r.json()),
+                fetch('/api/files/trash/stats').then(r => r.json()),
+            ]);
+
+            const items = res[0] || [];
+            const trashStats = res[1] || {};
+
+            stats.textContent = `Itens na lixeira: ${trashStats.count || 0} • Espaço: ${trashStats.sizeFormatted || '0 B'}`;
+
+            if (!items.length) {
+                list.innerHTML = '<p style="color:#8a8a8a;">A lixeira está vazia.</p>';
+                emptyBtn.style.display = 'none';
+                return;
+            }
+
+            emptyBtn.style.display = 'block';
+
+            emptyBtn.onclick = async () => {
+                await fetch('/api/files/trash', { method: 'DELETE' });
+                loadTrash();
+            };
+
+            list.innerHTML = '';
+            items.forEach(item => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #222; gap:12px; flex-wrap:wrap;';
+                row.innerHTML = `
+                    <div style="min-width:0; flex:1 1 200px;">
+                        <div style="font-weight:600; color:white;">${escapeHtml(item.name)}</div>
+                        <div style="color:#8a8a8a; font-size:12px;">${item.type === 'folder' ? 'Pasta' : 'Arquivo'} • ${item.sizeFormatted || '—'}</div>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button data-restore="${item.trashPath}" type="button">Restaurar</button>
+                        <button data-delete="${item.trashPath}" type="button" style="background:linear-gradient(135deg,#ff4d4d,#b30000);">Excluir permanentemente</button>
+                    </div>
+                `;
+                list.appendChild(row);
+            });
+
+            list.querySelectorAll('button[data-restore]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    await fetch('/api/files/trash/restore', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ trashPath: btn.getAttribute('data-restore') }),
+                    });
+                    loadTrash();
+                });
+            });
+
+            list.querySelectorAll('button[data-delete]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    await fetch('/api/files/trash/' + encodeURIComponent(btn.getAttribute('data-delete')), { method: 'DELETE' });
+                    loadTrash();
+                });
+            });
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        loadTrash();
+
+        document.querySelectorAll('.dock-item').forEach(function(item) {
+            var href = item.getAttribute('href');
+            var current = window.location.pathname;
+            if (href === current || (href === '/' && (current === '/index.html' || current === '/'))) {
+                item.classList.add('active');
+            }
+        });
+    </script>
+</body>
+</html>

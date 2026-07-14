@@ -192,6 +192,49 @@ Próxima evolução:
 * verificação de atualizações pelo GitHub;
 * melhorias no gerenciamento do sistema.
 
+
+## v0.3.0
+
+Gerenciamento de Arquivos e Instalação.
+
+## 🗑️ Recycle Bin (Lixeira)
+
+* Restaurar arquivos excluídos.
+* Excluir arquivos permanentemente.
+* Esvaziar lixeira.
+* Mostrar espaço ocupado pela lixeira.
+
+## 📦 Sistema de Instalação
+
+Criar scripts de instalação específicos para cada sistema operacional:
+
+### 🪟 Windows
+
+* Script de instalação .ps1.
+* Instalação automática de dependências.
+* Configuração inicial do ambiente.
+* Criação de atalhos e configurações necessárias.
+
+### 🐧 Linux
+
+* Script de instalação .sh.
+* Instalação de dependências pelo gerenciador de pacotes.
+* Configuração de permissões.
+* Inicialização automática do serviço.
+
+### 🍎 macOS
+
+* Script de instalação .sh.
+* Configuração do ambiente.
+* Instalação de dependências necessárias.
+* Preparação para execução no sistema.
+
+## Objetivos da versão
+
+* Facilitar a instalação do BrightierOS.
+* Reduzir configuração manual.
+* Melhorar suporte multiplataforma.
+
 ## v0.2.1
 
 Expansão:

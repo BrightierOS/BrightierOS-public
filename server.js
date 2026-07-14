@@ -183,3 +183,7 @@ server.listen(PORT, () => {
   const actualPort = server.address().port;
   console.log(`BrightierOS running at http://localhost:${actualPort}`);
 });
+
+// Mount trash router
+const trashRouter = require('./routes/trash');
+app.use('/api/files', trashRouter);
