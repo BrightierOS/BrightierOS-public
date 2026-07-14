@@ -47,13 +47,18 @@ loadStores(app);
 const userRouter = require('./routes/user');
 app.use('/api/users', userRouter);
 
+// Mount update router for version checking and updates
+const updateRouter = require('./routes/update');
+app.use('/api/update', updateRouter);
+
 
 wss.on('connection', (socket) => {
   console.log('Console connected.');
 
+  const pkg = require('./package.json');
   socket.send(`BrightierOS Console
 
-Version 0.0.1-dev Connected to ${os.hostname()}
+Version ${pkg.version} Connected to ${os.hostname()}
 
 Type "help" for available commands.`);
 
@@ -78,7 +83,7 @@ Other commands are executed by Windows.`);
         return;
 
       case 'version':
-        socket.send('BrightierOS v0.0.1-dev');
+        socket.send(`BrightierOS v${require('./package.json').version}`);
         return;
 
       case 'hostname':
@@ -151,7 +156,9 @@ app.get('/api/stats', async (req, res) => {
 });
 
 server.on('error', handleStartupError);
-wss.on('error', handleStartupError);
+wss.on('error', (err) => {
+  console.error('WebSocket error (not fatal):', err.message);
+});
 
 server.listen(PORT, () => {
   const actualPort = server.address().port;

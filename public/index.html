@@ -130,6 +130,24 @@
             </div>
         </div>
 
+        <div class="box" id="updates-box">
+            <h1>Atualizações do Sistema</h1>
+            <div id="update-status">
+                <p>Verificando atualizações...</p>
+            </div>
+            <div id="update-actions" style="display:none; margin-top:12px;">
+                <button id="checkUpdateBtn" type="button" style="margin-right:8px;">Verificar novamente</button>
+                <button id="applyUpdateBtn" type="button" class="button" style="display:none;">Atualizar agora</button>
+            </div>
+            <div id="update-history-box" style="margin-top:16px; display:none;">
+                <h3 style="margin:0 0 8px 0; font-size:14px; color:#ccc;">Histórico</h3>
+                <div id="update-history-list"></div>
+            </div>
+        </div>
+
+
+
+
     </content>
 
 
@@ -186,9 +204,21 @@
 
         document.getElementById("resetButton")?.addEventListener("click", async () => {
             if (confirm("Tem certeza que deseja resetar o sistema? Todos os dados serão perdidos.")) {
-                await fetch("/api/users/reset", { method: "POST" });
-                localStorage.removeItem("brightieros-user");
-                window.location.href = "/setup.html";
+                try {
+                    const response = await fetch("/api/users/reset", {
+                        method: "POST",
+                        headers: { "x-confirmed-reset": "true" }
+                    });
+                    if (!response.ok) {
+                        const data = await response.json();
+                        alert("Falha ao resetar: " + (data.error || "Erro desconhecido."));
+                        return;
+                    }
+                    localStorage.removeItem("brightieros-user");
+                    window.location.href = "/setup.html";
+                } catch (error) {
+                    alert("Erro ao resetar o sistema: " + error.message);
+                }
             }
         });
 
@@ -329,9 +359,153 @@
 
         loadPlugins();
 
+
+        // ─── Sistema de Atualizações v0.2.0 ─────────────────────────
+        async function checkUpdates() {
+            const statusEl = document.getElementById("update-status");
+            const actionsEl = document.getElementById("update-actions");
+            const applyBtn = document.getElementById("applyUpdateBtn");
+
+            try {
+                const response = await fetch("/api/update/check");
+                const data = await response.json();
+
+                if (!data.success) {
+                    statusEl.innerHTML = `<p style="color:#f88;">${data.error || "Erro ao verificar atualizações."}</p>`;
+                    actionsEl.style.display = "block";
+                    return;
+                }
+
+                const installed = data.installedVersion;
+                const available = data.availableVersion;
+
+                if (data.hasUpdate) {
+                    statusEl.innerHTML = `
+                        <p style="margin:0 0 8px 0;">
+                            <span style="color:#aaa;">Instalada:</span>
+                            <strong style="color:#fff;">v${installed}</strong>
+                            &nbsp;&nbsp;→&nbsp;&nbsp;
+                            <span style="color:#aaa;">Disponível:</span>
+                            <strong style="color:#4caf50;">v${available}</strong>
+                        </p>
+                        <p style="margin:0; font-size:13px; color:#aaa;">
+                            Uma nova versão está disponível!
+                            <a href="${data.repoUrl}" target="_blank" style="color:#88f;">Ver no GitHub</a>
+                        </p>
+                        ${data.changelog ? `<pre style="margin:8px 0 0 0; font-size:12px; color:#888; max-height:120px; overflow-y:auto;">${data.changelog}</pre>` : ""}
+                    `;
+                    applyBtn.style.display = "inline-block";
+                } else {
+                    statusEl.innerHTML = `
+                        <p style="margin:0 0 4px 0;">
+                            <span style="color:#aaa;">Versão instalada:</span>
+                            <strong style="color:#fff;">v${installed}</strong>
+                        </p>
+                        <p style="margin:0; font-size:13px; color:#4caf50;">✓ Você está na versão mais recente.</p>
+                    `;
+                    applyBtn.style.display = "none";
+                }
+
+                actionsEl.style.display = "block";
+            } catch (err) {
+                statusEl.innerHTML = `<p style="color:#f88;">Erro de conexão: ${err.message}</p>`;
+                actionsEl.style.display = "block";
+            }
+
+            // Carrega histórico também
+            loadUpdateHistory();
+        }
+
+
+
+
+
     </script>
 
 
 </body>
+
+        async function loadUpdateHistory() {
+            try {
+                const response = await fetch("/api/update/history");
+                const data = await response.json();
+                const box = document.getElementById("update-history-box");
+                const list = document.getElementById("update-history-list");
+
+                if (data.success && data.history && data.history.length > 0) {
+                    box.style.display = "block";
+                    list.innerHTML = data.history.map(h => {
+                        const date = new Date(h.timestamp);
+                        const dateStr = date.toLocaleString("pt-BR");
+                        return `<div style="padding:6px 0; border-bottom:1px solid #333; font-size:13px;">
+                            <span style="color:#888;">${dateStr}</span>
+                            <span style="color:#fff; margin-left:8px;">
+                                v${h.from} → v${h.to}
+                            </span>
+                            <span style="color:#aaa; margin-left:8px;">${h.message || ""}</span>
+                        </div>`;
+                    }).join("");
+                }
+        // Botão de verificar novamente
+        document.getElementById("checkUpdateBtn")?.addEventListener("click", () => {
+            document.getElementById("update-status").innerHTML = "<p>Verificando atualizações...</p>";
+            document.getElementById("applyUpdateBtn").style.display = "none";
+            checkUpdates();
+        });
+
+        // Botão de aplicar atualização
+        document.getElementById("applyUpdateBtn")?.addEventListener("click", async () => {
+            if (!confirm("Tem certeza que deseja atualizar o BrightierOS? O servidor será reiniciado após a atualização.")) {
+                return;
+            }
+
+            const statusEl = document.getElementById("update-status");
+            const applyBtn = document.getElementById("applyUpdateBtn");
+
+            statusEl.innerHTML = "<p>Aplicando atualização...</p>";
+            applyBtn.disabled = true;
+            applyBtn.textContent = "Atualizando...";
+
+            try {
+                const response = await fetch("/api/update/apply", { method: "POST" });
+                const data = await response.json();
+
+                if (data.success) {
+                    statusEl.innerHTML = `
+                        <p style="color:#4caf50;">
+                            ✓ ${data.message}
+                        </p>
+                        <p style="font-size:13px; color:#aaa;">
+                            v${data.installedVersion} → <strong style="color:#fff;">v${data.newVersion}</strong>
+                        </p>
+                        <p style="font-size:13px; color:#ffa;">
+                            Reinicie o servidor para aplicar as mudanças.
+                        </p>
+                    `;
+                    applyBtn.style.display = "none";
+
+                    // Recarrega o histórico
+                    loadUpdateHistory();
+                } else {
+                    statusEl.innerHTML = `<p style="color:#f88;">${data.error || "Falha ao atualizar."}</p>`;
+                    applyBtn.disabled = false;
+                    applyBtn.textContent = "Tentar novamente";
+                }
+            } catch (err) {
+                statusEl.innerHTML = `<p style="color:#f88;">Erro: ${err.message}</p>`;
+                applyBtn.disabled = false;
+                applyBtn.textContent = "Tentar novamente";
+            }
+        });
+
+        // Verifica atualizações ao carregar a página
+        checkUpdates();
+
+
+            } catch {
+                // histórico é opcional, falha silenciosa
+            }
+        }
+
 
 </html>
