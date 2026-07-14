@@ -1,527 +1,110 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="./assets/BrightierOS.png" sizes="128x128">
-    <link rel="stylesheet" href="./assets/dashboard.css">
-    <title>BrightierOS</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrightierOS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/dashboard.css">
+  <style>
+    :root { --bg:#0b0b0b; --panel:#111113; --line:#1f1f22; --text:#e6e6e6; --muted:#8a8a8a; --accent:#00d4ff; }
+    html, body { background:var(--bg); color:var(--text); font-family:"Inter",sans-serif; }
+    main { margin:0; }
+    h1 { font-family:"Doto",sans-serif; font-size:48px; color:var(--accent); letter-spacing:-2px; margin:0; }
+    h2 { font-family:"Inter",sans-serif; font-size:18px; font-weight:400; color:var(--muted); margin-top:6px; }
+    a { color:#fff; text-decoration:none; }
+    .header { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+    .header-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .btn { display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px; background:linear-gradient(135deg,#00d4ff,#1f7cff); color:#fff; font-weight:600; }
+    .ghost { background:transparent; border:1px solid var(--line); color:#ddd; }
+    .box { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:18px; margin-bottom:14px; box-shadow:0 8px 24px rgba(0,0,0,0.35); }
+    .stack { display:flex; flex-direction:column; gap:14px; }
+    .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th, td { padding:10px 12px; text-align:left; border-bottom:1px solid #1b1b1b; }
+    th { color:var(--muted); font-weight:500; font-size:12px; letter-spacing:.3px; }
+    tbody tr:hover { background:#0f1014; }
+    .toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .label { color:var(--muted); font-size:12px; }
+    .muted { color:var(--muted); font-size:13px; }
+    .danger { background:linear-gradient(135deg,#ff4d4d,#b30000); color:#fff; border:none; border-radius:999px; padding:10px 14px; font-weight:600; }
+    .nav { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); display:flex; gap:4px; padding:8px 12px; background:rgba(20,20,20,.7); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,.08); border-radius:20px; box-shadow:0 8px 32px rgba(0,0,0,.6); z-index:9999; }
+    .nav a { color:#aaa; font-size:11px; font-weight:500; padding:8px 14px; border-radius:12px; display:inline-flex; flex-direction:column; align-items:center; gap:4px; transition:.2s; position:relative; text-decoration:none; }
+    .nav a:hover { color:#fff; background:rgba(255,255,255,.06); transform:translateY(-4px); }
+    .nav a.active { color:#00d4ff; }
+    .dock-icon { font-size:22px; line-height:1; }
+    .dock-label { font-size:10px; opacity:.8; white-space:nowrap; }
+    .nav a.active::before { content:''; position:absolute; top:-4px; left:50%; transform:translateX(-50%); width:4px; height:4px; background:#00d4ff; border-radius:50%; }
+    @media (max-width: 720px) { body { padding:20px; padding-bottom:84px; } h1 { font-size:38px; } .box, table { max-width:100%; } }
+    @media (max-width: 520px) { body { padding:16px; padding-bottom:76px; } h1 { font-size:30px; } .nav { gap:0; padding:6px 8px; border-radius:16px; bottom:10px; } .nav a { padding:6px 10px; min-width:38px; } .dock-label { display:none; } .toolbar { gap:8px; } table { font-size:13px; } }
+  </style>
 </head>
-
 <body>
-
-    <main>
-        <h1>BrightierOS</h1>
-        <h2>Your infrastructure. Brighter.</h2>
-        <p id="time">--:--:--</p>
-    </main>
-
-
-    <content>
-
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px;">
-            <p id="currentUserLabel" style="margin:0;">Carregando usuário...</p>
-            <button id="logoutButton" type="button">Sair</button>
-            <button id="resetButton" type="button" style="margin-left:12px;">Resetar Sistema</button>
-        </div>
-
-
-
-        <div class="box">
-
-            <h1>Desempenho</h1>
-
-
-            <div class="metric">
-
-                <p>CPU</p>
-
-                <div class="bar">
-                    <div class="fill" id="cpuBar"></div>
-                </div>
-
-                <span id="cpuText">0.0%</span>
-
-            </div>
-
-
-
-            <div class="metric">
-
-                <p>RAM</p>
-
-                <div class="bar">
-                    <div class="fill" id="ramBar"></div>
-                </div>
-
-                <span id="ramText">0.0%</span>
-
-            </div>
-
-
-
-            <div class="metric">
-
-                <p>GPU</p>
-
-                <div class="bar">
-                    <div class="fill" id="gpuBar"></div>
-                </div>
-
-                <span id="gpuText">0%</span>
-
-            </div>
-
-
-
-            <div class="metric">
-
-                <p>Storage</p>
-
-                <div class="bar">
-                    <div class="fill" id="storageBar"></div>
-                </div>
-
-                <span id="storageText">0.0%</span>
-
-            </div>
-
-
-        </div>
-
-
-
-        <div class="box">
-
-            <h1>Files</h1>
-
-            <p>
-                Gerencie seus arquivos e pastas diretamente do BrightierOS. <a href="/files.html">Clique aqui para abrir
-                    o gerenciador de arquivos.</a>
-            </p>
-
-        </div>
-
-        <div class="box">
-
-            <h1>Console</h1>
-
-            <p>
-                Acesse o console do BrightierOS para monitorar e gerenciar seus serviços em tempo real. <a
-                    href="/console.html">Clique aqui para abrir o console.</a>
-            </p>
-
-        </div>
-        <div class="box">
-            <h1>Community App Store</h1>
-            <p>Explore plugins criados pela comunidade.</p>
-            <a href="/store.html" class="button">Ir para a Store</a>
-        </div>
-
-        <div class="box" id="plugins-box">
-            <h1>Meus Plugins</h1>
-            <div id="installed-plugins-list">
-                <p>Carregando plugins...</p>
-            </div>
-        </div>
-
-        <div class="box" id="updates-box">
-            <h1>Atualizações do Sistema</h1>
-            <div id="update-status">
-                <p>Verificando atualizações...</p>
-            </div>
-            <div id="update-actions" style="display:none; margin-top:12px;">
-                <button id="checkUpdateBtn" type="button" style="margin-right:8px;">Verificar novamente</button>
-                <button id="applyUpdateBtn" type="button" class="button" style="display:none;">Atualizar agora</button>
-            </div>
-            <div id="update-history-box" style="margin-top:16px; display:none;">
-                <h3 style="margin:0 0 8px 0; font-size:14px; color:#ccc;">Histórico</h3>
-                <div id="update-history-list"></div>
-            </div>
-        </div>
-
-
-
-
-    </content>
-
-
-
-    <script>
-        // Redirect to login if not authenticated
-        (async () => {
-            try {
-                const response = await fetch('/api/users/setup');
-                const data = await response.json();
-
-                // Se a conta não existe mais no backend (excluiu o user.json), limpa o storage e vai pro setup
-                if (!data || !data.user) {
-                    localStorage.removeItem('brightieros-user');
-                    window.location.href = '/setup.html';
-                    return;
-                }
-
-                // Se a conta existe, verifica se o usuário está logado na máquina
-                if (!localStorage.getItem('brightieros-user')) {
-                    window.location.href = '/login.html';
-                }
-            } catch (error) {
-                console.error(error);
-            }
-        })();
-
-        // existing ensureUserAccess
-        // Authentication redirect handled above; no need for ensureUserAccess function
-
-        async function loadCurrentUser() {
-            try {
-                const storedUser = localStorage.getItem('brightieros-user');
-                if (storedUser) {
-                    const user = JSON.parse(storedUser);
-                    document.getElementById("currentUserLabel").textContent = `Olá, ${user.username}!`;
-                    return;
-                }
-
-                const response = await fetch("/api/users/setup");
-                const data = await response.json();
-                if (data && data.user) {
-                    document.getElementById("currentUserLabel").textContent = `Olá, ${data.user.username}!`;
-                }
-            } catch (error) {
-                console.error(error);
-            }
-        }
-
-        document.getElementById("logoutButton")?.addEventListener("click", () => {
-            localStorage.removeItem("brightieros-user");
-            window.location.href = "/login.html";
-        });
-
-        document.getElementById("resetButton")?.addEventListener("click", async () => {
-            if (confirm("Tem certeza que deseja resetar o sistema? Todos os dados serão perdidos.")) {
-                try {
-                    const response = await fetch("/api/users/reset", {
-                        method: "POST",
-                        headers: { "x-confirmed-reset": "true" }
-                    });
-                    if (!response.ok) {
-                        const data = await response.json();
-                        alert("Falha ao resetar: " + (data.error || "Erro desconhecido."));
-                        return;
-                    }
-                    localStorage.removeItem("brightieros-user");
-                    window.location.href = "/setup.html";
-                } catch (error) {
-                    alert("Erro ao resetar o sistema: " + error.message);
-                }
-            }
-        });
-
-        async function updateStats() {
-            try {
-
-                const response = await fetch("/api/stats");
-
-                const data = await response.json();
-                document.getElementById("time").innerHTML = data.time;
-
-                // CPU
-
-                document.getElementById("cpuText").innerHTML =
-                    data.cpu.name + " — " + data.cpu.usage + "%";
-
-
-                document.getElementById("cpuBar").style.width =
-                    data.cpu.usage + "%";
-
-
-
-                // RAM
-
-                document.getElementById("ramText").innerHTML =
-                    data.ram.used +
-                    "GB / " +
-                    data.ram.total +
-                    "GB — " +
-                    data.ram.usage +
-                    "%";
-
-
-                document.getElementById("ramBar").style.width =
-                    data.ram.usage + "%";
-
-
-
-                // GPU
-
-                if (data.gpu.length) {
-
-                    document.getElementById("gpuText").innerHTML =
-                        data.gpu.map(g =>
-                            g.name + " — " + g.usage + "%"
-                        ).join("<br>");
-
-
-                    document.getElementById("gpuBar").style.width =
-                        data.gpu[0].usage + "%";
-
-                }
-
-
-
-                // STORAGE
-
-                document.getElementById("storageText").innerHTML =
-                    data.storage.map(d =>
-                        d.drive + " — " + d.usage + "%"
-                    ).join("<br>");
-
-
-                document.getElementById("storageBar").style.width =
-                    data.storage[0].usage + "%";
-
-
-            }
-
-            catch (error) {
-
-                console.error(error);
-
-            }
-
-        }
-
-
-
-
-        loadCurrentUser();
-        updateStats();
-
-        setInterval(updateStats, 1000);
-
-        async function loadPlugins() {
-            try {
-                const response = await fetch('/api/plugins');
-                const plugins = await response.json();
-                const container = document.getElementById('installed-plugins-list');
-
-                if (!plugins || plugins.length === 0) {
-                    container.innerHTML = '<p>Nenhum plugin instalado.</p>';
-                    return;
-                }
-
-                container.innerHTML = '';
-                plugins.forEach(plugin => {
-                    const div = document.createElement('div');
-                    div.style.marginBottom = '12px';
-                    div.style.padding = '12px';
-                    div.style.background = '#222';
-                    div.style.borderRadius = '8px';
-
-                    const title = document.createElement('h3');
-                    title.textContent = plugin.name;
-                    title.style.margin = '0 0 8px 0';
-                    title.style.color = '#fff';
-                    title.style.fontSize = '16px';
-
-                    const desc = document.createElement('p');
-                    desc.textContent = plugin.description || 'Sem descrição';
-                    desc.style.margin = '0 0 12px 0';
-                    desc.style.fontSize = '14px';
-                    desc.style.color = '#aaa';
-
-                    div.appendChild(title);
-                    div.appendChild(desc);
-
-                    if (plugin.access) {
-                        const btn = document.createElement('a');
-                        btn.href = plugin.access;
-                        btn.className = 'button';
-                        btn.textContent = 'Acessar Plugin';
-                        btn.style.display = 'inline-block';
-                        btn.style.fontSize = '14px';
-                        btn.style.padding = '6px 12px';
-                        div.appendChild(btn);
-                    }
-
-                    container.appendChild(div);
-                });
-            } catch (err) {
-                document.getElementById('installed-plugins-list').innerHTML = '<p>Erro ao carregar plugins.</p>';
-                console.error(err);
-            }
-        }
-
-        loadPlugins();
-        // ─── Sistema de Atualizações v0.2.0 ─────────────────────────
-
-        async function checkUpdates() {
-            const statusEl = document.getElementById("update-status");
-            const actionsEl = document.getElementById("update-actions");
-            const applyBtn = document.getElementById("applyUpdateBtn");
-
-            try {
-                const response = await fetch("/api/update/check");
-                const data = await response.json();
-
-                if (!data.success) {
-                    statusEl.innerHTML = `<p style="color:#f88;">${data.error || "Erro ao verificar atualizações."}</p>`;
-                    actionsEl.style.display = "block";
-                    return;
-                }
-
-                const installed = data.installedVersion;
-                const available = data.availableVersion;
-
-                if (data.hasUpdate) {
-                    statusEl.innerHTML = `
-                        <p style="margin:0 0 8px 0;">
-                            <span style="color:#aaa;">Instalada:</span>
-                            <strong style="color:#fff;">v${installed}</strong>
-                            &nbsp;&nbsp;→&nbsp;&nbsp;
-                            <span style="color:#aaa;">Disponível:</span>
-                            <strong style="color:#4caf50;">v${available}</strong>
-                        </p>
-                        <p style="margin:0; font-size:13px; color:#aaa;">
-                            Uma nova versão está disponível!
-                            <a href="${data.repoUrl}" target="_blank" style="color:#88f;">Ver no GitHub</a>
-                        </p>
-                        ${data.changelog ? `<pre style="margin:8px 0 0 0; font-size:12px; color:#888; max-height:120px; overflow-y:auto;">${data.changelog}</pre>` : ""}
-                    `;
-                    applyBtn.style.display = "inline-block";
-                } else {
-                    statusEl.innerHTML = `
-                        <p style="margin:0 0 4px 0;">
-                            <span style="color:#aaa;">Versão instalada:</span>
-                            <strong style="color:#fff;">v${installed}</strong>
-                        </p>
-                        <p style="margin:0; font-size:13px; color:#4caf50;">✓ Você está na versão mais recente.</p>
-                    `;
-                    applyBtn.style.display = "none";
-                }
-
-                actionsEl.style.display = "block";
-            } catch (err) {
-                statusEl.innerHTML = `<p style="color:#f88;">Erro de conexão: ${err.message}</p>`;
-                actionsEl.style.display = "block";
-            }
-
-            loadUpdateHistory();
-        }
-
-
-        async function loadUpdateHistory() {
-            try {
-                const response = await fetch("/api/update/history");
-                const data = await response.json();
-                const box = document.getElementById("update-history-box");
-                const list = document.getElementById("update-history-list");
-
-                if (data.success && data.history && data.history.length > 0) {
-                    box.style.display = "block";
-                    list.innerHTML = data.history.map(h => {
-                        const date = new Date(h.timestamp);
-                        const dateStr = date.toLocaleString("pt-BR");
-                        return `<div style="padding:6px 0; border-bottom:1px solid #333; font-size:13px;">
-                            <span style="color:#888;">${dateStr}</span>
-                            <span style="color:#fff; margin-left:8px;">
-                                v${h.from} → v${h.to}
-                            </span>
-                            <span style="color:#aaa; margin-left:8px;">${h.message || ""}</span>
-                        </div>`;
-                    }).join("");
-                }
-            } catch {
-                // histórico é opcional
-            }
-        }
-
-        document.getElementById("checkUpdateBtn")?.addEventListener("click", () => {
-            document.getElementById("update-status").innerHTML = "<p>Verificando atualizações...</p>";
-            document.getElementById("applyUpdateBtn").style.display = "none";
-            checkUpdates();
-        });
-
-        document.getElementById("applyUpdateBtn")?.addEventListener("click", async () => {
-            if (!confirm("Tem certeza que deseja atualizar o BrightierOS? O servidor será reiniciado após a atualização.")) {
-                return;
-            }
-
-            const statusEl = document.getElementById("update-status");
-            const applyBtn = document.getElementById("applyUpdateBtn");
-
-            statusEl.innerHTML = "<p>Aplicando atualização...</p>";
-            applyBtn.disabled = true;
-            applyBtn.textContent = "Atualizando...";
-
-            try {
-                const response = await fetch("/api/update/apply", { method: "POST" });
-                const data = await response.json();
-
-                if (data.success) {
-                    statusEl.innerHTML = `
-                        <p style="color:#4caf50;">
-                            ✓ ${data.message}
-                        </p>
-                        <p style="font-size:13px; color:#aaa;">
-                            v${data.installedVersion} → <strong style="color:#fff;">v${data.newVersion}</strong>
-                        </p>
-                        <p style="font-size:13px; color:#ffa;">
-                            Reinicie o servidor para aplicar as mudanças.
-                        </p>
-                    `;
-                    applyBtn.style.display = "none";
-                    loadUpdateHistory();
-                } else {
-                    statusEl.innerHTML = `<p style="color:#f88;">${data.error || "Falha ao atualizar."}</p>`;
-                    applyBtn.disabled = false;
-                    applyBtn.textContent = "Tentar novamente";
-                }
-            } catch (err) {
-                statusEl.innerHTML = `<p style="color:#f88;">Erro: ${err.message}</p>`;
-                applyBtn.disabled = false;
-                applyBtn.textContent = "Tentar novamente";
-            }
-        });
-
-        checkUpdates();
-
-    </script>
-
-<nav class="dock">
-    <a href="/" class="dock-item" data-page="dashboard">
-        <span class="dock-icon">🏠</span>
-        <span class="dock-label">Dashboard</span>
-    </a>
-    <a href="/files.html" class="dock-item" data-page="files">
-        <span class="dock-icon">📁</span>
-        <span class="dock-label">Files</span>
-    </a>
-    <a href="/console.html" class="dock-item" data-page="console">
-        <span class="dock-icon">💻</span>
-        <span class="dock-label">Console</span>
-    </a>
-    <a href="/store.html" class="dock-item" data-page="store">
-        <span class="dock-icon">🛒</span>
-        <span class="dock-label">Store</span>
-    </a>
-</nav>
-
+<main>
+  <div class="header">
+    <div>
+      <h1>BrightierOS</h1>
+      <h2>Your infrastructure. Brighter.</h2>
+    </div>
+    <div class="header-actions">
+      <span id="time" class="label">--:--:--</span>
+      <button id="logoutButton" class="btn ghost">Sair</button>
+      <button id="resetButton" class="btn ghost">Resetar Sistema</button>
+    </div>
+  </div>
+</main>
+<content class="stack">
+  <div class="box">
+    <h2 style="margin:0 0 12px">Desempenho</h2>
+    <div id="stats"></div>
+  </div>
+  <div class="box">
+    <h1 style="font-size:20px; margin:0 0 10px; color:#fff">Files</h1>
+    <p class="muted">Gerencie seus arquivos e pastas diretamente do BrightierOS. <a href="/files.html">Abrir gerenciador</a></p>
+  </div>
+  <div class="box">
+    <h1 style="font-size:20px; margin:0 0 10px; color:#fff">Console</h1>
+    <p class="muted">Acesse o console para monitorar servi�os. <a href="/console.html">Abrir console</a></p>
+  </div>
+  <div class="box">
+    <h1 style="font-size:20px; margin:0 0 10px; color:#fff">Community App Store</h1>
+    <p class="muted">Explore plugins criados pela comunidade. <a href="/store.html">Ir para a Store</a></p>
+  </div>
+  <div class="box">
+    <h1 style="font-size:20px; margin:0 0 10px; color:#fff">Meus Plugins</h1>
+    <div id="installed-plugins-list"></div>
+  </div>
+  <div class="box">
+    <h1 style="font-size:20px; margin:0 0 10px; color:#fff">Atualiza��es</h1>
+    <div id="update-status"></div>
+    <div class="toolbar" style="margin-top:10px">
+      <button id="checkUpdateBtn" class="btn">Verificar atualiza��es</button>
+      <button id="applyUpdateBtn" class="btn" style="display:none">Atualizar agora</button>
+    </div>
+    <div id="update-history"></div>
+  </div>
+</content>
 <script>
-    document.querySelectorAll('.dock-item').forEach(function(item) {
-        var href = item.getAttribute('href');
-        var current = window.location.pathname;
-        if (href === current || (href === '/' && (current === '/index.html' || current === '/'))) {
-            item.classList.add('active');
-        }
-    });
+document.getElementById("logoutButton").addEventListener("click", () => { localStorage.removeItem("brightieros-user"); window.location.href = "/login.html"; });
+document.getElementById("resetButton").addEventListener("click", async () => { if (!confirm('Resetar sistema?')) return; await fetch('/api/users/reset', { headers: { 'x-confirmed-reset': 'true' }, method: 'POST' }); localStorage.removeItem('brightieros-user'); window.location.href = '/setup.html'; });
 </script>
-
+<script src="assets/index.js"></script>
+<nav class="nav">
+  <a href="/" class="dock-item active" data-page="dashboard"><span class="dock-icon">??</span><span class="dock-label">Dashboard</span></a>
+  <a href="/files.html" class="dock-item" data-page="files"><span class="dock-icon">??</span><span class="dock-label">Files</span></a>
+  <a href="/console.html" class="dock-item" data-page="console"><span class="dock-icon">??</span><span class="dock-label">Console</span></a>
+  <a href="/store.html" class="dock-item" data-page="store"><span class="dock-icon">??</span><span class="dock-label">Store</span></a>
+</nav>
+<script>
+  document.querySelectorAll('.dock-item').forEach(function(item) {
+    var href = item.getAttribute('href');
+    var current = window.location.pathname;
+    if (href === current || (href === '/' && (current === '/index.html' || current === '/'))) {
+      item.classList.add('active');
+    }
+  });
+</script>
 </body>
-
 </html>

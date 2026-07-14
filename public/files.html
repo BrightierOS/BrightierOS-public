@@ -1,121 +1,104 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BrightierOS Files</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/dashboard.css">
-    <style>
-        .header-row { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
-        .toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
-        .filter-chip { padding:8px 12px; border-radius:999px; background:#111; border:1px solid #222; color:#ddd; font-family:"Inter",sans-serif; font-size:13px; cursor:pointer; transition:.2s; }
-        .filter-chip:hover,.filter-chip.active { border-color:#00d4ff; color:#fff; }
-        .table-card { overflow:hidden; }
-        table.data-table { width:100%; border-collapse:collapse; font-family:"Inter",sans-serif; font-size:14px; color:#e6e6e6; }
-        table.data-table thead { position:sticky; top:0; z-index:2; }
-        table.data-table th, table.data-table td { padding:10px 12px; text-align:left; white-space:nowrap; border-bottom:1px solid #1f1f1f; }
-        table.data-table th { background:#0c0c0c; color:#9a9a9a; font-weight:500; font-size:12px; letter-spacing:.3px; }
-        table.data-table tbody tr.row:hover { background:#0f1014; }
-        .file-icon { width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; background:#111; border:1px solid #232323; font-size:17px; margin-right:10px; vertical-align:middle; }
-        .row-name { color:#fff; font-weight:500; }
-        .row-meta { color:#8a8a8a; font-size:12px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrightierOS Files</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/dashboard.css">
+  <style>
+    :root { --bg:#0b0b0b; --panel:#111113; --line:#1f1f22; --text:#e6e6e6; --muted:#8a8a8a; --accent:#00d4ff; }
+    html, body { background:var(--bg); color:var(--text); font-family:"Inter",sans-serif; }
+    main { margin:0; }
+    h1 { font-family:"Doto",sans-serif; font-size:48px; color:var(--accent); letter-spacing:-2px; margin:0; }
+    h2 { font-family:"Inter",sans-serif; font-size:18px; font-weight:400; color:var(--muted); margin-top:6px; }
+    a { color:#fff; text-decoration:none; }
+    .header { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+    .header-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .btn { display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px; background:linear-gradient(135deg,#00d4ff,#1f7cff); color:#fff; font-weight:600; }
+    .ghost { background:transparent; border:1px solid var(--line); color:#ddd; }
+    .box { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:18px; margin-bottom:14px; box-shadow:0 8px 24px rgba(0,0,0,0.35); }
+    .stack { display:flex; flex-direction:column; gap:14px; }
+    .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th, td { padding:10px 12px; text-align:left; border-bottom:1px solid #1b1b1b; }
+    th { color:var(--muted); font-weight:500; font-size:12px; letter-spacing:.3px; }
+    tbody tr:hover { background:#0f1014; }
+    .toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .label { color:var(--muted); font-size:12px; }
+    .muted { color:var(--muted); font-size:13px; }
+    .danger { background:linear-gradient(135deg,#ff4d4d,#b30000); color:#fff; border:none; border-radius:999px; padding:10px 14px; font-weight:600; }
+    .nav { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); display:flex; gap:4px; padding:8px 12px; background:rgba(20,20,20,.7); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,.08); border-radius:20px; box-shadow:0 8px 32px rgba(0,0,0,.6); z-index:9999; }
+    .nav a { color:#aaa; font-size:11px; font-weight:500; padding:8px 14px; border-radius:12px; display:inline-flex; flex-direction:column; align-items:center; gap:4px; transition:.2s; position:relative; text-decoration:none; }
+    .nav a:hover { color:#fff; background:rgba(255,255,255,.06); transform:translateY(-4px); }
+    .nav a.active { color:#00d4ff; }
+    .dock-icon { font-size:22px; line-height:1; }
+    .dock-label { font-size:10px; opacity:.8; white-space:nowrap; }
+    .nav a.active::before { content:''; position:absolute; top:-4px; left:50%; transform:translateX(-50%); width:4px; height:4px; background:#00d4ff; border-radius:50%; }
+    @media (max-width: 720px) { body { padding:20px; padding-bottom:84px; } h1 { font-size:38px; } .box, table { max-width:100%; } }
+    @media (max-width: 520px) { body { padding:16px; padding-bottom:76px; } h1 { font-size:30px; } .nav { gap:0; padding:6px 8px; border-radius:16px; bottom:10px; } .nav a { padding:6px 10px; min-width:38px; } .dock-label { display:none; } .toolbar { gap:8px; } table { font-size:13px; } }
+  </style>
 </head>
 <body>
 <main>
-    <div class="header-row">
-        <div>
-            <h1 style="margin:0;">BrightierOS</h1>
-            <h2 style="margin:6px 0 0;">Files</h2>
-        </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <a href="/" class="button" style="text-decoration:none; display:inline-flex; align-items:center;">← Dashboard</a>
-            <a href="/trash.html" class="button" style="text-decoration:none; display:inline-flex; align-items:center;">🗑️ Lixeira</a>
-            <button id="logoutButton" type="button" style="background: transparent; border:1px solid #2a2a2a;">Sair</button>
-        </div>
+  <div class="header">
+    <div>
+      <h1 style="margin:0">BrightierOS</h1>
+      <h2 style="margin:6px 0 0">Files</h2>
     </div>
-
-    <content class="stack">
-        <div class="box">
-            <label style="color:#8a8a8a; font-size:12px; margin:0 0 8px; display:block;">Pasta atual</label>
-            <p id="breadcrumb" style="margin:0; font-weight:600;">Home</p>
-        </div>
-
-        <div class="box">
-            <div class="toolbar">
-                <button id="newFolderButton" type="button">📁 New Folder</button>
-                <button id="newFileButton" type="button">📄 New File</button>
-                <button id="uploadButton" type="button">⬆ Upload</button>
-                <button id="uploadFolderButton" type="button">📦 Upload Folder</button>
-                <button id="backButton" type="button" style="background: transparent; border:1px solid #2a2a2a;">← Back</button>
-            </div>
-            <input type="file" id="uploadInput" hidden>
-            <input type="file" id="uploadFolderInput" webkitdirectory directory hidden>
-        </div>
-
-        <div class="box table-card">
-            <table id="filesTable" class="data-table">
-                <thead>
-                    <tr>
-                        <th style="width:44%">Name</th>
-                        <th style="width:20%">Type</th>
-                        <th style="width:18%">Size</th>
-                        <th style="width:18%">Actions</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-    </content>
-
+    <div class="header-actions">
+      <a href="/" class="btn ghost">? Dashboard</a>
+      <a href="/trash.html" class="btn ghost">??? Lixeira</a>
+      <button id="logoutButton" class="btn ghost">Sair</button>
+    </div>
+  </div>
+</main>
+<content class="stack">
+  <div class="box">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+      <div>
+        <div class="label">Pasta atual</div>
+        <div id="breadcrumb" style="font-weight:600">Home</div>
+      </div>
+      <div class="toolbar">
+        <button id="backButton" class="btn ghost">? Back</button>
+        <button id="newFolderButton" class="btn">?? New Folder</button>
+        <button id="newFileButton" class="btn">?? New File</button>
+        <button id="uploadButton" class="btn">? Upload</button>
+        <button id="uploadFolderButton" class="btn">?? Upload Folder</button>
+      </div>
+    </div>
+    <input type="file" id="uploadInput" hidden>
+    <input type="file" id="uploadFolderInput" webkitdirectory directory hidden>
+  </div>
+  <div class="box table-wrap">
+    <table>
+      <thead><tr><th style="width:50%">Name</th><th style="width:20%">Type</th><th style="width:15%">Size</th></tr></thead>
+      <tbody id="filesTable"></tbody>
+    </table>
+  </div>
+</content>
 <script>
-document.getElementById("logoutButton").addEventListener("click", () => {
-    localStorage.removeItem("brightieros-user");
-    window.location.href = "/login.html";
-});
-
-(async () => {
-    try {
-        const r = await fetch('/api/users/setup');
-        const d = await r.json();
-        if (!d?.user) { localStorage.removeItem('brightieros-user'); window.location.href = '/setup.html'; return; }
-        if (!localStorage.getItem('brightieros-user')) { window.location.href = '/login.html'; }
-    } catch (e) { console.error(e); window.location.href = '/login.html'; }
-})();
+document.getElementById("logoutButton").addEventListener("click", () => { localStorage.removeItem("brightieros-user"); window.location.href = "/login.html"; });
+(async () => { try { const r = await fetch('/api/users/setup'); const d = await r.json(); if (!d?.user) { localStorage.removeItem('brightieros-user'); window.location.href = '/setup.html'; return; } if (!localStorage.getItem('brightieros-user')) { window.location.href = '/login.html'; } } catch (e) { console.error(e); window.location.href = '/login.html'; } })();
 </script>
-
 <script src="assets/files.js"></script>
-
-<nav class="dock">
-    <a href="/" class="dock-item" data-page="dashboard">
-        <span class="dock-icon">🏠</span>
-        <span class="dock-label">Dashboard</span>
-    </a>
-    <a href="/files.html" class="dock-item" data-page="files">
-        <span class="dock-icon">📁</span>
-        <span class="dock-label">Files</span>
-    </a>
-    <a href="/console.html" class="dock-item" data-page="console">
-        <span class="dock-icon">💻</span>
-        <span class="dock-label">Console</span>
-    </a>
-    <a href="/store.html" class="dock-item" data-page="store">
-        <span class="dock-icon">🛒</span>
-        <span class="dock-label">Store</span>
-    </a>
+<nav class="nav">
+  <a href="/" class="dock-item active" data-page="dashboard"><span class="dock-icon">??</span><span class="dock-label">Dashboard</span></a>
+  <a href="/files.html" class="dock-item" data-page="files"><span class="dock-icon">??</span><span class="dock-label">Files</span></a>
+  <a href="/console.html" class="dock-item" data-page="console"><span class="dock-icon">??</span><span class="dock-label">Console</span></a>
+  <a href="/store.html" class="dock-item" data-page="store"><span class="dock-icon">??</span><span class="dock-label">Store</span></a>
 </nav>
-
 <script>
-    document.querySelectorAll('.dock-item').forEach(function(item) {
-        var href = item.getAttribute('href');
-        var current = window.location.pathname;
-        if (href === current || (href === '/' && (current === '/index.html' || current === '/'))) {
-            item.classList.add('active');
-        }
-    });
+  document.querySelectorAll('.dock-item').forEach(function(item) {
+    var href = item.getAttribute('href');
+    var current = window.location.pathname;
+    if (href === current || (href === '/' && (current === '/index.html' || current === '/'))) {
+      item.classList.add('active');
+    }
+  });
 </script>
 </body>
 </html>
