@@ -40,7 +40,7 @@ module.exports = (app) => {
       const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
 
       // Basic validation of required fields
-      const required = ['id', 'name', 'version', 'author', 'description', 'entry', 'frontend'];
+      const required = ['id', 'name', 'version'];
       const missing = required.filter((f) => !(f in manifest));
       if (missing.length) {
         console.error(`[PluginLoader] Plugin "${pluginId}" manifest missing fields: ${missing.join(', ')}. Skipping.`);
@@ -48,29 +48,52 @@ module.exports = (app) => {
       }
 
       // Load backend
-      const backendPath = path.join(pluginPath, manifest.entry);
-      if (!fs.existsSync(backendPath)) {
-        console.error(`[PluginLoader] Backend entry "${manifest.entry}" not found for plugin "${pluginId}". Skipping.`);
-        return;
-      }
+      const entryPoint = manifest.entry || manifest.backend;
+      if (entryPoint) {
+        const backendPath = path.join(pluginPath, entryPoint);
+        if (!fs.existsSync(backendPath)) {
+          console.error(`[PluginLoader] Backend entry "${entryPoint}" not found for plugin "${pluginId}". Skipping.`);
+          return;
+        }
 
-      const pluginApi = {}; // future‑proof placeholder for shared API
-      const backend = require(backendPath);
-      if (typeof backend === 'function') {
-        backend(app, pluginApi);
-        console.log(`[PluginLoader] Routes loaded for plugin "${manifest.name}" (id: ${manifest.id}).`);
-      } else {
-        console.warn(`[PluginLoader] Backend of plugin "${pluginId}" does not export a function. Routes not registered.`);
+        const pluginApi = {}; // future‑proof placeholder for shared API
+        const backend = require(backendPath);
+        if (typeof backend === 'function') {
+          backend(app, pluginApi);
+          console.log(`[PluginLoader] Routes loaded for plugin "${manifest.name}" (id: ${manifest.id}).`);
+        } else {
+          console.warn(`[PluginLoader] Backend of plugin "${pluginId}" does not export a function. Routes not registered.`);
+        }
       }
 
       // Serve frontend if present
-      const frontendPath = path.join(pluginPath, manifest.frontend);
-      if (fs.existsSync(frontendPath) && fs.lstatSync(frontendPath).isDirectory()) {
-        app.use(`/plugins/${manifest.id}`, express.static(frontendPath));
-        console.log(`[PluginLoader] Static assets served for plugin "${manifest.name}" at /plugins/${manifest.id}`);
+      if (manifest.frontend) {
+        const frontendPath = path.join(pluginPath, manifest.frontend);
+        if (fs.existsSync(frontendPath) && fs.lstatSync(frontendPath).isDirectory()) {
+          app.use(`/plugins/${manifest.id}`, express.static(frontendPath));
+          console.log(`[PluginLoader] Static assets served for plugin "${manifest.name}" at /plugins/${manifest.id}`);
+        }
       }
     } catch (err) {
       console.error(`[PluginLoader] Failed to load plugin "${pluginId}":`, err);
     }
+  });
+
+  // API to list installed plugins
+  app.get('/api/plugins', (req, res) => {
+    const installed = [];
+    if (fs.existsSync(pluginsRoot)) {
+      const dirs = fs.readdirSync(pluginsRoot, { withFileTypes: true }).filter(d => d.isDirectory());
+      dirs.forEach(d => {
+        const manifestPath = path.join(pluginsRoot, d.name, 'manifest.json');
+        if (fs.existsSync(manifestPath)) {
+          try {
+            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+            installed.push(manifest);
+          } catch (e) {}
+        }
+      });
+    }
+    res.json(installed);
   });
 };

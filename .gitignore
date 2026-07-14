@@ -5,6 +5,8 @@ node_modules/
 
 data/community-stores/
 data/stores.json
+data/user.json
+data/plugins/
 
 dist/
 build/

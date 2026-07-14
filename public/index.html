@@ -120,6 +120,12 @@
     <a href="/store.html" class="button">Ir para a Store</a>
 </div>
 
+<div class="box" id="plugins-box">
+    <h1>Meus Plugins</h1>
+    <div id="installed-plugins-list">
+        <p>Carregando plugins...</p>
+    </div>
+</div>
 
 </content>
 
@@ -255,6 +261,61 @@ loadCurrentUser();
 updateStats();
 
 setInterval(updateStats, 1000);
+
+async function loadPlugins() {
+    try {
+        const response = await fetch('/api/plugins');
+        const plugins = await response.json();
+        const container = document.getElementById('installed-plugins-list');
+        
+        if (!plugins || plugins.length === 0) {
+            container.innerHTML = '<p>Nenhum plugin instalado.</p>';
+            return;
+        }
+
+        container.innerHTML = '';
+        plugins.forEach(plugin => {
+            const div = document.createElement('div');
+            div.style.marginBottom = '12px';
+            div.style.padding = '12px';
+            div.style.background = '#222';
+            div.style.borderRadius = '8px';
+            
+            const title = document.createElement('h3');
+            title.textContent = plugin.name;
+            title.style.margin = '0 0 8px 0';
+            title.style.color = '#fff';
+            title.style.fontSize = '16px';
+            
+            const desc = document.createElement('p');
+            desc.textContent = plugin.description || 'Sem descrição';
+            desc.style.margin = '0 0 12px 0';
+            desc.style.fontSize = '14px';
+            desc.style.color = '#aaa';
+
+            div.appendChild(title);
+            div.appendChild(desc);
+
+            if (plugin.access) {
+                const btn = document.createElement('a');
+                btn.href = plugin.access;
+                btn.className = 'button';
+                btn.textContent = 'Acessar Plugin';
+                btn.style.display = 'inline-block';
+                btn.style.fontSize = '14px';
+                btn.style.padding = '6px 12px';
+                div.appendChild(btn);
+            }
+
+            container.appendChild(div);
+        });
+    } catch (err) {
+        document.getElementById('installed-plugins-list').innerHTML = '<p>Erro ao carregar plugins.</p>';
+        console.error(err);
+    }
+}
+
+loadPlugins();
 
 </script>
 

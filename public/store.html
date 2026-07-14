@@ -6,8 +6,8 @@
   <link rel="stylesheet" href="assets/dashboard.css">
 </head>
 <body>
-  <h1>Community App Store</h1>
-  <section id="add-store">
+  <h1 class="box">Community App Store</h1>
+  <section id="add-store" class="store-section">
     <h2>Adicionar nova loja</h2>
     <form id="store-form">
       <label>ID: <input type="text" name="id" required></label><br>
@@ -17,15 +17,16 @@
     </form>
     <p id="store-msg"></p>
   </section>
-  <section id="stores-list">
+  <section id="stores-list" class="store-section">
     <h2>Lojas registradas</h2>
     <ul id="stores"></ul>
   </section>
-  <section id="apps-list" style="display:none;">
+  <section id="apps-list" class="store-section" style="display:none;">
     <h2>Plugins da loja <span id="current-store-name"></span></h2>
     <ul id="apps"></ul>
     <button id="back-to-stores">Voltar às lojas</button>
   </section>
+  
   <script src="assets/store.js"></script>
 </body>
 </html>

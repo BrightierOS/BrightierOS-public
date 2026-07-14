@@ -87,30 +87,41 @@ module.exports = (app) => {
         return res.status(500).json({ error: 'Failed to clone store.' });
       }
     }
-    const pluginSrc = path.join(cachePath, 'apps', pluginId);
-    if (!fs.existsSync(pluginSrc)) {
-      return res.status(404).json({ error: 'Plugin not found in store.' });
+    const appsPath = path.join(cachePath, 'apps.json');
+    if (!fs.existsSync(appsPath)) {
+      return res.status(404).json({ error: 'apps.json not found in store.' });
     }
-    const manifestPath = path.join(pluginSrc, 'manifest.json');
-    if (!fs.existsSync(manifestPath)) {
-      return res.status(400).json({ error: 'manifest.json missing in plugin.' });
+    const apps = JSON.parse(fs.readFileSync(appsPath));
+    const appEntry = apps.find(a => a.id === pluginId);
+    if (!appEntry || !appEntry.repository) {
+      return res.status(404).json({ error: 'Plugin repository not found in store catalog.' });
     }
-    const manifest = JSON.parse(fs.readFileSync(manifestPath));
-    // Very small validation – required fields
-    if (!manifest.id || !manifest.backend) {
-      return res.status(400).json({ error: 'Invalid manifest (missing id or backend).' });
-    }
-    const dest = path.join(__dirname, '..', 'data', 'plugins', manifest.id);
+
+    const dest = path.join(__dirname, '..', 'data', 'plugins', pluginId);
     if (fs.existsSync(dest)) {
       return res.status(409).json({ error: 'Plugin already installed.' });
     }
+
     try {
-      // Node >=16 provides recursive copy
-      fs.cpSync(pluginSrc, dest, { recursive: true });
+      // Clone the specific plugin from its repository
+      await simpleGit().clone(appEntry.repository, dest);
     } catch (e) {
-      console.error('[Store] Copy error', e);
-      return res.status(500).json({ error: 'Failed to copy plugin files.' });
+      console.error('[Store] Plugin clone error', e);
+      return res.status(500).json({ error: 'Failed to clone plugin repository.' });
     }
+
+    const manifestPath = path.join(dest, 'manifest.json');
+    if (!fs.existsSync(manifestPath)) {
+      fs.rmSync(dest, { recursive: true, force: true });
+      return res.status(400).json({ error: 'manifest.json missing in plugin repository.' });
+    }
+
+    const manifest = JSON.parse(fs.readFileSync(manifestPath));
+    if (!manifest.id || (!manifest.backend && !manifest.entry)) {
+      fs.rmSync(dest, { recursive: true, force: true });
+      return res.status(400).json({ error: 'Invalid manifest (missing id or backend).' });
+    }
+
     console.log(`[Store] Plugin ${manifest.id} installed from store ${id}`);
     return res.json({ message: 'Plugin installed successfully.' });
   });

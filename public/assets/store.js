@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function loadCatalog(store) {
     api.getCatalog(store.id).then(apps => {
+      if (apps.error) throw new Error(apps.error);
       currentStoreName.textContent = store.name;
       appsList.innerHTML = '';
       apps.forEach(app => {
@@ -45,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
         appsList.appendChild(li);
       });
       appsSection.style.display = 'block';
-    }).catch(err => alert('Erro ao ler catálogo: ' + err));
+    }).catch(err => alert('Erro ao ler catálogo: ' + err.message));
   }
 
   function confirmInstall(store, app) {
