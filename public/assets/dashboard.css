@@ -1,0 +1,260 @@
+html {
+
+    background:#050505;
+
+    font-family:"Inter", sans-serif;
+
+    color:white;
+
+}
+
+
+body {
+
+    margin:0;
+
+    padding:40px;
+
+}
+
+
+
+main {
+
+    font-family:"Doto", sans-serif;
+
+    margin-bottom:40px;
+
+}
+
+
+
+main h1 {
+
+    font-size:48px;
+
+    margin:0;
+
+    color:#00d4ff;
+
+    letter-spacing:-2px;
+
+}
+
+
+
+main h2 {
+
+    font-family:"Inter", sans-serif;
+
+    font-size:18px;
+
+    font-weight:400;
+
+    color:#8a8a8a;
+
+    margin-top:8px;
+
+}
+
+
+
+main p {
+
+    color:#bdbdbd;
+
+}
+
+
+
+content {
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:flex-start;
+
+    max-width:900px;
+
+}
+
+
+
+content > p {
+
+    font-size:20px;
+
+}
+
+
+
+.box {
+
+    background:#111;
+
+    border:1px solid #222;
+
+    border-radius:16px;
+
+    padding:24px;
+
+    margin-bottom:18px;
+
+    width:100%;
+
+    max-width:700px;
+
+    box-shadow:0 8px 30px rgba(0,0,0,.4);
+
+}
+
+
+
+.box h1 {
+
+    font-size:22px;
+
+    margin:0 0 20px;
+
+    font-family:"Inter",sans-serif;
+
+}
+
+
+
+.box p {
+
+    color:#b8b8b8;
+
+    line-height:1.7;
+
+}
+
+
+
+.metric {
+
+    margin-bottom:22px;
+
+}
+
+
+
+.metric p {
+
+    margin:0 0 8px;
+
+    color:white;
+
+}
+
+
+
+.metric span {
+
+    display:block;
+
+    margin-top:6px;
+
+    color:#8a8a8a;
+
+    font-size:14px;
+
+}
+
+
+
+.bar {
+
+    width:100%;
+
+    height:12px;
+
+    background:#222;
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+}
+
+
+
+.fill {
+
+    height:100%;
+
+    width:0%;
+
+    background:#00d4ff;
+
+    border-radius:20px;
+
+    transition:.5s;
+
+}
+
+
+
+h3 {
+
+    color:#00d4ff;
+
+    margin:30px 0 15px 20px;
+
+}
+
+
+
+@media(max-width:700px){
+
+    body{
+
+        padding:20px;
+
+    }
+
+
+    main h1{
+
+        font-size:36px;
+
+    }
+
+
+    .box{
+
+        max-width:100%;
+
+    }
+
+}
+
+a{
+    color:#FFFFFF;
+}
+
+button {
+    background: linear-gradient(135deg, #00d4ff, #1f7cff);
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 16px;
+    font-weight: 600;
+    font-family: "Inter", sans-serif;
+    cursor: pointer;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset, 0 8px 24px rgba(0, 212, 255, 0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.12) inset, 0 12px 28px rgba(0, 212, 255, 0.3);
+    filter: brightness(1.05);
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset, 0 4px 16px rgba(0, 212, 255, 0.2);
+}

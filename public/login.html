@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang='pt-BR'>
+<head>
+  <meta charset='UTF-8' />
+  <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+  <title>BrightierOS Login</title>
+  <link rel='preconnect' href='https://fonts.googleapis.com' />
+  <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin />
+  <link href='https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Inter:wght@400;500;600&display=swap' rel='stylesheet' />
+  <link rel='stylesheet' href='assets/dashboard.css' />
+  <style>
+    body { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .login-card { width: min(440px, 100%); background: #111; border: 1px solid #222; border-radius: 18px; padding: 28px; box-shadow: 0 12px 34px rgba(0,0,0,0.35); }
+    form { display: flex; flex-direction: column; gap: 12px; }
+    input { padding: 10px 12px; border-radius: 10px; border: 1px solid #2a2a2a; background: #0f0f0f; color: white; font-family: 'Inter', sans-serif; }
+    .message { margin-top: 10px; color: #00d4ff; font-size: 14px; }
+    .hint { color: #8a8a8a; font-size: 14px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class='login-card'>
+    <h1 style='margin-top:0;'>BrightierOS</h1>
+    <h2 style='margin-top:6px;'>Login</h2>
+    <p>Entre com seu usuário e senha.</p>
+    <form id='loginForm'>
+      <input id='username' placeholder='Usuário' required />
+      <input id='password' type='password' placeholder='Senha' required />
+      <button type='submit'>Entrar</button>
+    </form>
+    <p id='message' class='message'></p>
+    <p class='hint'><a href='/setup.html'>Primeiro acesso?</a></p>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const message = document.getElementById('message');
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        const response = await fetch('/api/users/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          message.textContent = data.error || 'Falha ao entrar.';
+          return;
+        }
+
+        localStorage.setItem('brightieros-user', JSON.stringify(data.user));
+        window.location.href = '/index.html';
+      } catch (error) {
+        message.textContent = 'Erro ao fazer login.';
+        console.error(error);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>BrightierOS Console</title>
+    <link rel="stylesheet" href="/assets/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+
+        html {
+            background: #050505;
+            color: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            padding: 40px;
+            font-family: "Inter", sans-serif;
+        }
+
+        h1 {
+            margin: 0;
+            font-family: "Doto", sans-serif;
+            font-size: 48px;
+            color: #00d4ff;
+            letter-spacing: -2px;
+        }
+
+        h2 {
+            margin-top: 8px;
+            margin-bottom: 30px;
+            color: #8a8a8a;
+            font-size: 18px;
+            font-weight: 400;
+        }
+
+        #terminal {
+
+            width: 900px;
+            max-width: 100%;
+
+            height: 550px;
+
+            overflow-y: auto;
+
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 16px;
+
+            padding: 20px;
+
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.6;
+
+            white-space: pre-wrap;
+
+            box-shadow: 0 8px 30px rgba(0,0,0,.4);
+
+        }
+
+        .line {
+
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            margin-top: 8px;
+
+        }
+
+        .prompt {
+
+            color: #00d4ff;
+            font-weight: bold;
+
+            white-space: nowrap;
+
+        }
+
+        input {
+
+            flex: 1;
+
+            background: transparent;
+            border: none;
+
+            color: white;
+
+            outline: none;
+
+            font-family: Consolas, monospace;
+            font-size: 14px;
+
+        }
+
+        .output{
+
+            color:#d6d6d6;
+
+            margin:6px 0 12px;
+        }
+
+        a{
+            color: #FFFFFF;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<h1>BrightierOS</h1>
+<h2>Console</h2>
+<div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+    <a href="/">Voltar</a>
+    <button id="logoutButton" type="button">Sair</button>
+</div>
+
+<div id="terminal">
+
+    <div class="line">
+
+        <span class="prompt">
+            brightier&gt;
+        </span>
+
+        <input
+            id="cmd"
+            autocomplete="off"
+            spellcheck="false"
+            autofocus
+        >
+
+    </div>
+
+</div>
+
+<script>
+(async () => {
+    try {
+        const storedUser = localStorage.getItem('brightieros-user');
+
+        if (!storedUser) {
+            const response = await fetch("/api/users/setup");
+            const data = await response.json();
+            if (!data || !data.user) {
+                window.location.href = "/login.html";
+                return;
+            }
+        }
+    } catch (error) {
+        console.error(error);
+    }
+
+document.getElementById("logoutButton")?.addEventListener("click", () => {
+    localStorage.removeItem("brightieros-user");
+    window.location.href = "/login.html";
+});
+
+const terminal = document.getElementById("terminal");
+const input = document.getElementById("cmd");
+
+const ws = new WebSocket(
+    `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`
+);
+
+ws.onmessage = (event) => {
+
+    const output = document.createElement("div");
+
+    output.className = "output";
+
+    output.textContent = event.data;
+
+    terminal.insertBefore(
+        output,
+        terminal.lastElementChild
+    );
+
+    terminal.scrollTop = terminal.scrollHeight;
+
+};
+
+input.addEventListener("keydown", (event) => {
+
+    if(event.key !== "Enter")
+        return;
+
+    const command = input.value.trim();
+
+    if(command === "")
+        return;
+
+    const history = document.createElement("div");
+
+    history.className = "output";
+
+    history.innerHTML =
+        `<span style="color:#00d4ff;">brightier&gt;</span> ${command}`;
+
+    terminal.insertBefore(
+        history,
+        terminal.lastElementChild
+    );
+
+    ws.send(command);
+
+    input.value = "";
+
+    terminal.scrollTop = terminal.scrollHeight;
+
+});
+
+ws.onclose = () => {
+
+    const output = document.createElement("div");
+
+    output.className = "output";
+
+    output.textContent =
+        "Connection lost.";
+
+    terminal.insertBefore(
+        output,
+        terminal.lastElementChild
+    );
+
+};
+
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>BrightierOS Files</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="assets/dashboard.css">
+
+</head>
+
+<body>
+
+<main>
+
+    <h1>BrightierOS</h1>
+    <h2>Files</h2>
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+        <a href="/">Voltar</a>
+        <button id="logoutButton" type="button">Sair</button>
+    </div>
+</main>
+
+<content>
+
+    <p id="breadcrumb">
+        Home
+    </p>
+
+    <div class="box">
+
+        <button id="backButton">
+            ← Back
+        </button>
+
+        <button id="newFolderButton">
+            📁 New Folder
+        </button>
+
+        <button id="newFileButton">
+            📄 New File
+        </button>
+
+        <button id="uploadButton">
+            ⬆ Upload
+        </button>
+
+        <button id="uploadFolderButton">
+            📦 Upload Folder
+        </button>
+
+        <input
+            type="file"
+            id="uploadInput"
+            hidden
+        >
+
+        <input
+            type="file"
+            id="uploadFolderInput"
+            webkitdirectory
+            directory
+            hidden
+        >
+
+    </div>
+
+    <div class="box">
+
+        <table id="filesTable">
+
+            <thead>
+
+                <tr>
+
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Size</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</content>
+
+<script>
+document.getElementById("logoutButton")?.addEventListener("click", () => {
+    localStorage.removeItem("brightieros-user");
+    window.location.href = "/login.html";
+});
+
+(async () => {
+    try {
+        if (localStorage.getItem('brightieros-user')) {
+            return;
+        }
+
+        const response = await fetch("/api/users/setup");
+        const data = await response.json();
+        if (!data || !data.user) {
+            window.location.href = "/login.html";
+        }
+    } catch (error) {
+        console.error(error);
+    }
+})();
+</script>
+
+<script src="assets/files.js"></script>
+
+</body>
+
+</html>

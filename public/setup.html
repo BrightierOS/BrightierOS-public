@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang='pt-BR'>
+<head>
+  <meta charset='UTF-8' />
+  <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+  <title>BrightierOS Setup</title>
+  <link rel='preconnect' href='https://fonts.googleapis.com' />
+  <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin />
+  <link href='https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Inter:wght@400;500;600&display=swap' rel='stylesheet' />
+  <link rel='stylesheet' href='assets/dashboard.css' />
+  <style>
+    body { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .setup-card { width: min(480px, 100%); background: #111; border: 1px solid #222; border-radius: 18px; padding: 28px; box-shadow: 0 12px 34px rgba(0,0,0,0.35); }
+    form { display: flex; flex-direction: column; gap: 12px; }
+    input { padding: 10px 12px; border-radius: 10px; border: 1px solid #2a2a2a; background: #0f0f0f; color: white; font-family: 'Inter', sans-serif; }
+    .hint { color: #8a8a8a; font-size: 14px; margin-top: 8px; }
+    .message { margin-top: 10px; color: #00d4ff; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class='setup-card'>
+    <h1 style='margin-top:0;'>BrightierOS</h1>
+    <h2 style='margin-top:6px;'>Setup inicial</h2>
+    <p>Crie o usuário principal para liberar o painel.</p>
+    <form id='setupForm'>
+      <input id='username' name='username' placeholder='Usuário' required />
+      <input id='password' name='password' type='password' placeholder='Senha' required />
+      <button type='submit'>Criar usuário</button>
+    </form>
+    <p id='message' class='message'></p>
+    <p class='hint'>Se já existir um usuário, você será redirecionado para o painel.</p>
+  </div>
+
+  <script>
+    async function checkSetup() {
+      try {
+        const response = await fetch('/api/users/setup');
+        const data = await response.json();
+        if (data && data.user) {
+          window.location.href = '/index.html';
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    document.getElementById('setupForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const message = document.getElementById('message');
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!username || !password) {
+        message.textContent = 'Informe usuário e senha.';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/users/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, role: 'admin' })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          message.textContent = data.error || 'Não foi possível criar o usuário.';
+          return;
+        }
+
+        message.textContent = 'Usuário criado com sucesso!';
+        window.location.href = '/index.html';
+      } catch (error) {
+        message.textContent = 'Erro ao criar usuário.';
+        console.error(error);
+      }
+    });
+
+    checkSetup();
+  </script>
+</body>
+</html>
