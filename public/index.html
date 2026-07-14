@@ -2,322 +2,334 @@
 <html lang="pt-BR">
 
 <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&display=swap" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="icon" type="image/png" href="./assets/BrightierOS.png" sizes="128x128">
-        <link rel="stylesheet" href="./assets/dashboard.css">
-        <title>BrightierOS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="./assets/BrightierOS.png" sizes="128x128">
+    <link rel="stylesheet" href="./assets/dashboard.css">
+    <title>BrightierOS</title>
 </head>
 
 <body>
 
-<main>
-    <h1>BrightierOS</h1>
-    <h2>Your infrastructure. Brighter.</h2>
-    <p id="time">--:--:--</p>
-</main>
+    <main>
+        <h1>BrightierOS</h1>
+        <h2>Your infrastructure. Brighter.</h2>
+        <p id="time">--:--:--</p>
+    </main>
 
 
-<content>
+    <content>
 
-<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px;">
-    <p id="currentUserLabel" style="margin:0;">Carregando usuário...</p>
-    <button id="logoutButton" type="button">Sair</button>
-</div>
-
-
-
-<div class="box">
-
-    <h1>Desempenho</h1>
-
-
-    <div class="metric">
-
-        <p>CPU</p>
-
-        <div class="bar">
-            <div class="fill" id="cpuBar"></div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px;">
+            <p id="currentUserLabel" style="margin:0;">Carregando usuário...</p>
+            <button id="logoutButton" type="button">Sair</button>
+            <button id="resetButton" type="button" style="margin-left:12px;">Resetar Sistema</button>
         </div>
 
-        <span id="cpuText">0.0%</span>
-
-    </div>
 
 
+        <div class="box">
 
-    <div class="metric">
+            <h1>Desempenho</h1>
 
-        <p>RAM</p>
 
-        <div class="bar">
-            <div class="fill" id="ramBar"></div>
+            <div class="metric">
+
+                <p>CPU</p>
+
+                <div class="bar">
+                    <div class="fill" id="cpuBar"></div>
+                </div>
+
+                <span id="cpuText">0.0%</span>
+
+            </div>
+
+
+
+            <div class="metric">
+
+                <p>RAM</p>
+
+                <div class="bar">
+                    <div class="fill" id="ramBar"></div>
+                </div>
+
+                <span id="ramText">0.0%</span>
+
+            </div>
+
+
+
+            <div class="metric">
+
+                <p>GPU</p>
+
+                <div class="bar">
+                    <div class="fill" id="gpuBar"></div>
+                </div>
+
+                <span id="gpuText">0%</span>
+
+            </div>
+
+
+
+            <div class="metric">
+
+                <p>Storage</p>
+
+                <div class="bar">
+                    <div class="fill" id="storageBar"></div>
+                </div>
+
+                <span id="storageText">0.0%</span>
+
+            </div>
+
+
         </div>
 
-        <span id="ramText">0.0%</span>
-
-    </div>
 
 
+        <div class="box">
 
-    <div class="metric">
+            <h1>Files</h1>
 
-        <p>GPU</p>
+            <p>
+                Gerencie seus arquivos e pastas diretamente do BrightierOS. <a href="/files.html">Clique aqui para abrir
+                    o gerenciador de arquivos.</a>
+            </p>
 
-        <div class="bar">
-            <div class="fill" id="gpuBar"></div>
         </div>
 
-        <span id="gpuText">0%</span>
+        <div class="box">
 
-    </div>
+            <h1>Console</h1>
 
+            <p>
+                Acesse o console do BrightierOS para monitorar e gerenciar seus serviços em tempo real. <a
+                    href="/console.html">Clique aqui para abrir o console.</a>
+            </p>
 
-
-    <div class="metric">
-
-        <p>Storage</p>
-
-        <div class="bar">
-            <div class="fill" id="storageBar"></div>
+        </div>
+        <div class="box">
+            <h1>Community App Store</h1>
+            <p>Explore plugins criados pela comunidade.</p>
+            <a href="/store.html" class="button">Ir para a Store</a>
         </div>
 
-        <span id="storageText">0.0%</span>
+        <div class="box" id="plugins-box">
+            <h1>Meus Plugins</h1>
+            <div id="installed-plugins-list">
+                <p>Carregando plugins...</p>
+            </div>
+        </div>
 
-    </div>
-
-
-</div>
-
-
-
-<div class="box">
-
-<h1>Files</h1>
-
-<p>
-    Gerencie seus arquivos e pastas diretamente do BrightierOS. <a href="/files.html">Clique aqui para abrir o gerenciador de arquivos.</a>
-</p>
-
-</div>
-
-<div class="box">
-
-    <h1>Console</h1>
-
-    <p>
-       Acesse o console do BrightierOS para monitorar e gerenciar seus serviços em tempo real. <a href="/console.html">Clique aqui para abrir o console.</a>
-    </p>
-
-</div>
-<div class="box">
-    <h1>Community App Store</h1>
-    <p>Explore plugins criados pela comunidade.</p>
-    <a href="/store.html" class="button">Ir para a Store</a>
-</div>
-
-<div class="box" id="plugins-box">
-    <h1>Meus Plugins</h1>
-    <div id="installed-plugins-list">
-        <p>Carregando plugins...</p>
-    </div>
-</div>
-
-</content>
+    </content>
 
 
 
-<script>
-// Redirect to login if not authenticated
-(async () => {
-    try {
-        // If already logged in, stay on dashboard
-        if (localStorage.getItem('brightieros-user')) {
-            return;
-        }
-        const response = await fetch('/api/users/setup');
-        const data = await response.json();
-        // No account exists -> go to setup
-        if (!data || !data.user) {
-            window.location.href = '/setup.html';
-        } else {
-            // Account exists but not logged in -> go to login
-            window.location.href = '/login.html';
-        }
-    } catch (error) {
-        console.error(error);
-    }
-})();
+    <script>
+        // Redirect to login if not authenticated
+        (async () => {
+            try {
+                const response = await fetch('/api/users/setup');
+                const data = await response.json();
 
-// existing ensureUserAccess
-// Authentication redirect handled above; no need for ensureUserAccess function
+                // Se a conta não existe mais no backend (excluiu o user.json), limpa o storage e vai pro setup
+                if (!data || !data.user) {
+                    localStorage.removeItem('brightieros-user');
+                    window.location.href = '/setup.html';
+                    return;
+                }
 
-async function loadCurrentUser(){
-    try {
-        const storedUser = localStorage.getItem('brightieros-user');
-        if (storedUser) {
-            const user = JSON.parse(storedUser);
-            document.getElementById("currentUserLabel").textContent = `Olá, ${user.username}!`;
-            return;
+                // Se a conta existe, verifica se o usuário está logado na máquina
+                if (!localStorage.getItem('brightieros-user')) {
+                    window.location.href = '/login.html';
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        })();
+
+        // existing ensureUserAccess
+        // Authentication redirect handled above; no need for ensureUserAccess function
+
+        async function loadCurrentUser() {
+            try {
+                const storedUser = localStorage.getItem('brightieros-user');
+                if (storedUser) {
+                    const user = JSON.parse(storedUser);
+                    document.getElementById("currentUserLabel").textContent = `Olá, ${user.username}!`;
+                    return;
+                }
+
+                const response = await fetch("/api/users/setup");
+                const data = await response.json();
+                if (data && data.user) {
+                    document.getElementById("currentUserLabel").textContent = `Olá, ${data.user.username}!`;
+                }
+            } catch (error) {
+                console.error(error);
+            }
         }
 
-        const response = await fetch("/api/users/setup");
-        const data = await response.json();
-        if (data && data.user) {
-            document.getElementById("currentUserLabel").textContent = `Olá, ${data.user.username}!`;
-        }
-    } catch (error) {
-        console.error(error);
-    }
-}
+        document.getElementById("logoutButton")?.addEventListener("click", () => {
+            localStorage.removeItem("brightieros-user");
+            window.location.href = "/login.html";
+        });
 
-document.getElementById("logoutButton")?.addEventListener("click", () => {
-    localStorage.removeItem("brightieros-user");
-    window.location.href = "/login.html";
-});
+        document.getElementById("resetButton")?.addEventListener("click", async () => {
+            if (confirm("Tem certeza que deseja resetar o sistema? Todos os dados serão perdidos.")) {
+                await fetch("/api/users/reset", { method: "POST" });
+                localStorage.removeItem("brightieros-user");
+                window.location.href = "/setup.html";
+            }
+        });
 
-async function updateStats(){
-    try {
+        async function updateStats() {
+            try {
 
-        const response = await fetch("/api/stats");
+                const response = await fetch("/api/stats");
 
-        const data = await response.json();
-        document.getElementById("time").innerHTML = data.time;
+                const data = await response.json();
+                document.getElementById("time").innerHTML = data.time;
 
-        // CPU
+                // CPU
 
-        document.getElementById("cpuText").innerHTML =
-            data.cpu.name + " — " + data.cpu.usage + "%";
+                document.getElementById("cpuText").innerHTML =
+                    data.cpu.name + " — " + data.cpu.usage + "%";
 
 
-        document.getElementById("cpuBar").style.width =
-            data.cpu.usage + "%";
+                document.getElementById("cpuBar").style.width =
+                    data.cpu.usage + "%";
 
 
 
-        // RAM
+                // RAM
 
-        document.getElementById("ramText").innerHTML =
-            data.ram.used +
-            "GB / " +
-            data.ram.total +
-            "GB — " +
-            data.ram.usage +
-            "%";
-
-
-        document.getElementById("ramBar").style.width =
-            data.ram.usage + "%";
+                document.getElementById("ramText").innerHTML =
+                    data.ram.used +
+                    "GB / " +
+                    data.ram.total +
+                    "GB — " +
+                    data.ram.usage +
+                    "%";
 
 
-
-        // GPU
-
-        if(data.gpu.length){
-
-            document.getElementById("gpuText").innerHTML =
-                data.gpu.map(g =>
-                    g.name + " — " + g.usage + "%"
-                ).join("<br>");
-
-
-            document.getElementById("gpuBar").style.width =
-                data.gpu[0].usage + "%";
-
-        }
+                document.getElementById("ramBar").style.width =
+                    data.ram.usage + "%";
 
 
 
-        // STORAGE
+                // GPU
 
-        document.getElementById("storageText").innerHTML =
-            data.storage.map(d =>
-                d.drive + " — " + d.usage + "%"
-            ).join("<br>");
+                if (data.gpu.length) {
 
-
-        document.getElementById("storageBar").style.width =
-            data.storage[0].usage + "%";
+                    document.getElementById("gpuText").innerHTML =
+                        data.gpu.map(g =>
+                            g.name + " — " + g.usage + "%"
+                        ).join("<br>");
 
 
-    }
+                    document.getElementById("gpuBar").style.width =
+                        data.gpu[0].usage + "%";
 
-    catch(error){
-
-        console.error(error);
-
-    }
-
-}
+                }
 
 
 
+                // STORAGE
 
-loadCurrentUser();
-updateStats();
+                document.getElementById("storageText").innerHTML =
+                    data.storage.map(d =>
+                        d.drive + " — " + d.usage + "%"
+                    ).join("<br>");
 
-setInterval(updateStats, 1000);
 
-async function loadPlugins() {
-    try {
-        const response = await fetch('/api/plugins');
-        const plugins = await response.json();
-        const container = document.getElementById('installed-plugins-list');
-        
-        if (!plugins || plugins.length === 0) {
-            container.innerHTML = '<p>Nenhum plugin instalado.</p>';
-            return;
-        }
+                document.getElementById("storageBar").style.width =
+                    data.storage[0].usage + "%";
 
-        container.innerHTML = '';
-        plugins.forEach(plugin => {
-            const div = document.createElement('div');
-            div.style.marginBottom = '12px';
-            div.style.padding = '12px';
-            div.style.background = '#222';
-            div.style.borderRadius = '8px';
-            
-            const title = document.createElement('h3');
-            title.textContent = plugin.name;
-            title.style.margin = '0 0 8px 0';
-            title.style.color = '#fff';
-            title.style.fontSize = '16px';
-            
-            const desc = document.createElement('p');
-            desc.textContent = plugin.description || 'Sem descrição';
-            desc.style.margin = '0 0 12px 0';
-            desc.style.fontSize = '14px';
-            desc.style.color = '#aaa';
 
-            div.appendChild(title);
-            div.appendChild(desc);
-
-            if (plugin.access) {
-                const btn = document.createElement('a');
-                btn.href = plugin.access;
-                btn.className = 'button';
-                btn.textContent = 'Acessar Plugin';
-                btn.style.display = 'inline-block';
-                btn.style.fontSize = '14px';
-                btn.style.padding = '6px 12px';
-                div.appendChild(btn);
             }
 
-            container.appendChild(div);
-        });
-    } catch (err) {
-        document.getElementById('installed-plugins-list').innerHTML = '<p>Erro ao carregar plugins.</p>';
-        console.error(err);
-    }
-}
+            catch (error) {
 
-loadPlugins();
+                console.error(error);
 
-</script>
+            }
+
+        }
+
+
+
+
+        loadCurrentUser();
+        updateStats();
+
+        setInterval(updateStats, 1000);
+
+        async function loadPlugins() {
+            try {
+                const response = await fetch('/api/plugins');
+                const plugins = await response.json();
+                const container = document.getElementById('installed-plugins-list');
+
+                if (!plugins || plugins.length === 0) {
+                    container.innerHTML = '<p>Nenhum plugin instalado.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                plugins.forEach(plugin => {
+                    const div = document.createElement('div');
+                    div.style.marginBottom = '12px';
+                    div.style.padding = '12px';
+                    div.style.background = '#222';
+                    div.style.borderRadius = '8px';
+
+                    const title = document.createElement('h3');
+                    title.textContent = plugin.name;
+                    title.style.margin = '0 0 8px 0';
+                    title.style.color = '#fff';
+                    title.style.fontSize = '16px';
+
+                    const desc = document.createElement('p');
+                    desc.textContent = plugin.description || 'Sem descrição';
+                    desc.style.margin = '0 0 12px 0';
+                    desc.style.fontSize = '14px';
+                    desc.style.color = '#aaa';
+
+                    div.appendChild(title);
+                    div.appendChild(desc);
+
+                    if (plugin.access) {
+                        const btn = document.createElement('a');
+                        btn.href = plugin.access;
+                        btn.className = 'button';
+                        btn.textContent = 'Acessar Plugin';
+                        btn.style.display = 'inline-block';
+                        btn.style.fontSize = '14px';
+                        btn.style.padding = '6px 12px';
+                        div.appendChild(btn);
+                    }
+
+                    container.appendChild(div);
+                });
+            } catch (err) {
+                document.getElementById('installed-plugins-list').innerHTML = '<p>Erro ao carregar plugins.</p>';
+                console.error(err);
+            }
+        }
+
+        loadPlugins();
+
+    </script>
 
 
 </body>

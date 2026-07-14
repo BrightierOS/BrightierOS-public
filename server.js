@@ -1,7 +1,7 @@
 // BrightierOS server.js
 // Express, WebSocket and systeminformation server.
 const filesRouter = require("./routes/files");
-const userRouter = require("./routes/user");
+
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
@@ -38,10 +38,14 @@ process.on('SIGTERM', () => {
 app.use(express.json());
 app.use(express.static('public'));
 app.use("/api/files", filesRouter);
-app.use("/api/users", userRouter);
+const loadPlugins = require('./routes/plugin');
+loadPlugins(app);
 // Load user‑generated plugins
 const loadStores = require('./routes/store');
 loadStores(app);
+// Mount user router for authentication and user management
+const userRouter = require('./routes/user');
+app.use('/api/users', userRouter);
 
 
 wss.on('connection', (socket) => {

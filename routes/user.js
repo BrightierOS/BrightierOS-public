@@ -93,8 +93,9 @@ router.post("/create", express.json(), (req, res) => {
 
     writeUser(newUser);
     res.json({ success: true, user: sanitizeUser(newUser) });
-  } catch {
-    res.status(500).json({ success: false, error: "Unable to create user." });
+  } catch (e) {
+    console.error("Erro ao criar usuário:", e);
+    res.status(500).json({ success: false, error: e.message || "Unable to create user." });
   }
 });
 
@@ -148,5 +149,40 @@ router.delete("/:id", (req, res) => {
     res.status(500).json({ success: false, error: "Unable to delete user." });
   }
 });
+router.post("/confirm-reset", express.json(), (req, res) => {
+  try {
+    const { password } = req.body || {};
+    const user = readUser();
+    if (!user) return res.status(401).json({ success: false, error: "No user logged in." });
+    if (user.password !== password) return res.status(403).json({ success: false, error: "Incorrect password." });
+    return res.json({ success: true, message: "Password confirmed." });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ success: false, error: "Confirm reset failed." });
+  }
+});
+
+// Reset endpoint now requires confirmation header
+router.post("/reset", (req, res) => {
+  if (req.headers["x-confirmed-reset"] !== "true") {
+    return res.status(403).json({ success: false, error: "Reset not confirmed." });
+  }
+  try {
+    const dataDir = path.join(__dirname, "..", "data");
+    // Delete entire data directory
+    if (fs.existsSync(dataDir)) {
+      fs.rmSync(dataDir, { recursive: true, force: true });
+    }
+    // Recreate empty data directory for future use
+    fs.mkdirSync(dataDir, { recursive: true });
+    res.json({ success: true, message: "System reset." });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ success: false, error: "Reset failed." });
+  }
+});
+
+
+
 
 module.exports = router;

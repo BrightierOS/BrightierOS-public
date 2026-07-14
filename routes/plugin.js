@@ -96,4 +96,20 @@ module.exports = (app) => {
     }
     res.json(installed);
   });
+
+  // DELETE endpoint to uninstall a plugin
+  app.delete('/api/plugins/:id', (req, res) => {
+    try {
+      const pluginId = req.params.id;
+      const pluginPath = path.join(pluginsRoot, pluginId);
+      if (!fs.existsSync(pluginPath)) {
+        return res.status(404).json({ success: false, error: 'Plugin not found.' });
+      }
+      fs.rmSync(pluginPath, { recursive: true, force: true });
+      return res.json({ success: true, message: 'Plugin removed.' });
+    } catch (e) {
+      console.error(e);
+      return res.status(500).json({ success: false, error: 'Failed to delete plugin.' });
+    }
+  });
 };
