@@ -304,3 +304,106 @@ button:active {
     transform: translateY(0);
     box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset, 0 4px 16px rgba(0, 212, 255, 0.2);
 }
+
+
+/* ─── Dock / Barra Inferior (estilo macOS / UmbrelOS) ───────────── */
+
+body {
+    padding-bottom: 90px;
+}
+
+.dock {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    background: rgba(20, 20, 20, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+    z-index: 9999;
+}
+
+.dock-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #aaa;
+    font-size: 11px;
+    font-family: "Inter", sans-serif;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    position: relative;
+    min-width: 52px;
+}
+
+.dock-item:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateY(-4px);
+}
+
+.dock-item:active {
+    transform: translateY(-2px);
+}
+
+.dock-icon {
+    font-size: 22px;
+    line-height: 1;
+    transition: transform 0.2s ease;
+}
+
+.dock-item:hover .dock-icon {
+    transform: scale(1.15);
+}
+
+.dock-label {
+    font-size: 10px;
+    opacity: 0.7;
+    white-space: nowrap;
+}
+
+.dock-item.active {
+    color: #00d4ff;
+}
+
+.dock-item.active::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background: #00d4ff;
+    border-radius: 50%;
+}
+
+@media(max-width: 600px) {
+    .dock {
+        gap: 0;
+        padding: 6px 8px;
+        bottom: 10px;
+        border-radius: 16px;
+    }
+    .dock-item {
+        padding: 6px 10px;
+        min-width: 40px;
+    }
+    .dock-label {
+        display: none;
+    }
+    body {
+        padding-bottom: 75px;
+    }
+}
