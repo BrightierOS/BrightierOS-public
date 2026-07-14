@@ -44,7 +44,7 @@
   <div class="header">
     <div>
       <h1 style="margin:0">Setup</h1>
-      <h2 style="margin:6px 0 0">Crie seu usuário</h2>
+      <h2 style="margin:6px 0 0">Crie seu usuâ€”rio</h2>
     </div>
     <div class="header-actions"></div>
   </div>
@@ -52,24 +52,24 @@
 <content class="stack">
   <div class="box" style="max-width:420px; margin:0 auto;">
     <form id='setupForm' class='stack'>
-      <input id='username' name='username' placeholder='Usuário' required />
+      <input id='username' name='username' placeholder='Usuâ€”rio' required />
       <input id='password' name='password' type='password' placeholder='Senha' required />
-      <button type='submit'>Criar usuário</button>
+      <button type='submit'>Criar usuâ€”rio</button>
     </form>
     <p id='message' class="muted" style="margin-top:10px"></p>
-    <p class="muted">Se já existir um usuário, você será redirecionado para o painel.</p>
+    <p class="muted">Se jâ€” existir um usuâ€”rio, vocâ€” serâ€” redirecionado para o painel.</p>
   </div>
 </content>
 <script>
-document.getElementById('setupForm').addEventListener('submit', async (event) => { event.preventDefault(); const message = document.getElementById('message'); const username = document.getElementById('username').value.trim(); const password = document.getElementById('password').value; if (!username || !password) { message.textContent = 'Informe usuário e senha.'; return; } try { const response = await fetch('/api/users/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, role: 'admin' }) }); const data = await response.json(); if (!response.ok) { message.textContent = data.error || 'Não foi possível criar o usuário.'; return; } message.textContent = 'Usuário criado com sucesso!'; window.location.href = '/index.html'; } catch (error) { message.textContent = 'Erro ao criar usuário.'; console.error(error); } });
+document.getElementById('setupForm').addEventListener('submit', async (event) => { event.preventDefault(); const message = document.getElementById('message'); const username = document.getElementById('username').value.trim(); const password = document.getElementById('password').value; if (!username || !password) { message.textContent = 'Informe usuâ€”rio e senha.'; return; } try { const response = await fetch('/api/users/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, role: 'admin' }) }); const data = await response.json(); if (!response.ok) { message.textContent = data.error || 'Nâ€”o foi possâ€”vel criar o usuâ€”rio.'; return; } message.textContent = 'Usuâ€”rio criado com sucesso!'; window.location.href = '/index.html'; } catch (error) { message.textContent = 'Erro ao criar usuâ€”rio.'; console.error(error); } });
 async function checkSetup(){ try { const response = await fetch("/api/users/setup"); const data = await response.json(); if (data && data.user) { window.location.href = "/login.html"; } } catch (e) { console.error(e); } }
 checkSetup();
 </script>
 <nav class="nav">
-  <a href="/" class="dock-item" data-page="dashboard"><span class="dock-icon">??</span><span class="dock-label">Dashboard</span></a>
-  <a href="/files.html" class="dock-item" data-page="files"><span class="dock-icon">??</span><span class="dock-label">Files</span></a>
-  <a href="/console.html" class="dock-item" data-page="console"><span class="dock-icon">??</span><span class="dock-label">Console</span></a>
-  <a href="/store.html" class="dock-item" data-page="store"><span class="dock-icon">??</span><span class="dock-label">Store</span></a>
+  <a href="/" class="dock-item" data-page="dashboard"><span class="dock-icon">ğŸ </span><span class="dock-label">Dashboard</span></a>
+  <a href="/files.html" class="dock-item" data-page="files"><span class="dock-icon">ğŸ </span><span class="dock-label">Files</span></a>
+  <a href="/console.html" class="dock-item" data-page="console"><span class="dock-icon">ğŸ </span><span class="dock-label">Console</span></a>
+  <a href="/store.html" class="dock-item" data-page="store"><span class="dock-icon">ğŸ </span><span class="dock-label">Store</span></a>
 </nav>
 <script>
   document.querySelectorAll('.dock-item').forEach(function(item) {

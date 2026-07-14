@@ -45,7 +45,7 @@
   <div class="header">
     <div>
       <h1 style="margin:0">Lixeira</h1>
-      <h2 style="margin:6px 0 0">Itens excluídos recentemente</h2>
+      <h2 style="margin:6px 0 0">Itens excluâ€”dos recentemente</h2>
     </div>
     <div class="header-actions">
       <a href="/files.html" class="btn ghost">?? Files</a>
@@ -70,14 +70,14 @@ async function loadTrash() {
   const stats = document.getElementById('stats');
   const emptyBtn = document.getElementById('emptyTrash');
   const [items, trashStats] = await Promise.all([ fetch('/api/files/trash').then(r => r.json()), fetch('/api/files/trash/stats').then(r => r.json()) ]);
-  stats.textContent = `Itens: ${trashStats.count || 0} • Espaço: ${trashStats.sizeFormatted || '0 B'}`;
-  if (!items.length) { list.innerHTML = '<tr><td colspan="4" style="color:#8a8a8a; text-align:center">A lixeira está vazia.</td></tr>'; emptyBtn.style.display='none'; return; }
+  stats.textContent = `Itens: ${trashStats.count || 0} â€” Espaâ€”o: ${trashStats.sizeFormatted || '0 B'}`;
+  if (!items.length) { list.innerHTML = '<tr><td colspan="4" style="color:#8a8a8a; text-align:center">A lixeira estâ€” vazia.</td></tr>'; emptyBtn.style.display='none'; return; }
   emptyBtn.style.display='block';
   emptyBtn.onclick = async () => { if (!confirm('Esvaziar lixeira permanentemente?')) return; await fetch('/api/files/trash', { method: 'DELETE' }); loadTrash(); };
   list.innerHTML = items.map(item => `<tr>
     <td><div style="display:flex; align-items:center; gap:10px;"><span style="font-size:18px;">${item.type==='folder'?'??':'??'}</span><span style="font-weight:600; color:#fff;">${escapeHtml(item.name)}</span></div></td>
     <td>${item.type==='folder'?'Pasta':'Arquivo'}</td>
-    <td class="muted">${item.sizeFormatted||'—'}</td>
+    <td class="muted">${item.sizeFormatted||'â€”'}</td>
     <td style="display:flex; gap:8px; flex-wrap:wrap;">
       <button class="btn ghost" data-restore="${item.trashPath}">Restaurar</button>
       <button class="danger" data-delete="${item.trashPath}">Excluir</button>
@@ -90,10 +90,10 @@ function escapeHtml(str){ return String(str).replace(/&/g, '&amp;').replace(/</g
 loadTrash();
 </script>
 <nav class="nav">
-  <a href="/" class="dock-item" data-page="dashboard"><span class="dock-icon">??</span><span class="dock-label">Dashboard</span></a>
-  <a href="/files.html" class="dock-item" data-page="files"><span class="dock-icon">??</span><span class="dock-label">Files</span></a>
-  <a href="/console.html" class="dock-item" data-page="console"><span class="dock-icon">??</span><span class="dock-label">Console</span></a>
-  <a href="/store.html" class="dock-item" data-page="store"><span class="dock-icon">??</span><span class="dock-label">Store</span></a>
+  <a href="/" class="dock-item" data-page="dashboard"><span class="dock-icon">ğŸ </span><span class="dock-label">Dashboard</span></a>
+  <a href="/files.html" class="dock-item" data-page="files"><span class="dock-icon">ğŸ </span><span class="dock-label">Files</span></a>
+  <a href="/console.html" class="dock-item" data-page="console"><span class="dock-icon">ğŸ </span><span class="dock-label">Console</span></a>
+  <a href="/store.html" class="dock-item" data-page="store"><span class="dock-icon">ğŸ </span><span class="dock-label">Store</span></a>
 </nav>
 <script>
   document.querySelectorAll('.dock-item').forEach(function(item) {

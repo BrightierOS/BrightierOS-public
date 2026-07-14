@@ -49,7 +49,7 @@
 <content class="stack">
   <div class="box" style="max-width:420px; margin:0 auto;">
     <form id='loginForm' class='stack'>
-      <input id='username' placeholder='Usu�rio' required />
+      <input id='username' placeholder='Usu—rio' required />
       <input id='password' type='password' placeholder='Senha' required />
       <button type='submit'>Entrar</button>
     </form>
@@ -65,10 +65,10 @@ ensureUserAccess();
 document.getElementById('loginForm').addEventListener('submit', async (event) => { event.preventDefault(); const message = document.getElementById('message'); const username = document.getElementById('username').value.trim(); const password = document.getElementById('password').value; try { const response = await fetch('/api/users/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) }); const data = await response.json(); if (!response.ok) { message.textContent = data.error || 'Falha ao entrar.'; return; } localStorage.setItem('brightieros-user', JSON.stringify(data.user)); window.location.href = '/index.html'; } catch (error) { message.textContent = 'Erro ao fazer login.'; console.error(error); } });
 </script>
 <nav class="nav">
-  <a href="/" class="dock-item" data-page="dashboard"><span class="dock-icon">??</span><span class="dock-label">Dashboard</span></a>
-  <a href="/files.html" class="dock-item" data-page="files"><span class="dock-icon">??</span><span class="dock-label">Files</span></a>
-  <a href="/console.html" class="dock-item" data-page="console"><span class="dock-icon">??</span><span class="dock-label">Console</span></a>
-  <a href="/store.html" class="dock-item" data-page="store"><span class="dock-icon">??</span><span class="dock-label">Store</span></a>
+  <a href="/" class="dock-item" data-page="dashboard"><span class="dock-icon">🏠</span><span class="dock-label">Dashboard</span></a>
+  <a href="/files.html" class="dock-item" data-page="files"><span class="dock-icon">🏠</span><span class="dock-label">Files</span></a>
+  <a href="/console.html" class="dock-item" data-page="console"><span class="dock-icon">🏠</span><span class="dock-label">Console</span></a>
+  <a href="/store.html" class="dock-item" data-page="store"><span class="dock-icon">🏠</span><span class="dock-label">Store</span></a>
 </nav>
 <script>
   document.querySelectorAll('.dock-item').forEach(function(item) {

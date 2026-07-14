@@ -76,10 +76,10 @@ input.addEventListener("keydown", (event) => { if (event.ctrlKey && (event.key =
 ws.onclose = () => { const out = document.createElement("div"); out.className = "output"; out.textContent = "Connection lost."; terminal.insertBefore(out, terminal.lastElementChild); };
 </script>
 <nav class="nav">
-  <a href="/" class="dock-item active" data-page="dashboard"><span class="dock-icon">??</span><span class="dock-label">Dashboard</span></a>
-  <a href="/files.html" class="dock-item" data-page="files"><span class="dock-icon">??</span><span class="dock-label">Files</span></a>
-  <a href="/console.html" class="dock-item" data-page="console"><span class="dock-icon">??</span><span class="dock-label">Console</span></a>
-  <a href="/store.html" class="dock-item" data-page="store"><span class="dock-icon">??</span><span class="dock-label">Store</span></a>
+  <a href="/" class="dock-item active" data-page="dashboard"><span class="dock-icon">🏠</span><span class="dock-label">Dashboard</span></a>
+  <a href="/files.html" class="dock-item" data-page="files"><span class="dock-icon">🏠</span><span class="dock-label">Files</span></a>
+  <a href="/console.html" class="dock-item" data-page="console"><span class="dock-icon">🏠</span><span class="dock-label">Console</span></a>
+  <a href="/store.html" class="dock-item" data-page="store"><span class="dock-icon">🏠</span><span class="dock-label">Store</span></a>
 </nav>
 <script>
   document.querySelectorAll('.dock-item').forEach(function(item) {
