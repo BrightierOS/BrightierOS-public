@@ -134,8 +134,14 @@
       roles: () => fetchJSON('/api/users/roles'),
       sessions: () => fetchJSON('/api/users/sessions'),
       logout: () => postJSON('/api/users/logout', {}),
-      create: (username, password, role = 'viewer', displayName) =>
-        postJSON('/api/users/create', { username, password, role, displayName }),
+      create: (username, password, role = 'viewer', displayName, invite) =>
+        postJSON('/api/users/create', { username, password, role, displayName, invite }),
+      invites: {
+        list: () => fetchJSON('/api/users/invites'),
+        get: (token) => fetchJSON(`/api/users/invites/${encodeURIComponent(token)}`),
+        create: (role, expiresInHours = 168) => postJSON('/api/users/invites', { role, expiresInHours }),
+        revoke: (token) => fetchJSON(`/api/users/invites/${encodeURIComponent(token)}`, { method: 'DELETE' }),
+      },
       update: (id, patch) => postJSON(`/api/users/${id}`, patch, { method: 'PUT' }),
       remove: (id) => fetchJSON(`/api/users/${id}`, { method: 'DELETE' }),
       changePassword: (id, password) => postJSON(`/api/users/${id}/password`, { password }),

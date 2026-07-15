@@ -110,6 +110,16 @@ router.post('/create', (req, res) => {
       return res.json({ success: true, user: users.sanitizeUser(user) });
     }
 
+    // Convite por link: papel definido pelo convite (admin ou viewer), sem exigir
+    // login nem auto-registro aberto.
+    if (body.invite) {
+      const invite = users.validateInvite(body.invite);
+      const user = users.createUser({ username: body.username, password: body.password, role: invite.role, displayName: body.displayName });
+      users.consumeInvite(body.invite);
+      users.appendAdminLog({ actor: invite.createdBy, action: 'user.create', target: user.username, detail: `convite (${invite.role})` });
+      return res.json({ success: true, user: users.sanitizeUser(user), invitedRole: invite.role });
+    }
+
     const session = users.authenticate(req);
     const settings = users.readSettings();
 
@@ -135,7 +145,46 @@ router.post('/create', (req, res) => {
   }
 });
 
+// ─── Convites por link ───────────────────────────────────────────────
 
+// GET /api/users/invites/:token — checa validade de um convite (público)
+router.get('/invites/:token', (req, res) => {
+  const invite = users.getInvite(req.params.token);
+  const status = users.inviteStatus(invite);
+  const valid = status === 'valid';
+  res.json({ success: true, valid, status, role: invite ? invite.role : null, expiresAt: invite ? invite.expiresAt : null });
+});
+
+// Listar convites (users:manage)
+router.get('/invites', users.requirePermission('users:manage'), (req, res) => {
+  res.json({ success: true, invites: users.listInvites() });
+});
+
+// Criar convite (users:manage)
+router.post('/invites', users.requirePermission('users:manage'), (req, res) => {
+  try {
+    const { role = 'viewer', maxUses = 1, expiresInHours = 168 } = req.body || {};
+    if (!users.ROLES.includes(role)) return res.status(400).json({ success: false, error: 'Papel inválido.' });
+    const session = users.authenticate(req);
+    const invite = users.createInvite({
+      role,
+      createdBy: session ? session.username : null,
+      maxUses,
+      expiresInMs: Number(expiresInHours) > 0 ? Number(expiresInHours) * 60 * 60 * 1000 : undefined,
+    });
+    res.json({ success: true, invite: { ...invite, status: 'valid' } });
+  } catch (e) {
+    res.status(400).json({ success: false, error: e.message });
+  }
+});
+
+// Revogar convite (users:manage)
+router.delete('/invites/:token', users.requirePermission('users:manage'), (req, res) => {
+  const ok = users.revokeInvite(req.params.token);
+  if (!ok) return res.status(404).json({ success: false, error: 'Convite não encontrado.' });
+  users.appendAdminLog({ actor: (users.authenticate(req) || {}).username, action: 'invite.revoke', target: req.params.token });
+  res.json({ success: true });
+});
 
 // DELETE /api/users/sessions/:id — encerra sessão (própria ou users:manage)
 router.delete('/sessions/:id', users.requirePermission(), (req, res) => {

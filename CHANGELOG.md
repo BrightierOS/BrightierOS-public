@@ -2,6 +2,21 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.5.4 — Convites por link
+
+* **Convites por link** com papel pré-definido: o administrador gera um link que
+  cria a conta já como **admin** ou **viewer**. Funciona mesmo com o auto-registro
+  (`allowRegistration`) desligado.
+* Backend `lib/users.js`: store de convites (`data/invites.json`) com token, papel,
+  criador, expiração (7 dias), uso único e revogação.
+* Rotas: `GET /api/users/invites/:token` (público, valida), `GET/POST /api/users/invites`
+  e `DELETE /api/users/invites/:token` (users:manage). `POST /api/users/create` aceita
+  `invite` e cria com o papel do convite.
+* Tela de **Signup** reconhece `?invite=TOKEN`, mostra "Você foi convidado como
+  <papel>" e trava o formulário se o convite for inválido/expirado/usado.
+* Administração → **Convites por link**: botões "Convidar visualizador" / "Convidar
+  administrador", lista com status (válido/usado/expirado/revogado), copiar link e revogar.
+
 ## v0.5.3 — Contas e permissões (correções)
 
 * **Signup corrigido e visível**: o link "Criar conta" agora aparece sempre na

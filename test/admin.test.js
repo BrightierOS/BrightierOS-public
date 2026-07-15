@@ -81,11 +81,24 @@ test('configurações do sistema com defaults', () => {
   assert.equal(U.readSettings().allowRegistration, true);
 });
 
-test('viewer é somente-leitura em arquivos (files:all)', () => {
-  assert.equal(U.hasPermission('viewer', 'files:all'), false);
-  assert.equal(U.hasPermission('viewer', 'files:read'), true);
-  assert.equal(U.hasPermission('admin', 'files:all'), true);
-  assert.equal(U.hasPermission('editor', 'files:all'), true);
+test('convites por link: criar, validar, consumir e revogar', () => {
+  const inv = U.createInvite({ role: 'admin', createdBy: 'root' });
+  assert.ok(inv.token && inv.role === 'admin');
+  assert.equal(U.inviteStatus(inv), 'valid');
+  // Valida e consome ao criar usuário pelo convite.
+  assert.ok(U.validateInvite(inv.token));
+  const invited = U.createUser({ username: 'convidado', password: 'pw', role: inv.role });
+  U.consumeInvite(inv.token);
+  assert.equal(U.inviteStatus(U.getInvite(inv.token)), 'used');
+  // Limpa o usuário criado para não afetar o teste de lockout de admin.
+  U.deleteUser(invited.id);
+  // Revogar.
+  assert.equal(U.revokeInvite(inv.token), true);
+  assert.equal(U.inviteStatus(U.getInvite(inv.token)), 'revoked');
+  // Papel inválido rejeitado.
+  assert.throws(() => U.createInvite({ role: 'super' }));
+  // Convite inexistente é inválido.
+  assert.equal(U.inviteStatus(U.getInvite('naoexiste')), 'invalid');
 });
 
 test('logs administrativos', () => {

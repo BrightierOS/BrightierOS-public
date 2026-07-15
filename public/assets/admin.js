@@ -226,6 +226,64 @@
     }
   }
 
+  // ─── Convites por link ─────────────────────────────────────────────
+  const invitesEl = () => document.getElementById('invites-list');
+
+  async function loadInvites() {
+    try {
+      const d = await api.user.invites.list();
+      const list = d.invites || [];
+      if (!list.length) { invitesEl().innerHTML = '<p class="muted">Nenhum convite. Crie um para convidar alguém.</p>'; return; }
+      invitesEl().innerHTML = `<div class="table-wrap"><table>
+        <thead><tr><th>Papel</th><th>Status</th><th>Expira em</th><th>Link</th><th></th></tr></thead>
+        <tbody>${list.map(i => `
+          <tr>
+            <td>${ui.escapeHtml(i.role)}</td>
+            <td>${inviteStatusLabel(i.status)}</td>
+            <td class="muted" style="font-size:12px">${fmtDate(i.expiresAt)}</td>
+            <td><button class="btn ghost sm" data-copy="${ui.escapeHtml(i.token)}">Copiar link</button></td>
+            <td><button class="btn danger sm" data-rev="${ui.escapeHtml(i.token)}" ${i.status !== 'valid' ? 'disabled' : ''}>Revogar</button></td>
+          </tr>`).join('')}</tbody></table></div>`;
+      invitesEl().querySelectorAll('[data-copy]').forEach(b =>
+        b.addEventListener('click', () => {
+          const url = `${window.location.origin}/signup.html?invite=${b.getAttribute('data-copy')}`;
+          navigator.clipboard?.writeText(url).then(
+            () => ui.toast('Link copiado!', 'ok'),
+            () => ui.prompt('Copie o link:', { value: url, title: 'Link de convite' })
+          );
+        }));
+      invitesEl().querySelectorAll('[data-rev]').forEach(b =>
+        b.addEventListener('click', async () => {
+          const ok = await ui.confirm('Revogar este convite?', { title: 'Revogar convite', danger: true });
+          if (!ok) return;
+          try { await api.user.invites.revoke(b.getAttribute('data-rev')); ui.toast('Convite revogado.', 'ok'); loadInvites(); loadLogs(); }
+          catch (e) { ui.toast(e.message, 'err'); }
+        }));
+    } catch (e) {
+      invitesEl().innerHTML = `<p class="muted" style="color:var(--danger)">${ui.escapeHtml(e.message)}</p>`;
+    }
+  }
+
+  function inviteStatusLabel(status) {
+    return {
+      valid: '<span style="color:var(--ok)">válido</span>',
+      used: '<span style="color:var(--muted)">usado</span>',
+      expired: '<span style="color:var(--warn)">expirado</span>',
+      revoked: '<span style="color:var(--danger)">revogado</span>',
+      invalid: '<span style="color:var(--danger)">inválido</span>',
+    }[status] || status;
+  }
+
+  async function createInvite(role) {
+    try {
+      const d = await api.user.invites.create(role);
+      const url = `${window.location.origin}/signup.html?invite=${d.invite.token}`;
+      ui.toast(`Convite (${role}) criado e copiado!`, 'ok');
+      try { await navigator.clipboard.writeText(url); } catch (_) {}
+      loadInvites(); loadLogs();
+    } catch (e) { ui.toast(e.message, 'err'); }
+  }
+
   function init() {
     const role = currentUser().role;
     if (role !== 'admin' && role !== 'editor') {
@@ -234,7 +292,11 @@
     }
     const nb = document.getElementById('newUserBtn');
     if (nb) nb.addEventListener('click', () => editUser(null));
-    loadUsers(); loadRoles(); loadSessions(); loadSettings(); loadLogs();
+    const iv = document.getElementById('inviteViewerBtn');
+    if (iv) iv.addEventListener('click', () => createInvite('viewer'));
+    const ia = document.getElementById('inviteAdminBtn');
+    if (ia) ia.addEventListener('click', () => createInvite('admin'));
+    loadUsers(); loadRoles(); loadSessions(); loadSettings(); loadLogs(); loadInvites();
   }
 
   document.addEventListener('brightier:ready', init);

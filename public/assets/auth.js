@@ -23,7 +23,10 @@
 
     if (page === 'login') bindLogin();
     else if (page === 'setup') bindSetup();
-    else if (page === 'signup') bindSignup();
+    else if (page === 'signup') {
+      const token = new URLSearchParams(window.location.search).get('invite');
+      bindSignup(token || '');
+    }
   }
 
   function setMsg(id, text, kind) {
@@ -75,26 +78,53 @@
     });
   }
 
-  function bindSignup() {
-    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+  function bindSignup(inviteToken) {
+    const inviteBox = document.getElementById('inviteInfo');
+    const roleLabel = document.getElementById('inviteRole');
+    const form = document.getElementById('signupForm');
+    const btn = form.querySelector('button[type="submit"]');
+
+    async function submitSignup(e) {
       e.preventDefault();
       setMsg('message', '', '');
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
       const displayName = document.getElementById('displayName');
       if (!username || !password) { setMsg('message', 'Informe usuário e senha.', 'err'); return; }
-      const btn = e.target.querySelector('button[type="submit"]');
       btn.disabled = true;
       try {
-        const data = await api.user.create(username, password, 'viewer', displayName ? displayName.value.trim() : '');
+        const data = await api.user.create(username, password, 'viewer', displayName ? displayName.value.trim() : '', inviteToken);
         setMsg('message', 'Conta criada! Vá para o login.', 'ok');
         setTimeout(() => go('/login.html'), 700);
       } catch (err) {
-        // Mensagem clara quando o cadastro está fechado ou usuário já existe.
         setMsg('message', err.message || 'Não foi possível criar a conta.', 'err');
         btn.disabled = false;
       }
-    });
+    }
+
+    if (inviteToken) {
+      const normalInfo = document.getElementById('normalInfo');
+      if (normalInfo) normalInfo.style.display = 'none';
+      (async () => {
+        try {
+          const info = await api.user.invites.get(inviteToken);
+          if (info && info.valid) {
+            if (roleLabel) roleLabel.textContent = info.role === 'admin' ? 'administrador' : 'visualizador';
+            if (inviteBox) inviteBox.style.display = '';
+          } else {
+            if (inviteBox) { inviteBox.style.display = ''; inviteBox.className = 'muted'; }
+            if (roleLabel) roleLabel.textContent = 'inválido/expirado';
+            form.style.display = 'none';
+            setMsg('message', 'Este convite é inválido, expirou ou já foi usado.', 'err');
+          }
+        } catch (_) {
+          form.style.display = 'none';
+          setMsg('message', 'Não foi possível validar o convite.', 'err');
+        }
+      })();
+    }
+
+    form.addEventListener('submit', submitSignup);
   }
 
   if (document.readyState === 'loading') {
