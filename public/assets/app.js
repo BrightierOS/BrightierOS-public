@@ -160,6 +160,14 @@
       window.location.replace('/login.html');
       return;
     }
+
+    // Páginas que exigem papel de administrador: não-admins são redirecionados.
+    const ADMIN_PAGES = ['console', 'admin'];
+    if (ADMIN_PAGES.includes(page) && currentRole() !== 'admin') {
+      window.location.replace('/');
+      return;
+    }
+
     mountLayout(page);
     // Atualiza os dados/permissões do usuário logado a partir do /me.
     try {

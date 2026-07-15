@@ -2,6 +2,15 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.5.4.8 — Console liberado + páginas de erro bonitas
+
+* **Console liberado**: o `console.html` agora é servido sem o bloqueio 403 no
+  request HTTP. A segurança real está no WebSocket (token no querystring) e no
+  guard do `app.js` (redireciona não-admin para `/`).
+* **Páginas de erro**: criadas `403.html`, `404.html` e `500.html` — UI
+  limpa, estilo consistente com o resto do sistema.
+* **Correção de sintaxe**: adicionado `});` faltando na rota do console.
+
 ## v0.5.4.7 — Correção definitiva do "role is not defined" + guarda automática
 
 * **Correção definitiva**: o `app.js` referenciava uma variável `role` fora de

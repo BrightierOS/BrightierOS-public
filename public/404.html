@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrightierOS — Não encontrado</title>
+  <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --accent: #6a5cff; --ok: #2ecc71; --danger: #e74c3c; --bg: #0d0d0f; --line: #26262b; --text: #e5e7eb; --muted: #9aa0a6; }
+    body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; align-items: center; justify-content: center; }
+    .error-card { background: #16161a; border: 1px solid var(--line); border-radius: 12px; padding: 40px; text-align: center; max-width: 420px; }
+    .error-code { font-size: 72px; font-weight: 800; color: var(--danger); margin: 0 0 8px; font-family: 'Doto', monospace; }
+    h1 { margin: 0 0 12px; font-size: 24px; font-weight: 600; }
+    p { color: var(--muted); margin: 0 0 24px; }
+    .btn { display: inline-block; padding: 10px 20px; background: var(--accent); color: #fff; border-radius: 8px; text-decoration: none; font-weight: 500; }
+    .btn:hover { background: #5a4ddc; }
+  </style>
+</head>
+<body>
+  <div class="error-card">
+    <div class="error-code">404</div>
+    <h1>Página não encontrada</h1>
+    <p>O endereço solicitado não existe ou foi movido.</p>
+    <a href="/" class="btn">← Voltar ao início</a>
+  </div>
+</body>
+</html>

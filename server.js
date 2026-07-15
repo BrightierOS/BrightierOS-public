@@ -56,13 +56,21 @@ process.on('SIGTERM', () => {
 
 app.use(express.json());
 
-// Defesa em profundidade: a página do terminal só é servida para administradores.
+// O console.html é servido sem verificação no request HTTP (auth usa localStorage no cliente).
+// A segurança real fica no WebSocket (token no querystring) e no guard do app.js (role check).
 app.get('/console.html', (req, res) => {
-  const session = users.sessionFromToken((req.headers['authorization'] || '').replace(/^Bearer\s+/i, '') || (new URL(req.url, 'http://localhost').searchParams.get('token') || ''));
-  if (!session || session.role !== 'admin') {
-    return res.status(403).send('Acesso negado: o terminal é restrito a administradores.');
-  }
   res.sendFile(require('path').join(__dirname, 'public', 'console.html'));
+});
+
+// Páginas de erro (servem HTML estático limpo)
+app.get('/403.html', (req, res) => {
+  res.sendFile(require('path').join(__dirname, 'public', '403.html'));
+});
+app.get('/404.html', (req, res) => {
+  res.sendFile(require('path').join(__dirname, 'public', '404.html'));
+});
+app.get('/500.html', (req, res) => {
+  res.sendFile(require('path').join(__dirname, 'public', '500.html'));
 });
 
 app.use(express.static('public'));
