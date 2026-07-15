@@ -45,11 +45,18 @@
       </section>
 
       <section class="card" style="grid-column: span 3;">
-        <h2>Atualizações</h2>
+        <h2>Atualizações inteligentes</h2>
+        <div id="local-changes" style="display:none"></div>
         <div id="update-status"></div>
         <div class="toolbar">
           <button id="checkUpdateBtn" class="btn sm">Verificar atualizações</button>
+          <input id="targetVersion" type="text" placeholder="Versão alvo (ex.: 0.4.6) — incremental" style="width:260px" />
           <button id="applyUpdateBtn" class="btn sm" style="display:none">Atualizar agora</button>
+        </div>
+        <div class="toolbar" style="margin-top:8px">
+          <button id="backupBtn" class="btn ghost sm">🗄 Fazer backup</button>
+          <button id="changelogBtn" class="btn ghost sm">📝 Ver changelog</button>
+          <button id="restoreBtn" class="btn ghost sm">♻ Restaurar backup</button>
         </div>
         <div id="update-history"></div>
       </section>

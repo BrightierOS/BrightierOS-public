@@ -143,9 +143,13 @@
 
     update: {
       check: () => fetchJSON('/api/update/check'),
-      apply: () => postJSON('/api/update/apply'),
+      apply: (opts = {}) => postJSON('/api/update/apply', opts),
       history: () => fetchJSON('/api/update/history'),
-      rollback: (targetVersion) => postJSON('/api/update/rollback', { targetVersion }),
+      rollback: (opts = {}) => postJSON('/api/update/rollback', opts),
+      backup: () => postJSON('/api/update/backup', {}),
+      backups: () => fetchJSON('/api/update/backups'),
+      restore: (backupId) => postJSON('/api/update/restore', { backupId }),
+      changelog: () => fetchJSON('/api/update/changelog'),
     },
 
     store: {

@@ -80,8 +80,13 @@
   }
 
   const updateStatusEl = document.getElementById('update-status');
+  const localChangesEl = document.getElementById('local-changes');
+  const targetVersionEl = document.getElementById('targetVersion');
   const checkBtn = document.getElementById('checkUpdateBtn');
   const applyBtn = document.getElementById('applyUpdateBtn');
+  const backupBtn = document.getElementById('backupBtn');
+  const changelogBtn = document.getElementById('changelogBtn');
+  const restoreBtn = document.getElementById('restoreBtn');
   const historyEl = document.getElementById('update-history');
 
   async function checkUpdates() {
@@ -98,24 +103,51 @@
       } else {
         updateStatusEl.innerHTML = `<p class="muted" style="color:var(--danger)">Erro: ${ui.escapeHtml(d.error || 'Não foi possível verificar.')}</p>`;
       }
+      renderLocalChanges(d.hasLocalChanges, d.localChanges);
     } catch (e) {
       updateStatusEl.innerHTML = '<p class="muted" style="color:var(--danger)">Erro ao verificar.</p>';
     }
   }
 
+  // Mostra um aviso quando há alterações locais não commitadas.
+  function renderLocalChanges(has, changes) {
+    if (!localChangesEl) return;
+    if (!has || !changes || !changes.length) {
+      localChangesEl.style.display = 'none';
+      localChangesEl.innerHTML = '';
+      return;
+    }
+    localChangesEl.style.display = 'block';
+    localChangesEl.innerHTML = `<div style="margin:10px 0;padding:10px 12px;border:1px solid var(--danger,#ff5470);border-radius:12px;background:rgba(255,84,112,.08)">
+      <div style="font-weight:600;color:var(--danger,#ff5470)">⚠️ Foram detectadas alterações locais</div>
+      <div class="muted" style="font-size:12px;margin-top:4px;white-space:pre-wrap">${ui.escapeHtml(changes.slice(0, 20).join('\n'))}</div>
+    </div>`;
+  }
+
   async function applyUpdate() {
-    const ok = await ui.confirm('Aplicar a atualização? O servidor será reiniciado.', { title: 'Atualizar' });
+    const target = targetVersionEl ? targetVersionEl.value.trim() : '';
+    const ok = await ui.confirm(
+      target
+        ? `Aplicar atualização incremental para v${target}? O servidor será reiniciado.`
+        : 'Aplicar a atualização? O servidor será reiniciado.',
+      { title: 'Atualizar' }
+    );
     if (!ok) return;
     applyBtn.disabled = true; applyBtn.textContent = 'Atualizando...';
     try {
-      const d = await api.update.apply();
-      if (d && d.success && d.restarted) {
-        ui.toast(d.message || 'Atualizado! Reiniciando o servidor...', 'ok');
-        await waitForServerAndReload();
-        return;
+      const d = await api.update.apply(target ? { targetVersion: target } : {});
+      if (d && d.code === 'LOCAL_CHANGES') {
+        // Não atualiza por cima de alterações locais sem confirmar.
+        const lista = (d.localChanges || []).map((c) => `• ${c}`).join('\n');
+        const force = await ui.confirm(
+          `⚠️ Foram detectadas alterações locais.\nAtualizar pode sobrescrever arquivos modificados.\n\n${lista}`,
+          { title: 'Alterações locais', okText: 'Continuar', cancelText: 'Cancelar', danger: true }
+        );
+        if (!force) { ui.toast('Atualização cancelada.', 'info'); return; }
+        const d2 = await api.update.apply(target ? { targetVersion: target, force: true } : { force: true });
+        return finishApply(d2);
       }
-      if (d && d.success) ui.toast(d.message || 'Atualizado!', 'ok');
-      else ui.toast((d && d.error) || 'Falha ao atualizar.', 'err');
+      return finishApply(d);
     } catch (e) { ui.toast(e.message, 'err'); }
     finally {
       applyBtn.disabled = false;
@@ -123,6 +155,17 @@
       loadHistory();
       checkUpdates();
     }
+  }
+
+  async function finishApply(d) {
+    if (!d) return;
+    if (d.success && d.restarted) {
+      ui.toast(d.message || 'Atualizado! Reiniciando o servidor...', 'ok');
+      await waitForServerAndReload();
+      return;
+    }
+    if (d.success) ui.toast(d.message || 'Atualizado!', 'ok');
+    else ui.toast(d.error || 'Falha ao atualizar.', 'err');
   }
 
   async function loadHistory() {
@@ -135,10 +178,17 @@
         const date = e.timestamp ? new Date(e.timestamp).toLocaleString('pt-BR') : '';
         const target = e.to || e.rolledBackTo || e.target || e.installedVersion;
         const isCurrent = i === 0;
+        const typeLabel = e.type === 'rollback' ? 'Rollback'
+          : e.type === 'backup' ? 'Backup'
+          : e.type === 'restore' ? 'Restauração'
+          : 'Atualização';
+        const actionBtn = (e.type === 'rollback' && !isCurrent)
+          ? `<button class="btn ghost sm" data-rollback="${ui.escapeHtml(target || '')}">Voltar</button>`
+          : '';
         return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-soft)">
-          <div style="flex:1"><div style="color:#fff;font-weight:600">${e.type === 'rollback' ? 'Rollback' : 'Atualização'}: ${ui.escapeHtml(target || '')}</div>
+          <div style="flex:1"><div style="color:#fff;font-weight:600">${typeLabel}: ${ui.escapeHtml(target || '')}</div>
           <div class="muted" style="font-size:12px">${ui.escapeHtml(date)}${e.message ? ' — ' + ui.escapeHtml(e.message) : ''}</div></div>
-          ${!isCurrent ? `<button class="btn ghost sm" data-rollback="${ui.escapeHtml(target || '')}">Voltar</button>` : ''}
+          ${actionBtn}
         </div>`;
       }).join('');
       historyEl.querySelectorAll('[data-rollback]').forEach(btn => {
@@ -148,7 +198,16 @@
           if (!ok) return;
           btn.disabled = true; btn.textContent = 'Revertendo...';
           try {
-            const d = await api.update.rollback(target);
+            let d = await api.update.rollback({ targetVersion: target });
+            if (d && d.code === 'LOCAL_CHANGES') {
+              const lista = (d.localChanges || []).map((c) => `• ${c}`).join('\n');
+              const force = await ui.confirm(
+                `⚠️ Foram detectadas alterações locais.\nReverter pode sobrescrever arquivos modificados.\n\n${lista}`,
+                { title: 'Alterações locais', okText: 'Continuar', cancelText: 'Cancelar', danger: true }
+              );
+              if (!force) { ui.toast('Revertão cancelada.', 'info'); loadHistory(); return; }
+              d = await api.update.rollback({ targetVersion: target, force: true });
+            }
 
             if (d && d.success && d.restarted) {
               ui.toast(d.message || `Revertido para v${target}`, 'ok');
@@ -166,8 +225,98 @@
     }
   }
 
+  // ─── Backup / Changelog / Restore ─────────────────────────────────
+
+  function openModal({ title, bodyHtml, footerHtml }) {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `<div class="modal" role="dialog" aria-modal="true">
+      <h3>${ui.escapeHtml(title)}</h3>
+      <div class="modal-body">${bodyHtml}</div>
+      <div class="row">${footerHtml || ''}</div>
+    </div>`;
+    document.body.appendChild(backdrop);
+    return backdrop;
+  }
+
+  async function doBackup() {
+    try {
+      backupBtn.disabled = true; backupBtn.textContent = 'Salvando...';
+      const d = await api.update.backup();
+      if (d && d.success) ui.toast(`Backup criado: ${d.backup.id}`, 'ok');
+      else ui.toast((d && d.error) || 'Falha ao criar backup.', 'err');
+    } catch (e) { ui.toast(e.message, 'err'); }
+    finally {
+      backupBtn.disabled = false;
+      backupBtn.textContent = '🗄 Fazer backup';
+      loadHistory();
+    }
+  }
+
+  async function showChangelog() {
+    try {
+      const d = await api.update.changelog();
+      const text = d.success && d.changelog ? d.changelog : 'Changelog não disponível.';
+      const backdrop = openModal({
+        title: 'Changelog',
+        bodyHtml: `<pre style="white-space:pre-wrap;max-height:60vh;overflow:auto;font-size:13px;line-height:1.5;margin:0">${ui.escapeHtml(text)}</pre>`,
+        footerHtml: `<button class="btn" data-close>Fechar</button>`,
+      });
+      backdrop.querySelector('[data-close]').onclick = () => backdrop.remove();
+      backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
+    } catch (e) { ui.toast(e.message, 'err'); }
+  }
+
+  async function showRestore() {
+    try {
+      const d = await api.update.backups();
+      const backups = (d.success && d.backups) || [];
+      if (!backups.length) { ui.toast('Nenhum backup disponível.', 'info'); return; }
+      const rows = backups.map((b) => {
+        const when = b.timestamp ? new Date(b.timestamp).toLocaleString('pt-BR') : '';
+        const size = ui.formatBytes(b.size);
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line-soft)">
+          <div style="flex:1"><div style="color:#fff;font-weight:600">${ui.escapeHtml(b.label || 'backup')}</div>
+          <div class="muted" style="font-size:12px">v${ui.escapeHtml(b.version || '?')} · ${ui.escapeHtml(when)} · ${size}</div></div>
+          <button class="btn ghost sm" data-restore="${ui.escapeHtml(b.id)}">Restaurar</button>
+        </div>`;
+      }).join('');
+      const backdrop = openModal({
+        title: 'Restaurar backup',
+        bodyHtml: `<p class="muted" style="margin:0 0 8px">Escolha um backup para restaurar. Um backup de segurança do estado atual será criado automaticamente.</p>${rows}`,
+        footerHtml: `<button class="btn ghost" data-close>Cancelar</button>`,
+      });
+      backdrop.querySelector('[data-close]').onclick = () => backdrop.remove();
+      backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
+      backdrop.querySelectorAll('[data-restore]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-restore');
+          const ok = await ui.confirm(`Restaurar o backup "${id}"? O servidor será reiniciado.`, { title: 'Restaurar backup', danger: true });
+          if (!ok) return;
+          btn.disabled = true; btn.textContent = 'Restaurando...';
+          try {
+            const r = await api.update.restore(id);
+            if (r && r.success && r.restarted) {
+              ui.toast(r.message || 'Restaurando...', 'ok');
+              backdrop.remove();
+              await waitForServerAndReload();
+              return;
+            }
+            if (r && r.success) ui.toast(r.message || 'Backup restaurado.', 'ok');
+            else ui.toast((r && r.error) || 'Falha ao restaurar.', 'err');
+          } catch (e) { ui.toast(e.message, 'err'); }
+        });
+      });
+    } catch (e) { ui.toast(e.message, 'err'); }
+  }
+
+  // ─── Listeners ────────────────────────────────────────────────────
+
   checkBtn && checkBtn.addEventListener('click', checkUpdates);
   applyBtn && applyBtn.addEventListener('click', applyUpdate);
+  backupBtn && backupBtn.addEventListener('click', doBackup);
+  changelogBtn && changelogBtn.addEventListener('click', showChangelog);
+  restoreBtn && restoreBtn.addEventListener('click', showRestore);
   loadMetrics();
   setInterval(loadMetrics, 5000);
   loadPlugins();
