@@ -2,6 +2,14 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.5.4.5 — Correção: crash do app shell (ReferenceError: role is not defined)
+
+* **Hotfix crítico**: `navVisible` referenciava `role` fora de escopo, causando
+  `ReferenceError: role is not defined` em `mountLayout` (tela em branco / dock
+  sumido em todas as páginas protegidas). Agora `navVisible` lê o papel direto
+  do `localStorage` via `currentRole()`. Também corrigido o acesso de `userRaw`
+  antes de sua declaração (temporal dead zone) dentro de `mountLayout`.
+
 ## v0.5.4.4 — Desatualizar (rollback) + atualizar por versão do GitHub + reiniciar
 
 * **Desatualizar / rollback** na Administração: seção "Atualizações" permite

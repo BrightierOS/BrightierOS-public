@@ -27,8 +27,12 @@
   ];
 
   // Console e Administração aparecem apenas para administradores.
+  function currentRole() {
+    try { return (JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}).role || null; } catch (_) { return null; }
+  }
+
   function navVisible(item) {
-    if (item.role === 'admin') return role === 'admin';
+    if (item.role === 'admin') return currentRole() === 'admin';
     return true;
   }
 
@@ -87,13 +91,12 @@
     const shell = document.createElement('div');
     shell.className = 'layout';
 
-    const role = (() => { try { return (JSON.parse(userRaw) || {}).role; } catch (_) { return null; } })();
+    const userRaw = localStorage.getItem(STORAGE_KEY);
     const navHtml = NAV.filter(navVisible).map(item => `
       <a href="${item.href}" class="${item.key === pageKey ? 'active' : ''}" title="${item.label}">
         ${item.icon}<span class="txt">${item.label}</span>
       </a>`).join('');
 
-    const userRaw = localStorage.getItem(STORAGE_KEY);
     let username = 'Usuário';
     let userRole = role || '';
     try { const u = JSON.parse(userRaw) || {}; username = u.username || username; userRole = u.role || userRole; } catch (_) {}
