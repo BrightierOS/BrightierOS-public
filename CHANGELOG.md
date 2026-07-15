@@ -2,6 +2,21 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.5.4.4 — Desatualizar (rollback) + atualizar por versão do GitHub + reiniciar
+
+* **Desatualizar / rollback** na Administração: seção "Atualizações" permite
+  atualizar para a versão mais recente do GitHub, ir para uma **versão específica**
+  (atualização incremental via tag) ou **desatualizar** (rollback) para uma versão
+  anterior. Um backup automático é criado antes de qualquer alteração.
+* **Backups**: listar e **restaurar** backups do estado do sistema (com backup de
+  segurança automático). Histórico de atualizações visível na UI.
+* **Reiniciar o BrightierOS**: botão em Configurações que reinicia **apenas o
+  servidor BrightierOS** (não o sistema operacional), via código de saída detectado
+  pelo launcher (bOS.bat/bOS.sh).
+* **Segurança**: rotas de escrita de atualização (`apply`, `rollback`, `backup`,
+  `restore`) e `admin/restart` agora exigem `users:manage` (só admin). Leituras
+  (check/history/backups/changelog) continuam para usuários logados.
+
 ## v0.5.4.3 — Correção: tela de carregamento + arquivos validando
 
 * **Correção de bug crítico**: a tela de carregamento ficava em *loop* infinito

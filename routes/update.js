@@ -12,6 +12,9 @@ const usersLib = require("../lib/users");
 
 const router = express.Router();
 
+// Operações de atualização/rollback/restore afetam o sistema inteiro: só admin.
+const requireManage = usersLib.requirePermission('users:manage');
+
 // DATA_DIR é sobrescritível por teste (BOS_DATA_DIR) sem afetar produção.
 const DATA_DIR = process.env.BOS_DATA_DIR
   ? path.resolve(process.env.BOS_DATA_DIR)
@@ -337,7 +340,7 @@ router.get("/check", async (req, res) => {
 
 // POST /api/update/apply — Aplica atualização (backup + plugins + incremental)
 // Corpo opcional: { targetVersion?, force? }
-router.post("/apply", async (req, res) => {
+router.post("/apply", requireManage, async (req, res) => {
   try {
     const { targetVersion, force } = req.body || {};
     const installed = getInstalledVersion();
@@ -488,7 +491,7 @@ router.get("/history", (req, res) => {
 
 // POST /api/update/rollback — Reverte para uma versão anterior via tag
 // Corpo: { targetVersion, force? }
-router.post("/rollback", async (req, res) => {
+router.post("/rollback", requireManage, async (req, res) => {
   try {
     const { targetVersion, force } = req.body || {};
     if (!targetVersion) {
@@ -576,7 +579,7 @@ router.post("/rollback", async (req, res) => {
 });
 
 // POST /api/update/backup — Cria um backup manual do estado atual
-router.post("/backup", async (req, res) => {
+router.post("/backup", requireManage, async (req, res) => {
   try {
     const label = (req.body && req.body.label) || "manual";
     const meta = await createBackup(label, { reason: "manual" });
@@ -604,7 +607,7 @@ router.get("/backups", (req, res) => {
 });
 
 // POST /api/update/restore — Restaura um backup (com backup de segurança)
-router.post("/restore", async (req, res) => {
+router.post("/restore", requireManage, async (req, res) => {
   try {
     const { backupId } = req.body || {};
     if (!backupId) {

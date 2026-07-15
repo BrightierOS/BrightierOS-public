@@ -284,6 +284,108 @@
     } catch (e) { ui.toast(e.message, 'err'); }
   }
 
+  // ─── Atualizações / Rollback / Backups ──────────────────────────────
+  async function loadUpdate() {
+    const el = document.getElementById('update-area');
+    if (!el) return;
+    try {
+      const d = await api.update.check();
+      const installed = d.installedVersion;
+      const available = d.availableVersion;
+      const tags = (d.incrementalTags || []).filter(t => t !== installed);
+      const opts = tags.map(t => `<option value="${ui.escapeHtml(t)}" ${t === available ? 'selected' : ''}>v${ui.escapeHtml(t)}</option>`).join('');
+      el.innerHTML = `
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+          <span>Instalado: <b>v${ui.escapeHtml(installed)}</b></span>
+          <span>Disponível: <b>v${ui.escapeHtml(available)}</b></span>
+          ${d.hasUpdate ? '<span style="color:var(--ok)">Nova versão disponível</span>' : '<span class="muted">Em dia</span>'}
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button id="updLatestBtn" class="btn sm" ${d.hasUpdate ? '' : 'disabled'}>⇧ Atualizar p/ v${ui.escapeHtml(available)} (GitHub)</button>
+          <span class="muted">ou ir para:</span>
+          <select id="updTag">${opts}</select>
+          <button id="updTagBtn" class="btn sm">Ir para versão</button>
+          <button id="updForce" class="btn ghost sm" title="Atualiza mesmo com alterações locais">⚠ Forçar</button>
+        </div>
+        ${d.hasLocalChanges ? `<p style="color:var(--warn);font-size:12px;margin-top:8px">⚠ Alterações locais detectadas (${d.localChanges.length}). Use "Forçar".</p>` : ''}
+        <div id="updMsg" style="margin-top:8px"></div>`;
+
+      const busy = (msg) => { const m = document.getElementById('updMsg'); if (m) m.innerHTML = `<span class="muted">${ui.escapeHtml(msg)}</span>`; };
+      document.getElementById('updLatestBtn').addEventListener('click', async () => {
+        busy('Atualizando...');
+        try { const r = await api.update.apply({ force: document.getElementById('updForce').classList.contains('active') }); handleUpdateResult(r); }
+        catch (e) { ui.toast(e.message, 'err'); busy(''); }
+      });
+      document.getElementById('updTagBtn').addEventListener('click', async () => {
+        const v = document.getElementById('updTag').value;
+        busy(`Indo para v${v}...`);
+        try { const r = await api.update.apply({ targetVersion: v, force: document.getElementById('updForce').classList.contains('active') }); handleUpdateResult(r); }
+        catch (e) { ui.toast(e.message, 'err'); busy(''); }
+      });
+      const forceBtn = document.getElementById('updForce');
+      forceBtn.addEventListener('click', () => forceBtn.classList.toggle('active'));
+    } catch (e) {
+      el.innerHTML = `<p class="muted" style="color:var(--danger)">${ui.escapeHtml(e.message)}</p>`;
+    }
+  }
+
+  function handleUpdateResult(r) {
+    if (!r || !r.success) { ui.toast((r && r.error) || 'Falha', 'err'); return; }
+    if (r.code === 'LOCAL_CHANGES') {
+      ui.confirm('Alterações locais detectadas. Atualizar mesmo assim? (um backup será criado)', { title: 'Atualizar mesmo assim', okText: 'Atualizar', danger: true })
+        .then(ok => { if (ok) api.update.apply({ force: true }).then(handleUpdateResult); });
+      return;
+    }
+    ui.toast(r.message || 'Atualizado! Reiniciando...', 'ok');
+  }
+
+  async function loadBackups() {
+    const el = document.getElementById('backups-area');
+    if (!el) return;
+    try {
+      const d = await api.update.backups();
+      const list = d.backups || [];
+      if (!list.length) { el.innerHTML = '<p class="muted">Nenhum backup.</p>'; return; }
+      el.innerHTML = `<div class="table-wrap"><table>
+        <thead><tr><th>Versão</th><th>Quando</th><th>Motivo</th><th></th></tr></thead>
+        <tbody>${list.map(b => `<tr>
+          <td>${ui.escapeHtml(b.version || '—')}</td>
+          <td class="muted" style="font-size:12px">${fmtDate(b.timestamp)}</td>
+          <td>${ui.escapeHtml(b.reason || '—')}</td>
+          <td class="row-actions"><button class="btn ghost sm" data-restore="${ui.escapeHtml(b.id)}">Restaurar</button></td>
+        </tr>`).join('')}</tbody></table></div>`;
+      el.querySelectorAll('[data-restore]').forEach(b =>
+        b.addEventListener('click', async () => {
+          const id = b.getAttribute('data-restore');
+          const ok = await ui.confirm(`Restaurar o backup ${id}? Um backup de segurança será criado.`, { title: 'Restaurar backup', danger: true });
+          if (!ok) return;
+          try { const r = await api.update.restore(id); ui.toast(r.message || 'Restaurado!', 'ok'); } catch (e) { ui.toast(e.message, 'err'); }
+        }));
+    } catch (e) {
+      el.innerHTML = `<p class="muted" style="color:var(--danger)">${ui.escapeHtml(e.message)}</p>`;
+    }
+  }
+
+  async function loadUpdateHistory() {
+    const el = document.getElementById('update-history');
+    if (!el) return;
+    try {
+      const d = await api.update.history();
+      const list = d.history || [];
+      if (!list.length) { el.innerHTML = '<p class="muted">Nenhum registro.</p>'; return; }
+      el.innerHTML = `<div class="table-wrap"><table>
+        <thead><tr><th>Quando</th><th>Tipo</th><th>De → Para</th><th>Detalhe</th></tr></thead>
+        <tbody>${list.map(h => `<tr>
+          <td class="muted" style="font-size:12px">${fmtDate(h.timestamp)}</td>
+          <td>${ui.escapeHtml(h.type)}</td>
+          <td>${ui.escapeHtml(h.from || '?')} → ${ui.escapeHtml(h.to || '?')}</td>
+          <td class="muted" style="font-size:12px">${ui.escapeHtml(h.message || '')}</td>
+        </tr>`).join('')}</tbody></table></div>`;
+    } catch (e) {
+      el.innerHTML = `<p class="muted" style="color:var(--danger)">${ui.escapeHtml(e.message)}</p>`;
+    }
+  }
+
   function init() {
     const role = currentUser().role;
     if (role !== 'admin' && role !== 'editor') {
@@ -296,7 +398,14 @@
     if (iv) iv.addEventListener('click', () => createInvite('viewer'));
     const ia = document.getElementById('inviteAdminBtn');
     if (ia) ia.addEventListener('click', () => createInvite('admin'));
+    const rb = document.getElementById('restartBosBtn');
+    if (rb) rb.addEventListener('click', async () => {
+      const ok = await ui.confirm('Reiniciar o BrightierOS? (apenas o servidor, não o sistema operacional)', { title: 'Reiniciar BrightierOS', okText: 'Reiniciar' });
+      if (!ok) return;
+      try { const r = await api.admin.restart(); ui.toast((r && r.message) || 'Reiniciando...', 'ok'); } catch (e) { ui.toast(e.message, 'err'); }
+    });
     loadUsers(); loadRoles(); loadSessions(); loadSettings(); loadLogs(); loadInvites();
+    loadUpdate(); loadBackups(); loadUpdateHistory();
   }
 
   document.addEventListener('brightier:ready', init);

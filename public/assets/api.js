@@ -183,6 +183,7 @@
       settings: () => fetchJSON('/api/admin/settings'),
       saveSettings: (patch) => postJSON('/api/admin/settings', patch, { method: 'PUT' }),
       logs: () => fetchJSON('/api/admin/logs'),
+      restart: () => postJSON('/api/admin/restart', {}),
     },
 
     stats: () => fetchJSON('/api/stats'),
