@@ -76,7 +76,6 @@ if command -v rsync >/dev/null 2>&1; then
 
     rsync -a \
         --delete \
-        --exclude=".git/" \
         --exclude="node_modules/" \
         --exclude="logs/" \
         --exclude="data/" \
