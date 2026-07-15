@@ -74,9 +74,11 @@ test('sessões: criar, listar, autenticar e encerrar', () => {
 test('configurações do sistema com defaults', () => {
   const s = U.readSettings();
   assert.equal(s.systemName, 'BrightierOS');
-  const updated = U.writeSettings({ maintenanceMode: true });
+  assert.equal(s.allowRegistration, false); // default desligado
+  const updated = U.writeSettings({ maintenanceMode: true, allowRegistration: true });
   assert.equal(updated.maintenanceMode, true);
-  assert.equal(U.readSettings().maintenanceMode, true);
+  assert.equal(updated.allowRegistration, true);
+  assert.equal(U.readSettings().allowRegistration, true);
 });
 
 test('logs administrativos', () => {

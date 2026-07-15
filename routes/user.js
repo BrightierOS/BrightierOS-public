@@ -8,7 +8,12 @@ const router = express.Router();
 router.get('/setup', (req, res) => {
   try {
     const all = users.readUsers();
-    res.json({ success: true, configured: all.length > 0, user: all.length ? users.sanitizeUser(all[0]) : null });
+    res.json({
+      success: true,
+      configured: all.length > 0,
+      user: all.length ? users.sanitizeUser(all[0]) : null,
+      allowRegistration: users.readSettings().allowRegistration,
+    });
   } catch (e) {
     res.status(500).json({ success: false, error: 'Falha ao verificar configuração.' });
   }
@@ -96,25 +101,39 @@ router.post('/logout', users.requirePermission(), (req, res) => {
 router.post('/create', (req, res) => {
   try {
     const existing = users.readUsers();
-    let actor = null;
-    if (existing.length > 0) {
-      const session = users.authenticate(req);
-      if (!session) return res.status(401).json({ success: false, error: 'Não autenticado.' });
-      if (!users.hasPermission(session.role, 'users:manage')) {
-        return res.status(403).json({ success: false, error: 'Sem permissão.' });
-      }
-      actor = session.username;
+    const body = req.body || {};
+
+    // Primeira execução: cria o administrador inicial (Setup).
+    if (existing.length === 0) {
+      const user = users.createUser({ username: body.username, password: body.password, role: 'admin', displayName: body.displayName });
+      users.appendAdminLog({ actor: null, action: 'user.create', target: user.username, detail: 'setup inicial (admin)' });
+      return res.json({ success: true, user: users.sanitizeUser(user) });
     }
-    const { username, password, role = 'viewer', displayName } = req.body || {};
-    const user = users.createUser({ username, password, role, displayName });
-    users.appendAdminLog({ actor, action: 'user.create', target: user.username, detail: `papel=${user.role}` });
-    res.json({ success: true, user: users.sanitizeUser(user) });
+
+    const session = users.authenticate(req);
+    const settings = users.readSettings();
+
+    // Cadastro público (Signup) quando permitido e sem autenticação: papel 'viewer'.
+    if (!session && settings.allowRegistration) {
+      const user = users.createUser({ username: body.username, password: body.password, role: 'viewer', displayName: body.displayName });
+      users.appendAdminLog({ actor: null, action: 'user.create', target: user.username, detail: 'signup público (viewer)' });
+      return res.json({ success: true, user: users.sanitizeUser(user) });
+    }
+
+    // Admin cria usuário manualmente.
+    if (!session) return res.status(401).json({ success: false, error: 'Não autenticado.' });
+    if (!users.hasPermission(session.role, 'users:manage')) {
+      return res.status(403).json({ success: false, error: 'Sem permissão.' });
+    }
+    const user = users.createUser({ username: body.username, password: body.password, role: body.role || 'viewer', displayName: body.displayName });
+    users.appendAdminLog({ actor: session.username, action: 'user.create', target: user.username, detail: `papel=${user.role}` });
+    return res.json({ success: true, user: users.sanitizeUser(user) });
   } catch (e) {
     res.status(400).json({ success: false, error: e.message });
   }
 });
 
-// __PART2_HERE__
+
 
 // DELETE /api/users/sessions/:id — encerra sessão (própria ou users:manage)
 router.delete('/sessions/:id', users.requirePermission(), (req, res) => {

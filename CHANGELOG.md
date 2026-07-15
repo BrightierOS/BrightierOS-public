@@ -2,6 +2,22 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.5.2 — Setup e Signup
+
+* Sistema de autenticação refeito em **dois fluxos** distintos:
+  * **Setup** (`/setup.html`): primeira execução do sistema, cria a conta
+    administradora inicial (só quando não há usuários).
+  * **Signup** (`/signup.html`): criação de uma **nova conta** quando o sistema
+    já está configurado, respeitando a configuração `allowRegistration`
+    (papel fixo `viewer`, sem privilégios).
+* `GET /api/users/setup` agora informa `allowRegistration`, usado para exibir
+  o link "Criar conta" na tela de login.
+* `POST /api/users/create` reformulado:
+  * sem usuários → cria o admin inicial (Setup);
+  * com `allowRegistration` e sem autenticação → cria conta `viewer` (Signup);
+  * autenticado com `users:manage` → cria usuário com papel definido pelo admin.
+* Tela de Setup ganhou campo "Nome de exibição" e textos mais claros.
+
 ## v0.5.1 — Meu Perfil
 
 * Nova tela **Meu Perfil** (`/profile.html`) acessível a qualquer usuário logado

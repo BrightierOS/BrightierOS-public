@@ -16,18 +16,22 @@
         <img src="assets/BrightierOS.png" alt="BrightierOS" style="width:38px;height:38px;border-radius:10px;" onerror="this.style.display='none'">
         <span class="name">Brightier<b>OS</b></span>
       </div>
-      <h1>Criar usuário</h1>
-      <p class="sub">Defina a conta administradora do sistema</p>
+      <h1>Configurar sistema</h1>
+      <p class="sub">Defina a conta administradora inicial</p>
       <form id="setupForm" class="stack">
         <div>
           <label for="username">Usuário</label>
           <input id="username" name="username" placeholder="administrador" required autocomplete="username" />
         </div>
         <div>
+          <label for="displayName">Nome de exibição</label>
+          <input id="displayName" name="displayName" placeholder="Administrador" autocomplete="name" />
+        </div>
+        <div>
           <label for="password">Senha</label>
           <input id="password" name="password" type="password" placeholder="uma senha segura" required autocomplete="new-password" />
         </div>
-        <button class="btn block" type="submit">Criar usuário</button>
+        <button class="btn block" type="submit">Criar administrador</button>
       </form>
       <p class="msg" id="message"></p>
       <p class="alt">Já tem conta? <a href="/login.html">Fazer login</a></p>

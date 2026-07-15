@@ -131,7 +131,7 @@
   /* Auth guard for protected pages (login & setup are public) */
   async function guard() {
     const page = document.body.getAttribute('data-page');
-    if (page === 'login' || page === 'setup') return;
+    if (page === 'login' || page === 'setup' || page === 'signup') return;
 
     try {
       const res = await api.user.setup();

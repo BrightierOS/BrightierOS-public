@@ -3,35 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BrightierOS — Entrar</title>
+  <title>BrightierOS — Criar conta</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/styles.css" />
 </head>
-<body data-page="login">
+<body data-page="signup">
   <div class="auth-wrap">
     <div class="auth-card">
       <div class="brand">
         <img src="assets/BrightierOS.png" alt="BrightierOS" style="width:38px;height:38px;border-radius:10px;" onerror="this.style.display='none'">
         <span class="name">Brightier<b>OS</b></span>
       </div>
-      <h1>Entrar</h1>
-      <p class="sub">Acesse o painel do seu servidor</p>
-      <form id="loginForm" class="stack">
+      <h1>Criar conta</h1>
+      <p class="sub">Registre um novo usuário (papel: visualizador)</p>
+      <form id="signupForm" class="stack">
         <div>
           <label for="username">Usuário</label>
           <input id="username" name="username" placeholder="seu usuário" required autocomplete="username" />
         </div>
         <div>
-          <label for="password">Senha</label>
-          <input id="password" name="password" type="password" placeholder="sua senha" required autocomplete="current-password" />
+          <label for="displayName">Nome de exibição</label>
+          <input id="displayName" name="displayName" placeholder="Seu nome" autocomplete="name" />
         </div>
-        <button class="btn block" type="submit">Entrar</button>
+        <div>
+          <label for="password">Senha</label>
+          <input id="password" name="password" type="password" placeholder="uma senha segura" required autocomplete="new-password" />
+        </div>
+        <button class="btn block" type="submit">Criar conta</button>
       </form>
       <p class="msg" id="message"></p>
-      <p class="alt">Primeiro acesso? <a href="/setup.html">Criar usuário</a></p>
-      <p class="alt" id="signupAlt" style="display:none">Não tem conta? <a href="/signup.html">Criar conta</a></p>
+      <p class="alt">Já tem conta? <a href="/login.html">Fazer login</a></p>
     </div>
   </div>
 
