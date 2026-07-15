@@ -230,11 +230,11 @@ server.listen(PORT, () => {
   console.log(`BrightierOS running at http://localhost:${actualPort}`);
 });
 
-// Fallback 404: serve página bonita para requisições HTML; JSON para outras.
+// Fallback 404: serve página bonita para requisições HTML; JSON para APIs.
 app.use((req, res) => {
-  if (req.accepts('html')) {
-    res.status(404).sendFile(require('path').join(__dirname, 'public', '404.html'));
-  } else {
+  if (req.path.startsWith('/api/')) {
     res.status(404).json({ error: 'Not found' });
+  } else {
+    res.status(404).sendFile(require('path').join(__dirname, 'public', '404.html'));
   }
 });

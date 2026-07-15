@@ -2,6 +2,12 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.5.4.11 — Fallback 404 corrigido (HTML para páginas, JSON para APIs)
+
+* Corrigido o fallback 404 para distinguir requisições de página (HTML) de APIs.
+  Agora `/api/*` retorna JSON `{ error: "Not found" }`, enquanto outras rotas
+  servem `public/404.html` com estilo bonito.
+
 ## v0.5.4.10 — Fallback 404 bonito
 
 * **Página 404 bonita para todas as rotas não encontradas**: adicionado middleware
