@@ -92,6 +92,9 @@ app.use('/api/admin', adminRouter);
 const updateRouter = require('./routes/update');
 app.use('/api/update', updateRouter);
 
+// Mount trash router (deve vir antes do fallback 404)
+const trashRouter = require('./routes/trash');
+app.use('/api/files', trashRouter);
 
 wss.on('connection', (socket, req) => {
   // Bloqueio de segurança: apenas administradores autenticados acessam o terminal.
@@ -227,6 +230,11 @@ server.listen(PORT, () => {
   console.log(`BrightierOS running at http://localhost:${actualPort}`);
 });
 
-// Mount trash router
-const trashRouter = require('./routes/trash');
-app.use('/api/files', trashRouter);
+// Fallback 404: serve página bonita para requisições HTML; JSON para outras.
+app.use((req, res) => {
+  if (req.accepts('html')) {
+    res.status(404).sendFile(require('path').join(__dirname, 'public', '404.html'));
+  } else {
+    res.status(404).json({ error: 'Not found' });
+  }
+});

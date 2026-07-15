@@ -2,6 +2,14 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.5.4.10 — Fallback 404 bonito
+
+* **Página 404 bonita para todas as rotas não encontradas**: adicionado middleware
+  `app.use` que serve `public/404.html` para requisições HTML (qualquer rota que não
+  exista), e retorna JSON `{ error: 'Not found' }` para requisições API.
+* Corrigido posicionamento do `trashRouter` (agora antes do fallback, não depois do
+  `server.listen`).
+
 ## v0.5.4.9 — Teste de forçar atualização + backend integrado
 
 * **Teste de force update**: adicionado teste em `test/update.test.js` que verifica
