@@ -2,6 +2,24 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.7.0 — Plataforma
+
+### Monitoramento
+* **Stats expandidos**: `/api/stats` agora retorna uptime, OS (distro, release, arch), cores CPU, load average.
+* **Histórico de métricas**: `/api/metrics/history` retorna os últimos 100 pontos (CPU/RAM).
+
+### Notificações
+* **Sistema de notificações**: `lib/notifications.js` + rotas `/api/notifications`.
+* **Tipos**: success, warning, error, info.
+
+### Auditoria
+* **Login/Logout agora registrados**: `users.appendAdminLog` é chamado automaticamente.
+* **Logs completos**: já existentes para settings, restart, updates, plugins, users.
+
+### Plugins
+* **Hooks expostos**: plugins recebem `hooks` na `pluginApi` para escutar eventos.
+* **Eventos disponíveis**: `server:start`.
+
 ## v0.6.1 — Separação do server.js
 
 * **Rotas core extraídas**: criado `routes/core.js` com `/console.html`, páginas de erro (403/404/500), e `/api/stats`.
