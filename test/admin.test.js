@@ -81,6 +81,13 @@ test('configurações do sistema com defaults', () => {
   assert.equal(U.readSettings().allowRegistration, true);
 });
 
+test('viewer é somente-leitura em arquivos (files:all)', () => {
+  assert.equal(U.hasPermission('viewer', 'files:all'), false);
+  assert.equal(U.hasPermission('viewer', 'files:read'), true);
+  assert.equal(U.hasPermission('admin', 'files:all'), true);
+  assert.equal(U.hasPermission('editor', 'files:all'), true);
+});
+
 test('logs administrativos', () => {
   U.appendAdminLog({ actor: 'root', action: 'update.force', target: '0.5.0', detail: 'forçado' });
   const logs = U.readAdminLogs();

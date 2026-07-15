@@ -102,6 +102,15 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; }
   width: 28px; height: 28px; border-radius: 50%; background: var(--accent-grad);
   display: grid; place-items: center; font-weight: 700; font-size: 13px; color: #04121a;
 }
+.role-badge {
+  font-size: 11px; font-weight: 600; text-transform: capitalize; line-height: 1;
+  padding: 4px 8px; border-radius: 999px; border: 1px solid var(--line);
+  color: var(--muted); background: rgba(255,255,255,0.03);
+}
+.role-badge.role-admin { color: #04121a; background: var(--accent-grad); border-color: transparent; }
+.role-badge.role-editor { color: #d6f7ff; background: rgba(80, 200, 255, 0.16); border-color: rgba(80, 200, 255, 0.35); }
+.role-badge.role-viewer { color: #cfe; background: rgba(120, 230, 180, 0.14); border-color: rgba(120, 230, 180, 0.3); }
+}
 .content { padding: 26px 28px 90px; max-width: 1180px; width: 100%; }
 
 /* ---------- Cards / grid ---------- */

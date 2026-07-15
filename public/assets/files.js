@@ -46,17 +46,21 @@
       grid.innerHTML = items.map(it => {
         const isFolder = it.type === 'folder';
         const full = joinPath(currentPath, it.name);
+        const canWrite = window.bosCan && window.bosCan('files:all');
         const acts = `<button class="btn ghost sm" data-act="open" data-path="${ui.escapeHtml(full)}">Abrir</button>` +
           (isFolder ? '' : `<button class="btn ghost sm" data-act="download" data-path="${ui.escapeHtml(full)}">Baixar</button>`);
+        const writeActs = canWrite
+          ? `<button class="btn ghost sm" data-act="rename" data-path="${ui.escapeHtml(full)}" data-name="${ui.escapeHtml(it.name)}">Renomear</button>
+            <button class="btn ghost sm" data-act="trash" data-path="${ui.escapeHtml(full)}">Lixeira</button>
+            <button class="btn danger sm" data-act="delete" data-path="${ui.escapeHtml(full)}">Excluir</button>`
+          : `<span class="muted" style="font-size:12px">somente leitura</span>`;
         return `<div class="file-item" data-type="${it.type}" data-path="${ui.escapeHtml(full)}">
           <div class="ic">${isFolder ? '📁' : ui.fileIcon(it.name)}</div>
           <div class="nm">${ui.escapeHtml(it.name)}</div>
           <div class="sz">${it.type === 'folder' ? 'pasta' : ui.formatBytes(it.size)}</div>
           <div class="acts">
             ${acts}
-            <button class="btn ghost sm" data-act="rename" data-path="${ui.escapeHtml(full)}" data-name="${ui.escapeHtml(it.name)}">Renomear</button>
-            <button class="btn ghost sm" data-act="trash" data-path="${ui.escapeHtml(full)}">Lixeira</button>
-            <button class="btn danger sm" data-act="delete" data-path="${ui.escapeHtml(full)}">Excluir</button>
+            ${writeActs}
           </div>
         </div>`;
       }).join('');
@@ -89,6 +93,14 @@
   function navigateInto(path) { currentPath = path; renderBreadcrumb(); load(); }
 
   document.getElementById('backBtn').onclick = () => { currentPath = dirName(currentPath); renderBreadcrumb(); load(); };
+
+  // Visualizador (viewer) é somente-leitura: esconde ações de escrita.
+  if (!(window.bosCan && window.bosCan('files:all'))) {
+    ['newFolderBtn', 'newFileBtn', 'uploadBtn', 'uploadFolderBtn'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+  }
 
   document.getElementById('newFolderBtn').onclick = async () => {
     const name = await ui.prompt('Nome da nova pasta:', { title: 'Nova pasta' });

@@ -89,7 +89,8 @@
 
     const userRaw = localStorage.getItem(STORAGE_KEY);
     let username = 'Usuário';
-    try { username = (JSON.parse(userRaw) || {}).username || username; } catch (_) {}
+    let userRole = role || '';
+    try { const u = JSON.parse(userRaw) || {}; username = u.username || username; userRole = u.role || userRole; } catch (_) {}
 
     shell.innerHTML = `
       <div class="main">
@@ -106,7 +107,7 @@
           </div>
           <div class="topbar-actions">
             <span class="clock" id="clock">--:--:--</span>
-            <span class="user-chip"><span class="avatar">${ui.escapeHtml(username.charAt(0).toUpperCase())}</span><span>${ui.escapeHtml(username)}</span></span>
+            <span class="user-chip"><span class="avatar">${ui.escapeHtml(username.charAt(0).toUpperCase())}</span><span>${ui.escapeHtml(username)}</span>${userRole ? `<span class="role-badge role-${ui.escapeHtml(userRole)}">${ui.escapeHtml(userRole)}</span>` : ''}</span>
             <button class="btn ghost sm" id="resetBtn" title="Resetar sistema">${ICONS.reset}<span class="txt">Reset</span></button>
             <button class="btn ghost sm" id="logoutBtn" title="Sair">${ICONS.logout}<span class="txt">Sair</span></button>
           </div>
@@ -128,6 +129,15 @@
     shell.querySelector('#resetBtn').addEventListener('click', resetSystem);
   }
 
+  /* Helper global: verifica se o usuário logado tem a permissão. */
+  window.bosCan = function (perm) {
+    try {
+      const u = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+      const perms = u.permissions || [];
+      return perms.includes('*') || perms.includes(perm);
+    } catch (_) { return false; }
+  };
+
   /* Auth guard for protected pages (login & setup are public) */
   async function guard() {
     const page = document.body.getAttribute('data-page');
@@ -142,6 +152,14 @@
       return;
     }
     mountLayout(page);
+    // Atualiza os dados/permissões do usuário logado a partir do /me.
+    try {
+      const me = await api.user.me();
+      if (me && me.user) {
+        const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...stored, ...me.user, permissions: me.permissions }));
+      }
+    } catch (_) { /* mantém o que já tem */ }
     document.dispatchEvent(new CustomEvent('brightier:ready'));
     finishBoot();
   }

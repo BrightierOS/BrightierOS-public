@@ -2,6 +2,14 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
+const users = require("../lib/users");
+
+// Autenticação: qualquer usuário logado pode ler; só quem tem 'files:all'
+// (admin/editor) pode modificar. Visualizador (viewer) é somente-leitura.
+const authRead = users.requirePermission();
+const authWrite = users.requirePermission("files:all");
+
+
 
 function isTextFile(filePath) {
     const ext = path.extname(filePath).toLowerCase();
@@ -57,7 +65,7 @@ function resolvePath(relativePath = "") {
 
 }
 
-router.get("/list", (req, res) => {
+router.get("/list", authRead, (req, res) => {
 
     try {
 
@@ -95,7 +103,7 @@ router.get("/list", (req, res) => {
 
 });
 
-router.get("/read", (req, res) => {
+router.get("/read", authRead, (req, res) => {
 
     try {
 
@@ -115,7 +123,7 @@ router.get("/read", (req, res) => {
 
 });
 
-router.post("/create-folder", express.json(), (req, res) => {
+router.post("/create-folder", authWrite, express.json(), (req, res) => {
 
     try {
 
@@ -141,7 +149,7 @@ router.post("/create-folder", express.json(), (req, res) => {
 
 });
 
-router.post("/create-file", express.json(), (req, res) => {
+router.post("/create-file", authWrite, express.json(), (req, res) => {
 
     try {
 
@@ -165,7 +173,7 @@ router.post("/create-file", express.json(), (req, res) => {
 
 });
 
-router.post("/rename", express.json(), (req, res) => {
+router.post("/rename", authWrite, express.json(), (req, res) => {
 
     try {
 
@@ -191,7 +199,7 @@ router.post("/rename", express.json(), (req, res) => {
 
 });
 
-router.post("/delete", express.json(), (req, res) => {
+router.post("/delete", authWrite, express.json(), (req, res) => {
 
     try {
 
@@ -218,7 +226,7 @@ router.post("/delete", express.json(), (req, res) => {
 
 });
 
-router.post("/upload", upload.single("file"), (req, res) => {
+router.post("/upload", authWrite, upload.single("file"), (req, res) => {
 
     res.json({
         success: true
@@ -226,7 +234,7 @@ router.post("/upload", upload.single("file"), (req, res) => {
 
 });
 
-router.post("/upload-folder", express.json(), (req, res) => {
+router.post("/upload-folder", authWrite, express.json(), (req, res) => {
 
     try {
 
@@ -258,7 +266,7 @@ router.post("/upload-folder", express.json(), (req, res) => {
 
 });
 
-router.post("/save", express.json(), (req, res) => {
+router.post("/save", authWrite, express.json(), (req, res) => {
 
     try {
 
@@ -282,7 +290,7 @@ router.post("/save", express.json(), (req, res) => {
 
 });
 
-router.get("/download", (req, res) => {
+router.get("/download", authRead, (req, res) => {
 
     try {
 

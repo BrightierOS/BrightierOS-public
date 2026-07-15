@@ -2,6 +2,23 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.5.3 — Contas e permissões (correções)
+
+* **Signup corrigido e visível**: o link "Criar conta" agora aparece sempre na
+  tela de login; a página de cadastro explica que cria um usuário `viewer`; o
+  servidor retorna `403 Cadastro fechado` claro quando `allowRegistration` está
+  desligado (antes retornava 401 confuso). A seção de Usuários na Administração
+  explica o fluxo de cadastro e o estado do auto-registro.
+* **Diferença admin × usuário agora é real** (não só no papel):
+  * `routes/files.js` passou a exigir autenticação em todas as rotas; apenas
+    quem tem `files:all` (admin/editor) pode criar/editar/renomear/excluir/enviar.
+    **Visualizador é somente-leitura** (navega e baixa, não modifica).
+  * O usuário logado recebe suas `permissions` via `/me` e `/login`; a UI esconde
+    botões de escrita para quem não pode (Arquivos) e mostra um **badge de papel**
+    no topo.
+* **Seção Papéis** com descrição humana do que cada papel pode fazer.
+* Tagline do Dashboard: "Your infrastructure. Brighter."
+
 ## v0.5.2 — Setup e Signup
 
 * Sistema de autenticação refeito em **dois fluxos** distintos:

@@ -28,11 +28,11 @@ router.get('/list', users.requirePermission('users:manage'), (req, res) => {
   }
 });
 
-// GET /api/users/me — usuário da sessão atual
+// GET /api/users/me — usuário da sessão atual (inclui permissões do papel)
 router.get('/me', users.requirePermission(), (req, res) => {
   try {
     const u = users.findUserById(req.session.userId);
-    res.json({ success: true, user: users.sanitizeUser(u) });
+    res.json({ success: true, user: users.sanitizeUser(u), permissions: users.ROLE_PERMISSIONS[u.role] || [] });
   } catch (e) {
     res.status(500).json({ success: false, error: 'Falha ao obter usuário.' });
   }
@@ -81,7 +81,7 @@ router.post('/login', (req, res) => {
     }
     users.updateUser(user.id, { lastLogin: new Date().toISOString() });
     const token = users.createSession(user, req);
-    res.json({ success: true, user: users.sanitizeUser(user), token });
+    res.json({ success: true, user: { ...users.sanitizeUser(user), permissions: users.ROLE_PERMISSIONS[user.role] || [] }, token });
   } catch (e) {
     res.status(500).json({ success: false, error: 'Falha ao entrar.' });
   }
@@ -121,7 +121,9 @@ router.post('/create', (req, res) => {
     }
 
     // Admin cria usuário manualmente.
-    if (!session) return res.status(401).json({ success: false, error: 'Não autenticado.' });
+    if (!session) {
+      return res.status(403).json({ success: false, code: 'REGISTRATION_CLOSED', error: 'Cadastro fechado. Peça ao administrador para autorizar o registro.' });
+    }
     if (!users.hasPermission(session.role, 'users:manage')) {
       return res.status(403).json({ success: false, error: 'Sem permissão.' });
     }

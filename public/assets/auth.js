@@ -14,8 +14,8 @@
       if (page === 'setup' && setup.configured) { go('/login.html'); return; }
       if (page === 'signup' && !setup.configured) { go('/setup.html'); return; }
       if ((page === 'login' || page === 'signup') && localStorage.getItem(STORAGE_KEY)) { go('/index.html'); return; }
-      // Mostra o link de cadastro no login quando permitido.
-      if (page === 'login' && setup.allowRegistration) {
+      // Sempre mostra o link de cadastro no login (o servidor decide se está aberto).
+      if (page === 'login') {
         const link = document.getElementById('signupAlt');
         if (link) link.style.display = '';
       }
@@ -90,6 +90,7 @@
         setMsg('message', 'Conta criada! Vá para o login.', 'ok');
         setTimeout(() => go('/login.html'), 700);
       } catch (err) {
+        // Mensagem clara quando o cadastro está fechado ou usuário já existe.
         setMsg('message', err.message || 'Não foi possível criar a conta.', 'err');
         btn.disabled = false;
       }

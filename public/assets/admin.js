@@ -24,11 +24,19 @@
   async function loadUsers() {
     try {
       const list = await api.user.list();
+      const canManage = window.bosCan && window.bosCan('users:manage');
+      const reg = (await api.user.setup().catch(() => ({}))).allowRegistration;
+      const info = canManage ? `<p class="muted" style="margin-bottom:12px;font-size:13px">
+        Papéis: <b>admin</b> gerencia tudo (usuários, configurações, logs); <b>editor</b> usa o sistema e vê logs;
+        <b>viewer</b> é somente-leitura (não edita arquivos). O cadastro público (<i>Signup</i>) cria usuários
+        <b>viewer</b> e só funciona quando <b>"Permitir auto-registro"</b> está ligado em Configurações
+        (${reg ? 'atualmente <span style="color:var(--ok)">ligado</span>' : 'atualmente <span style="color:var(--warn)">desligado</span>'}).
+      </p>` : '';
       if (!Array.isArray(list) || !list.length) {
-        usersEl().innerHTML = '<p class="muted">Nenhum usuário.</p>';
+        usersEl().innerHTML = info + '<p class="muted">Nenhum usuário.</p>';
         return;
       }
-      usersEl().innerHTML = `<div class="table-wrap"><table>
+      usersEl().innerHTML = info + `<div class="table-wrap"><table>
         <thead><tr><th>Usuário</th><th>Nome</th><th>Papel</th><th>Status</th><th>Último acesso</th><th></th></tr></thead>
         <tbody>${list.map(u => `
           <tr>
@@ -117,6 +125,12 @@
   }
 
   // ─── Papéis ───────────────────────────────────────────────────────
+  const ROLE_DESCRIPTIONS = {
+    admin: 'Acesso total: gerencia usuários, papéis, configurações do sistema e logs. Único papel que pode alterar o sistema.',
+    editor: 'Usa o sistema como um usuário avançado (arquivos, plugins, loja) e visualiza logs. Não gerencia usuários nem configurações.',
+    viewer: 'Somente leitura: navega e baixa arquivos, mas não cria, edita, renomeia ou exclui. Não acessa a Administração.',
+  };
+
   async function loadRoles() {
     try {
       const d = await api.user.roles();
@@ -124,7 +138,8 @@
       rolesEl().innerHTML = (d.roles || []).map(r => `
         <div style="padding:10px 0;border-bottom:1px solid var(--line-soft)">
           <div style="color:#fff;font-weight:600;text-transform:capitalize">${ui.escapeHtml(r)}</div>
-          <div class="muted" style="font-size:12px;margin-top:4px">${(perms[r] || []).map(p => ui.escapeHtml(p)).join(' · ')}</div>
+          <div class="muted" style="font-size:12px;margin-top:4px">${ui.escapeHtml(ROLE_DESCRIPTIONS[r] || '')}</div>
+          <div class="muted" style="font-size:11px;margin-top:4px;opacity:.8">${ROLE_DESCRIPTIONS[r] ? (perms[r] || []).map(p => ui.escapeHtml(p)).join(' · ') : ''}</div>
         </div>`).join('');
     } catch (e) {
       rolesEl().innerHTML = `<p class="muted" style="color:var(--danger)">${ui.escapeHtml(e.message)}</p>`;
