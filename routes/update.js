@@ -14,7 +14,7 @@ const PKG_PATH = path.join(__dirname, "..", "package.json");
 
 const REMOTE = "origin";
 const BRANCH = "main";
-const REPO_URL = "https://github.com/BrightierOS/BrightierOS-private.git";
+const REPO_URL = "https://github.com/BrightierOS/BrightierOS-public.git";
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -156,6 +156,53 @@ router.get("/history", (req, res) => {
     res.json({ success: true, history });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/update/rollback — Reverte para uma versão anterior via tag
+router.post("/rollback", async (req, res) => {
+  try {
+    const { targetVersion } = req.body || {};
+    if (!targetVersion) {
+      return res.status(400).json({ success: false, error: 'Informe a versão alvo.' });
+    }
+
+    const installed = getInstalledVersion();
+    if (targetVersion === installed) {
+      return res.status(400).json({ success: false, error: 'Já está nesta versão.' });
+    }
+
+    const git = simpleGit({ baseDir: path.join(__dirname, "..") });
+    const tag = `v${String(targetVersion).replace(/^v/, '')}`;
+
+    // Confirma que a tag existe
+    const tags = await git.tags();
+    if (!tags.all.includes(tag)) {
+      return res.status(404).json({ success: false, error: `Tag ${tag} não encontrada.` });
+    }
+
+    await git.checkout(tag);
+
+    const newPkg = JSON.parse(fs.readFileSync(PKG_PATH, "utf8"));
+    const newVersion = newPkg.version || targetVersion;
+
+    addHistoryEntry({
+      type: "rollback",
+      from: installed,
+      to: newVersion,
+      target: targetVersion,
+      message: `Rollback para ${tag}`,
+    });
+
+    res.json({
+      success: true,
+      installedVersion: installed,
+      rolledBackTo: newVersion,
+      message: `Revertido para ${tag}. Reinicie para aplicar.`,
+    });
+  } catch (err) {
+    console.error("Erro ao reverter:", err.message);
+    res.status(500).json({ success: false, error: "Falha ao reverter: " + err.message });
   }
 });
 
