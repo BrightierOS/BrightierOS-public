@@ -141,6 +141,9 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; }
 
 .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
 
+.section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.section-head h2 { margin: 0; }
+
 /* ---------- Inputs ---------- */
 input, select, textarea {
   width: 100%; padding: 11px 13px; border-radius: var(--radius-sm);
@@ -261,6 +264,10 @@ tbody tr:hover { background: rgba(255, 255, 255, 0.025); }
   .grid.cols-2, .grid.cols-3 { grid-template-columns: 1fr; }
   .dock { gap: 2px; padding: 6px 8px; bottom: 12px; }
   .dock a { padding: 6px 12px; min-width: 44px; }
+  .section-head { align-items: flex-start; }
+  table { font-size: 13px; }
+  th, td { padding: 9px 10px; }
+  .modal { padding: 18px; border-radius: 14px; }
 }
 @media (max-width: 520px) {
   .dock a span.txt { display: none; }
@@ -268,6 +275,14 @@ tbody tr:hover { background: rgba(255, 255, 255, 0.025); }
   .dock a svg { width: 22px; height: 22px; }
   .topbar-actions .btn span.txt { display: none; }
   .clock { display: none; }
+  .topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .topbar-actions { width: 100%; justify-content: flex-end; }
+  .row-actions { flex-direction: column; align-items: stretch; }
+  .row-actions .btn { width: 100%; }
+  .toolbar { gap: 8px; }
+  .toolbar input { width: 100% !important; }
+  .section-head { flex-direction: column; align-items: stretch; }
+  .section-head .btn { width: 100%; }
 }
 
 

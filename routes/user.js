@@ -1,188 +1,189 @@
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
+const express = require('express');
+const fs = require('fs');
+const users = require('../lib/users');
 
 const router = express.Router();
-const DATA_DIR = path.join(__dirname, "..", "data");
-const USER_FILE = path.join(DATA_DIR, "user.json");
 
-function ensureStore() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-
-  if (!fs.existsSync(USER_FILE)) {
-    fs.writeFileSync(USER_FILE, "{}", "utf8");
-  }
-}
-
-function readUser() {
-  ensureStore();
-  const content = fs.readFileSync(USER_FILE, "utf8").trim();
-  if (!content) return null;
-
-  const parsed = JSON.parse(content);
-  return parsed && parsed.username ? parsed : null;
-}
-
-function writeUser(user) {
-  ensureStore();
-  fs.writeFileSync(USER_FILE, JSON.stringify(user, null, 2), "utf8");
-}
-
-function sanitizeUser(user) {
-  const { password, ...rest } = user;
-  return rest;
-}
-
-router.get("/setup", (req, res) => {
+// GET /api/users/setup — informa se já existe usuário configurado
+router.get('/setup', (req, res) => {
   try {
-    const user = readUser();
-    if (!user) {
-      return res.json({ success: false, user: null });
-    }
-
-    res.json({ success: true, user: sanitizeUser(user) });
-  } catch {
-    res.status(500).json({ success: false, error: "Unable to load setup user." });
-  }
-});
-
-router.get("/list", (req, res) => {
-  try {
-    const user = readUser();
-    res.json(user ? [sanitizeUser(user)] : []);
-  } catch {
-    res.status(500).json({ success: false, error: "Unable to read users." });
-  }
-});
-
-router.get("/:id", (req, res) => {
-  try {
-    const user = readUser();
-
-    if (!user || user.id !== req.params.id) {
-      return res.status(404).json({ success: false, error: "User not found." });
-    }
-
-    res.json({ success: true, user: sanitizeUser(user) });
-  } catch {
-    res.status(500).json({ success: false, error: "Unable to read user." });
-  }
-});
-
-router.post("/create", express.json(), (req, res) => {
-  try {
-    const { username, password, role = "user" } = req.body || {};
-
-    if (!username || !password) {
-      return res.status(400).json({ success: false, error: "Username and password are required." });
-    }
-
-    if (readUser()) {
-      return res.status(409).json({ success: false, error: "User already exists." });
-    }
-
-    const newUser = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      username,
-      password,
-      role,
-      createdAt: new Date().toISOString(),
-    };
-
-    writeUser(newUser);
-    res.json({ success: true, user: sanitizeUser(newUser) });
+    const all = users.readUsers();
+    res.json({ success: true, configured: all.length > 0, user: all.length ? users.sanitizeUser(all[0]) : null });
   } catch (e) {
-    console.error("Erro ao criar usuário:", e);
-    res.status(500).json({ success: false, error: e.message || "Unable to create user." });
+    res.status(500).json({ success: false, error: 'Falha ao verificar configuração.' });
   }
 });
 
-router.post("/login", express.json(), (req, res) => {
+// GET /api/users/list — lista usuários (users:manage)
+router.get('/list', users.requirePermission('users:manage'), (req, res) => {
+  try {
+    res.json(users.readUsers().map(users.sanitizeUser));
+  } catch (e) {
+    res.status(500).json({ success: false, error: 'Falha ao listar usuários.' });
+  }
+});
+
+// GET /api/users/me — usuário da sessão atual
+router.get('/me', users.requirePermission(), (req, res) => {
+  try {
+    const u = users.findUserById(req.session.userId);
+    res.json({ success: true, user: users.sanitizeUser(u) });
+  } catch (e) {
+    res.status(500).json({ success: false, error: 'Falha ao obter usuário.' });
+  }
+});
+
+// GET /api/users/roles — papéis e permissões (roles:view)
+router.get('/roles', users.requirePermission('roles:view'), (req, res) => {
+  res.json({ success: true, roles: users.ROLES, permissions: users.ROLE_PERMISSIONS });
+});
+
+// GET /api/users/sessions — sessões ativas (users:manage)
+router.get('/sessions', users.requirePermission('users:manage'), (req, res) => {
+  res.json({ success: true, sessions: users.listSessions() });
+});
+
+// POST /api/users/login
+router.post('/login', (req, res) => {
   try {
     const { username, password } = req.body || {};
-    const user = readUser();
-
     if (!username || !password) {
-      return res.status(400).json({ success: false, error: "Username and password are required." });
+      return res.status(400).json({ success: false, error: 'Usuário e senha são obrigatórios.' });
     }
-
-    if (!user || user.username.toLowerCase() !== String(username).toLowerCase() || user.password !== String(password)) {
-      return res.status(401).json({ success: false, error: "Invalid credentials." });
+    const user = users.findUserByUsername(username);
+    if (!user || !user.active || !users.verifyPassword(password, user.passwordHash)) {
+      return res.status(401).json({ success: false, error: 'Credenciais inválidas.' });
     }
-
-    res.json({ success: true, user: sanitizeUser(user) });
-  } catch {
-    res.status(500).json({ success: false, error: "Unable to login." });
+    users.updateUser(user.id, { lastLogin: new Date().toISOString() });
+    const token = users.createSession(user, req);
+    res.json({ success: true, user: users.sanitizeUser(user), token });
+  } catch (e) {
+    res.status(500).json({ success: false, error: 'Falha ao entrar.' });
   }
 });
 
-router.put("/:id", express.json(), (req, res) => {
+// POST /api/users/logout — encerra a sessão atual
+router.post('/logout', users.requirePermission(), (req, res) => {
   try {
-    const current = readUser();
-
-    if (!current || current.id !== req.params.id) {
-      return res.status(404).json({ success: false, error: "User not found." });
-    }
-
-    const updated = { ...current, ...req.body, id: current.id };
-    writeUser(updated);
-
-    res.json({ success: true, user: sanitizeUser(updated) });
-  } catch {
-    res.status(500).json({ success: false, error: "Unable to update user." });
-  }
-});
-
-router.delete("/:id", (req, res) => {
-  try {
-    const current = readUser();
-
-    if (!current || current.id !== req.params.id) {
-      return res.status(404).json({ success: false, error: "User not found." });
-    }
-
-    writeUser({});
+    users.terminateSession(req.session.id);
     res.json({ success: true });
-  } catch {
-    res.status(500).json({ success: false, error: "Unable to delete user." });
+  } catch (e) {
+    res.status(500).json({ success: false, error: 'Falha ao sair.' });
   }
 });
-router.post("/confirm-reset", express.json(), (req, res) => {
+
+// POST /api/users/create — cria usuário (setup inicial sem auth; depois requer permissão)
+router.post('/create', (req, res) => {
+  try {
+    const existing = users.readUsers();
+    let actor = null;
+    if (existing.length > 0) {
+      const session = users.authenticate(req);
+      if (!session) return res.status(401).json({ success: false, error: 'Não autenticado.' });
+      if (!users.hasPermission(session.role, 'users:manage')) {
+        return res.status(403).json({ success: false, error: 'Sem permissão.' });
+      }
+      actor = session.username;
+    }
+    const { username, password, role = 'viewer', displayName } = req.body || {};
+    const user = users.createUser({ username, password, role, displayName });
+    users.appendAdminLog({ actor, action: 'user.create', target: user.username, detail: `papel=${user.role}` });
+    res.json({ success: true, user: users.sanitizeUser(user) });
+  } catch (e) {
+    res.status(400).json({ success: false, error: e.message });
+  }
+});
+
+// __PART2_HERE__
+
+// DELETE /api/users/sessions/:id — encerra sessão (própria ou users:manage)
+router.delete('/sessions/:id', users.requirePermission(), (req, res) => {
+  try {
+    const id = req.params.id;
+    const isOwn = req.session && req.session.id === id;
+    if (!isOwn && !users.hasPermission(req.session.role, 'users:manage')) {
+      return res.status(403).json({ success: false, error: 'Sem permissão.' });
+    }
+    const ok = users.terminateSession(id);
+    users.appendAdminLog({
+      actor: req.session.username,
+      action: 'session.terminate',
+      target: id,
+      detail: isOwn ? 'própria' : 'de terceiro',
+    });
+    res.json({ success: ok });
+  } catch (e) {
+    res.status(500).json({ success: false, error: 'Falha ao encerrar sessão.' });
+  }
+});
+
+// GET /api/users/:id — detalhe (users:manage)
+router.get('/:id', users.requirePermission('users:manage'), (req, res) => {
+  try {
+    const u = users.findUserById(req.params.id);
+    if (!u) return res.status(404).json({ success: false, error: 'Usuário não encontrado.' });
+    res.json({ success: true, user: users.sanitizeUser(u) });
+  } catch (e) {
+    res.status(500).json({ success: false, error: 'Falha ao obter usuário.' });
+  }
+});
+
+// PUT /api/users/:id — edita usuário (users:manage)
+router.put('/:id', users.requirePermission('users:manage'), (req, res) => {
+  try {
+    const updated = users.updateUser(req.params.id, req.body || {});
+    users.appendAdminLog({
+      actor: req.session.username,
+      action: 'user.update',
+      target: updated.username,
+      detail: JSON.stringify(req.body || {}),
+    });
+    res.json({ success: true, user: users.sanitizeUser(updated) });
+  } catch (e) {
+    res.status(400).json({ success: false, error: e.message });
+  }
+});
+
+// DELETE /api/users/:id — remove usuário (users:manage)
+router.delete('/:id', users.requirePermission('users:manage'), (req, res) => {
+  try {
+    const u = users.deleteUser(req.params.id);
+    users.appendAdminLog({ actor: req.session.username, action: 'user.delete', target: u.username });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(400).json({ success: false, error: e.message });
+  }
+});
+
+// POST /api/users/:id/password — altera senha (própria ou users:manage)
+router.post('/:id/password', users.requirePermission(), (req, res) => {
   try {
     const { password } = req.body || {};
-    const user = readUser();
-    if (!user) return res.status(401).json({ success: false, error: "No user logged in." });
-    if (user.password !== password) return res.status(403).json({ success: false, error: "Incorrect password." });
-    return res.json({ success: true, message: "Password confirmed." });
+    const isOwn = req.session.userId === req.params.id;
+    if (!isOwn && !users.hasPermission(req.session.role, 'users:manage')) {
+      return res.status(403).json({ success: false, error: 'Sem permissão.' });
+    }
+    users.changePassword(req.params.id, password);
+    users.appendAdminLog({ actor: req.session.username, action: 'user.password', target: req.params.id });
+    res.json({ success: true });
   } catch (e) {
-    console.error(e);
-    return res.status(500).json({ success: false, error: "Confirm reset failed." });
+    res.status(400).json({ success: false, error: e.message });
   }
 });
 
-// Reset endpoint now requires confirmation header
-router.post("/reset", (req, res) => {
-  if (req.headers["x-confirmed-reset"] !== "true") {
-    return res.status(403).json({ success: false, error: "Reset not confirmed." });
+// Reset de sistema (mantido): apaga todo o diretório de dados.
+router.post('/reset', (req, res) => {
+  if (req.headers['x-confirmed-reset'] !== 'true') {
+    return res.status(403).json({ success: false, error: 'Reset não confirmado.' });
   }
   try {
-    const dataDir = path.join(__dirname, "..", "data");
-    // Delete entire data directory
-    if (fs.existsSync(dataDir)) {
-      fs.rmSync(dataDir, { recursive: true, force: true });
-    }
-    // Recreate empty data directory for future use
+    const dataDir = users.DATA_DIR;
+    if (fs.existsSync(dataDir)) fs.rmSync(dataDir, { recursive: true, force: true });
     fs.mkdirSync(dataDir, { recursive: true });
-    res.json({ success: true, message: "System reset." });
+    res.json({ success: true, message: 'Sistema resetado.' });
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ success: false, error: "Reset failed." });
+    res.status(500).json({ success: false, error: 'Falha ao resetar.' });
   }
 });
-
-
-
 
 module.exports = router;

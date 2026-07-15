@@ -37,6 +37,7 @@
       try {
         const data = await api.user.login(username, password);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
+        localStorage.setItem('brightieros-token', data.token);
         go('/index.html');
       } catch (err) {
         setMsg('message', err.message || 'Falha ao entrar.', 'err');

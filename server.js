@@ -53,6 +53,10 @@ loadStores(app);
 const userRouter = require('./routes/user');
 app.use('/api/users', userRouter);
 
+// Mount admin router for system settings and admin audit logs
+const adminRouter = require('./routes/admin');
+app.use('/api/admin', adminRouter);
+
 // Mount update router for version checking and updates
 const updateRouter = require('./routes/update');
 app.use('/api/update', updateRouter);

@@ -8,6 +8,7 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const simpleGit = require("simple-git");
+const usersLib = require("../lib/users");
 
 const router = express.Router();
 
@@ -355,6 +356,18 @@ router.post("/apply", async (req, res) => {
       });
     }
 
+    // Atualização forçada: registra no log administrativo que ignoramos alterações locais.
+    if (force && localChanges.length > 0) {
+      try {
+        usersLib.appendAdminLog({
+          actor: (usersLib.authenticate(req) || {}).username || "system",
+          action: "update.force",
+          target: targetVersion || "latest",
+          detail: `atualização forçada; arquivos modificados ignorados: ${localChanges.length}`,
+        });
+      } catch (_) { /* log não é crítico */ }
+    }
+
     // 1) Backup automático ANTES de atualizar.
     let backup = null;
     try {
@@ -500,6 +513,18 @@ router.post("/rollback", async (req, res) => {
         message:
           "Foram detectadas alterações locais. Reverter pode sobrescrever arquivos modificados.",
       });
+    }
+
+    // Reversão forçada: registra no log administrativo que ignoramos alterações locais.
+    if (force && localChanges.length > 0) {
+      try {
+        usersLib.appendAdminLog({
+          actor: (usersLib.authenticate(req) || {}).username || "system",
+          action: "rollback.force",
+          target: targetVersion || "latest",
+          detail: `reversão forçada; arquivos modificados ignorados: ${localChanges.length}`,
+        });
+      } catch (_) { /* log não é crítico */ }
     }
 
     // Backup antes do rollback.

@@ -6,7 +6,10 @@
   'use strict';
 
   async function fetchJSON(url, options = {}) {
-    const res = await fetch(url, options);
+    const token = (typeof localStorage !== 'undefined') ? localStorage.getItem('brightieros-token') : null;
+    const headers = { ...(options.headers || {}) };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    const res = await fetch(url, { ...options, headers });
     let data = null;
     try { data = await res.json(); } catch (_) { /* no body */ }
     if (!res.ok) {
@@ -126,12 +129,25 @@
     user: {
       setup: () => fetchJSON('/api/users/setup'),
       list: () => fetchJSON('/api/users/list'),
-      create: (username, password, role = 'admin') =>
-        postJSON('/api/users/create', { username, password, role }),
+      me: () => fetchJSON('/api/users/me'),
+      roles: () => fetchJSON('/api/users/roles'),
+      sessions: () => fetchJSON('/api/users/sessions'),
+      logout: () => postJSON('/api/users/logout', {}),
+      create: (username, password, role = 'viewer', displayName) =>
+        postJSON('/api/users/create', { username, password, role, displayName }),
+      update: (id, patch) => postJSON(`/api/users/${id}`, patch, { method: 'PUT' }),
+      remove: (id) => fetchJSON(`/api/users/${id}`, { method: 'DELETE' }),
+      changePassword: (id, password) => postJSON(`/api/users/${id}/password`, { password }),
       login: (username, password) =>
         postJSON('/api/users/login', { username, password }),
       reset: () =>
         fetchJSON('/api/users/reset', { method: 'POST', headers: { 'x-confirmed-reset': 'true' } }),
+    },
+
+    admin: {
+      settings: () => fetchJSON('/api/admin/settings'),
+      saveSettings: (patch) => postJSON('/api/admin/settings', patch, { method: 'PUT' }),
+      logs: () => fetchJSON('/api/admin/logs'),
     },
 
     stats: () => fetchJSON('/api/stats'),

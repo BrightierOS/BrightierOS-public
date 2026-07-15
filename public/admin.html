@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrightierOS — Administração</title>
+  <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body data-page="admin" data-title="Administração" data-sub="Gerencie usuários, permissões, sessões e o sistema.">
+  <main class="page">
+    <div class="grid cols-1">
+      <section class="card">
+        <div class="section-head">
+          <h2>Usuários</h2>
+          <button id="newUserBtn" class="btn sm">+ Novo usuário</button>
+        </div>
+        <div id="users-list"><p class="muted">Carregando...</p></div>
+      </section>
+
+      <section class="card">
+        <h2>Papéis e Permissões</h2>
+        <div id="roles-list"><p class="muted">Carregando...</p></div>
+      </section>
+
+      <section class="card">
+        <h2>Sessões ativas</h2>
+        <div id="sessions-list"><p class="muted">Carregando...</p></div>
+      </section>
+
+      <section class="card">
+        <h2>Configurações do sistema</h2>
+        <div id="settings-form"><p class="muted">Carregando...</p></div>
+      </section>
+
+      <section class="card">
+        <h2>Logs administrativos</h2>
+        <div id="logs-list"><p class="muted">Carregando...</p></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="assets/api.js"></script>
+  <script src="assets/app.js"></script>
+  <script src="assets/admin.js"></script>
+</body>
+</html>

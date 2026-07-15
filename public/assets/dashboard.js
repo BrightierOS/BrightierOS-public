@@ -140,8 +140,8 @@
         // Não atualiza por cima de alterações locais sem confirmar.
         const lista = (d.localChanges || []).map((c) => `• ${c}`).join('\n');
         const force = await ui.confirm(
-          `⚠️ Foram detectadas alterações locais.\nAtualizar pode sobrescrever arquivos modificados.\n\n${lista}`,
-          { title: 'Alterações locais', okText: 'Continuar', cancelText: 'Cancelar', danger: true }
+          `⚠️ Foram detectadas alterações locais.\nAtualizar pode sobrescrever arquivos modificados.\nUm backup automático será criado antes de continuar.\n\n${lista}`,
+          { title: 'Alterações locais', okText: 'Atualizar mesmo assim', cancelText: 'Cancelar', danger: true }
         );
         if (!force) { ui.toast('Atualização cancelada.', 'info'); return; }
         const d2 = await api.update.apply(target ? { targetVersion: target, force: true } : { force: true });
