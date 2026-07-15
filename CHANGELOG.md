@@ -2,6 +2,19 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.5.4.2 — Terminal restrito a administradores
+
+* **Segurança**: o terminal (WebSocket que executa comandos do SO) antes não exigia
+  autenticação — qualquer um que alcançasse a porta tinha shell. Agora **só administradores
+  autenticados** acessam.
+  * `server.js`: o WebSocket do terminal valida um token admin (`?token=`); conexões de
+    não-admin ou sem token são fechadas imediatamente.
+  * `server.js`: `/console.html` retorna `403` para não-administradores (defesa em profundidade).
+  * `lib/users.js`: `sessionFromToken(token)` para validar sessão fora do middleware HTTP.
+* **UI**: o item "Console" saiu do dock padrão e só aparece para `admin`; removido o link
+  rápido de Console do Dashboard.
+* O **viewer** (e editor) **não tem mais acesso ao terminal**.
+
 ## v0.5.4.1 — Correção: copiar link de convite
 
 * Corrigido "Copiar link" na lista de convites e na criação de convite que não

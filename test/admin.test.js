@@ -81,6 +81,21 @@ test('configurações do sistema com defaults', () => {
   assert.equal(U.readSettings().allowRegistration, true);
 });
 
+test('sessionFromToken valida e rejeita token inválido/não-admin', () => {
+  const admin = U.findUserByUsername('root');
+  const req = { ip: '127.0.0.1', headers: { 'user-agent': 'test' } };
+  const token = U.createSession(admin, req);
+  assert.ok(U.sessionFromToken(token));
+  assert.equal(U.sessionFromToken('token-inexistente'), null);
+  // Reuso de token não-admin não dá acesso admin (checado pelo server via role).
+  const viewer = U.createUser({ username: 'v0', password: 'pw', role: 'viewer' });
+  const vTok = U.createSession(viewer, req);
+  const vs = U.sessionFromToken(vTok);
+  assert.ok(vs);
+  assert.equal(vs.role, 'viewer');
+  assert.notEqual(vs.role, 'admin');
+  U.deleteUser(viewer.id);
+});
 test('convites por link: criar, validar, consumir e revogar', () => {
   const inv = U.createInvite({ role: 'admin', createdBy: 'root' });
   assert.ok(inv.token && inv.role === 'admin');

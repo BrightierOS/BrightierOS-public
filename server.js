@@ -8,10 +8,23 @@ const WebSocket = require('ws');
 const si = require('systeminformation');
 const { exec } = require('child_process');
 const os = require('os');
+const users = require('./lib/users');
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+
+// O terminal (WebSocket) executa comandos do SO: só administradores autenticados.
+function terminalAllowed(req) {
+  try {
+    const url = new URL(req.url, 'http://localhost');
+    const token = url.searchParams.get('token') || '';
+    const session = users.sessionFromToken(token);
+    return !!session && session.role === 'admin';
+  } catch (_) {
+    return false;
+  }
+}
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -42,6 +55,16 @@ process.on('SIGTERM', () => {
 });
 
 app.use(express.json());
+
+// Defesa em profundidade: a página do terminal só é servida para administradores.
+app.get('/console.html', (req, res) => {
+  const session = users.sessionFromToken((req.headers['authorization'] || '').replace(/^Bearer\s+/i, '') || (new URL(req.url, 'http://localhost').searchParams.get('token') || ''));
+  if (!session || session.role !== 'admin') {
+    return res.status(403).send('Acesso negado: o terminal é restrito a administradores.');
+  }
+  res.sendFile(require('path').join(__dirname, 'public', 'console.html'));
+});
+
 app.use(express.static('public'));
 app.use("/api/files", filesRouter);
 const loadPlugins = require('./routes/plugin');
@@ -62,7 +85,15 @@ const updateRouter = require('./routes/update');
 app.use('/api/update', updateRouter);
 
 
-wss.on('connection', (socket) => {
+wss.on('connection', (socket, req) => {
+  // Bloqueio de segurança: apenas administradores autenticados acessam o terminal.
+  if (!terminalAllowed(req)) {
+    console.warn('Conexão de terminal recusada: não-admin ou sem token.');
+    try { socket.send('Acesso negado: o terminal é restrito a administradores.'); } catch (_) {}
+    socket.close();
+    return;
+  }
+
   console.log('Console connected.');
 
   const pkg = require('./package.json');

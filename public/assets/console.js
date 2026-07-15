@@ -8,7 +8,9 @@
   const input = document.getElementById('cmd');
   if (!terminal || !input) return;
 
-  const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`);
+  const token = (typeof localStorage !== 'undefined') ? localStorage.getItem('brightieros-token') : null;
+  const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/?token=${encodeURIComponent(token || '')}`;
+  const ws = new WebSocket(wsUrl);
 
   function scroll() { terminal.scrollTop = terminal.scrollHeight; }
 

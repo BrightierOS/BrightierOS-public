@@ -19,12 +19,18 @@
   const NAV = [
     { key: 'dashboard', href: '/', label: 'Dashboard', icon: ICONS.dashboard },
     { key: 'files', href: '/files.html', label: 'Arquivos', icon: ICONS.files },
-    { key: 'console', href: '/console.html', label: 'Console', icon: ICONS.console },
     { key: 'store', href: '/store.html', label: 'Loja', icon: ICONS.store },
     { key: 'trash', href: '/trash.html', label: 'Lixeira', icon: ICONS.trash },
-    { key: 'admin', href: '/admin.html', label: 'Administração', icon: ICONS.admin },
+    { key: 'admin', href: '/admin.html', label: 'Administração', icon: ICONS.admin, role: 'admin' },
+    { key: 'console', href: '/console.html', label: 'Console', icon: ICONS.console, role: 'admin' },
     { key: 'profile', href: '/profile.html', label: 'Perfil', icon: ICONS.profile },
   ];
+
+  // Console e Administração aparecem apenas para administradores.
+  function navVisible(item) {
+    if (item.role === 'admin') return role === 'admin';
+    return true;
+  }
 
   const STORAGE_KEY = 'brightieros-user';
 
@@ -82,7 +88,7 @@
     shell.className = 'layout';
 
     const role = (() => { try { return (JSON.parse(userRaw) || {}).role; } catch (_) { return null; } })();
-    const navHtml = NAV.filter(item => item.key !== 'admin' || role === 'admin' || role === 'editor').map(item => `
+    const navHtml = NAV.filter(navVisible).map(item => `
       <a href="${item.href}" class="${item.key === pageKey ? 'active' : ''}" title="${item.label}">
         ${item.icon}<span class="txt">${item.label}</span>
       </a>`).join('');
