@@ -30,7 +30,7 @@ module.exports = (app) => {
     }
     const stores = JSON.parse(fs.readFileSync(storesFile));
     if (stores.find((s) => s.id === id)) {
-      return res.status(409).json({ error: 'Store id already exists.' });
+      return res.status(409).json({ success: false, error: 'Store id already exists.' });
     }
     stores.push({ id, name, url });
     fs.writeFileSync(storesFile, JSON.stringify(stores, null, 2));
@@ -53,7 +53,7 @@ module.exports = (app) => {
     const { id } = req.params;
     const stores = JSON.parse(fs.readFileSync(storesFile));
     const store = stores.find((s) => s.id === id);
-    if (!store) return res.status(404).json({ error: 'Store not found.' });
+    if (!store) return res.status(404).json({ success: false, error: 'Store not found.' });
     const cachePath = getCachePath(id);
     // Clone on‑demand if not cached yet
     if (!fs.existsSync(cachePath)) {
@@ -61,12 +61,12 @@ module.exports = (app) => {
         await simpleGit().clone(store.url, cachePath);
       } catch (e) {
         console.error('[Store] Clone error', e);
-        return res.status(500).json({ error: 'Failed to clone store.' });
+        return res.status(500).json({ success: false, error: 'Failed to clone store.' });
       }
     }
     const appsPath = path.join(cachePath, 'apps.json');
     if (!fs.existsSync(appsPath)) {
-      return res.status(404).json({ error: 'apps.json not found in store.' });
+      return res.status(404).json({ success: false, error: 'apps.json not found in store.' });
     }
     const apps = JSON.parse(fs.readFileSync(appsPath));
     res.json(apps);
@@ -77,29 +77,29 @@ module.exports = (app) => {
     const { id, pluginId } = req.params;
     const stores = JSON.parse(fs.readFileSync(storesFile));
     const store = stores.find((s) => s.id === id);
-    if (!store) return res.status(404).json({ error: 'Store not found.' });
+    if (!store) return res.status(404).json({ success: false, error: 'Store not found.' });
     const cachePath = getCachePath(id);
     if (!fs.existsSync(cachePath)) {
       try {
         await simpleGit().clone(store.url, cachePath);
       } catch (e) {
         console.error('[Store] Clone error', e);
-        return res.status(500).json({ error: 'Failed to clone store.' });
+        return res.status(500).json({ success: false, error: 'Failed to clone store.' });
       }
     }
     const appsPath = path.join(cachePath, 'apps.json');
     if (!fs.existsSync(appsPath)) {
-      return res.status(404).json({ error: 'apps.json not found in store.' });
+      return res.status(404).json({ success: false, error: 'apps.json not found in store.' });
     }
     const apps = JSON.parse(fs.readFileSync(appsPath));
     const appEntry = apps.find(a => a.id === pluginId);
     if (!appEntry || !appEntry.repository) {
-      return res.status(404).json({ error: 'Plugin repository not found in store catalog.' });
+      return res.status(404).json({ success: false, error: 'Plugin repository not found in store catalog.' });
     }
 
     const dest = path.join(__dirname, '..', 'data', 'plugins', pluginId);
     if (fs.existsSync(dest)) {
-      return res.status(409).json({ error: 'Plugin already installed.' });
+      return res.status(409).json({ success: false, error: 'Plugin already installed.' });
     }
 
     try {
@@ -107,7 +107,7 @@ module.exports = (app) => {
       await simpleGit().clone(appEntry.repository, dest);
     } catch (e) {
       console.error('[Store] Plugin clone error', e);
-      return res.status(500).json({ error: 'Failed to clone plugin repository.' });
+      return res.status(500).json({ success: false, error: 'Failed to clone plugin repository.' });
     }
 
     const manifestPath = path.join(dest, 'manifest.json');
