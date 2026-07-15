@@ -2,6 +2,19 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.5.4.6 — Correção: telas de auth quebradas (login/setup/signup)
+
+* **Hotfix crítico**: `auth.js` tinha o mesmo typo do app shell — o listener
+  usava `DOMContentDLoaded` (evento inexistente) em vez de `DOMContentLoaded`,
+  então `boot()` nunca rodava e os formulários de **login, setup e signup**
+  nunca eram vinculados (a interface "não funcionava a partir do login").
+  Agora `boot()` é chamado direto (com `requestAnimationFrame` como fallback),
+  igual ao `app.js`.
+* **Multiplataforma**: confirmado que backend e launchers (`bOS.sh` para
+  Linux/macOS, `bOS.bat` para Windows) não dependem de comandos específicos de
+  SO — o terminal usa `child_process.exec` (portátil) e o restart por código 65
+  é tratado em ambos os launchers.
+
 ## v0.5.4.5 — Correção: crash do app shell (ReferenceError: role is not defined)
 
 * **Hotfix crítico**: `navVisible` referenciava `role` fora de escopo, causando

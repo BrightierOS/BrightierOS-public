@@ -127,7 +127,12 @@
     form.addEventListener('submit', submitSignup);
   }
 
+  // O script roda ao final do <body>, então o DOM já está disponível na maioria
+  // dos casos. Chamamos boot() direto; se ainda estiver carregando, aguardamos o
+  // próximo frame. Evita depender do nome exato do evento de DOM pronto.
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentDLoaded', boot);
-  } else { boot(); }
+    requestAnimationFrame(boot);
+  } else {
+    boot();
+  }
 })();
