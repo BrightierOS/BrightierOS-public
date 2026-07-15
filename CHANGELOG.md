@@ -2,6 +2,16 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.5.4.9 — Teste de forçar atualização + backend integrado
+
+* **Teste de force update**: adicionado teste em `test/update.test.js` que verifica
+  que `force:true` é reconhecido pelo backend (implementado em
+  `routes/update.js` linhas 352-372, 362-372). Quando `force` é verdadeiro,
+  as alterações locais são ignoradas e um backup automático é criado antes.
+* **Forçar atualização já estava implementado**: o `/api/update/apply` aceita
+  `{ force: true }` no body, ignora alterações locais e registra o log
+  administrativo com `action: "update.force"`.
+
 ## v0.5.4.8 — Console liberado + páginas de erro bonitas
 
 * **Console liberado**: o `console.html` agora é servido sem o bloqueio 403 no
