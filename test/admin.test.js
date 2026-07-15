@@ -26,6 +26,18 @@ test('permissões por papel', () => {
   assert.equal(U.hasPermission('viewer', 'logs:view'), true);
 });
 
+test('permissão hierárquica: "<grupo>:all" cobre "<grupo>:ação"', () => {
+  // admin tem files:all -> também pode files:read e files:write
+  assert.equal(U.hasPermission('admin', 'files:read'), true);
+  assert.equal(U.hasPermission('admin', 'files:write'), true);
+  // editor tem files:all também
+  assert.equal(U.hasPermission('editor', 'files:read'), true);
+  // viewer só files:read -> NÃO tem files:all
+  assert.equal(U.hasPermission('viewer', 'files:all'), false);
+  assert.equal(U.hasPermission('viewer', 'files:read'), true);
+  assert.equal(U.hasPermission('viewer', 'files:write'), false);
+});
+
 test('CRUD de usuários', () => {
   const admin = U.createUser({ username: 'root', password: 'pw', role: 'admin' });
   assert.equal(admin.role, 'admin');

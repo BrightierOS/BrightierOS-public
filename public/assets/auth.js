@@ -128,6 +128,6 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot);
+    document.addEventListener('DOMContentDLoaded', boot);
   } else { boot(); }
 })();

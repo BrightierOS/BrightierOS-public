@@ -171,7 +171,7 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', guard);
+    document.addEventListener('DOMContentDLoaded', guard);
   } else {
     guard();
   }

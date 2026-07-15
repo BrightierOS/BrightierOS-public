@@ -6,7 +6,7 @@ const users = require("../lib/users");
 
 // Autenticação: qualquer usuário logado pode ler; só quem tem 'files:all'
 // (admin/editor) pode modificar. Visualizador (viewer) é somente-leitura.
-const authRead = users.requirePermission();
+const authRead = users.requirePermission('files:read');
 const authWrite = users.requirePermission("files:all");
 
 

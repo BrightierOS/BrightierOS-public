@@ -2,6 +2,22 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.5.4.3 — Correção: tela de carregamento + arquivos validando
+
+* **Correção de bug crítico**: a tela de carregamento ficava em *loop* infinito
+  porque o listener usava o evento digitado erado `DOMContentLoaded` (faltava
+  um "D") em `app.js` e `auth.js` — o `guard()`/`boot()` nunca executava.
+  Agora usa `DOMContentLoaded` correto e o boot loader some normalmente.
+* **Arquivos validam autenticação** (`routes/files.js`): `authRead` agora exige
+  `files:read` (qualquer usuário **logado** pode ler) e `authWrite` exige
+  `files:all` (só admin/editor escreve). Nenhuma rota de arquivos funciona
+  sem login. Visualizador (viewer) continua somente-leitura.
+* **Permissão hierárquica** (`lib/users.js`): `<grupo>:all` agora concede
+  automaticamente `<grupo>:ação` (ex.: `files:all` cobre `files:read`/`files:write`).
+  Antes, admin/editor eram barrados ao *ler* arquivos porque só tinham `files:all`.
+* **Segurança de dados**: `.gitignore` já ignora `data/` (usuários, sessões, convites —
+  contém hashes de senha), `.env`, `*.log` e `*.ps1`. Nenhuma credencial é versionada.
+
 ## v0.5.4.2 — Terminal restrito a administradores
 
 * **Segurança**: o terminal (WebSocket que executa comandos do SO) antes não exigia
