@@ -2,6 +2,12 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.6.0 — Consolidação
+
+### Tratamento de erros
+* Padronizada resposta de erro no `/api/store/*`: agora retorna `{ success: false, error: "..." }`.
+* Fallback 404 já existente divide HTML (páginas bonitas) de JSON (APIs).
+
 ## v0.5.4.11 — Fallback 404 corrigido (HTML para páginas, JSON para APIs)
 
 * Corrigido o fallback 404 para distinguir requisições de página (HTML) de APIs.

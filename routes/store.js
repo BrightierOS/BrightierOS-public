@@ -23,10 +23,10 @@ module.exports = (app) => {
   app.post('/api/store', express.json(), (req, res) => {
     const { id, name, url } = req.body;
     if (!id || !name || !url) {
-      return res.status(400).json({ error: 'Missing id, name or url.' });
+      return res.status(400).json({ success: false, error: 'Missing id, name or url.' });
     }
     if (!url.startsWith('https://')) {
-      return res.status(400).json({ error: 'Only public HTTPS URLs are allowed.' });
+      return res.status(400).json({ success: false, error: 'Only public HTTPS URLs are allowed.' });
     }
     const stores = JSON.parse(fs.readFileSync(storesFile));
     if (stores.find((s) => s.id === id)) {
