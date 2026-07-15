@@ -2,6 +2,14 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.5.4.1 — Correção: copiar link de convite
+
+* Corrigido "Copiar link" na lista de convites e na criação de convite que não
+  copiava em contexto inseguro (HTTP em LAN). Adicionado `ui.copy()` com fallback
+  via `textarea` + `execCommand('copy')` quando `navigator.clipboard` indisponível.
+* Se mesmo assim a cópia falhar, o link é exibido em um diálogo para cópia manual.
+* `ui.prompt` agora seleciona o texto ao abrir e fecha corretamente (resolve `null`).
+
 ## v0.5.4 — Convites por link
 
 * **Convites por link** com papel pré-definido: o administrador gera um link que

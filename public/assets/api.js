@@ -111,6 +111,7 @@
         document.body.appendChild(backdrop);
         const input = backdrop.querySelector('[data-field]');
         input.focus();
+        input.select();
         const close = (val) => { backdrop.remove(); resolve(val); };
         backdrop.querySelector('[data-act="cancel"]').onclick = () => close(null);
         backdrop.querySelector('[data-act="ok"]').onclick = () => close(input.value.trim());
@@ -120,6 +121,33 @@
           if (e.key === 'Escape') close(null);
         });
       });
+    },
+
+    // Copia texto para a área de transferência. Funciona em contexto seguro
+    // (HTTPS/localhost) via navigator.clipboard e, fora dele (HTTP em LAN),
+    // usa um textarea + execCommand('copy') como fallback.
+    async copy(text) {
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+      } catch (_) { /* cai no fallback */ }
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.top = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, ta.value.length);
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+      } catch (_) {
+        return false;
+      }
     },
   };
 

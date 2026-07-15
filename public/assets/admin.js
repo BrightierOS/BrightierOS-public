@@ -245,12 +245,11 @@
             <td><button class="btn danger sm" data-rev="${ui.escapeHtml(i.token)}" ${i.status !== 'valid' ? 'disabled' : ''}>Revogar</button></td>
           </tr>`).join('')}</tbody></table></div>`;
       invitesEl().querySelectorAll('[data-copy]').forEach(b =>
-        b.addEventListener('click', () => {
+        b.addEventListener('click', async () => {
           const url = `${window.location.origin}/signup.html?invite=${b.getAttribute('data-copy')}`;
-          navigator.clipboard?.writeText(url).then(
-            () => ui.toast('Link copiado!', 'ok'),
-            () => ui.prompt('Copie o link:', { value: url, title: 'Link de convite' })
-          );
+          const ok = await ui.copy(url);
+          if (ok) ui.toast('Link copiado!', 'ok');
+          else ui.prompt('Copie o link manualmente:', { value: url, title: 'Link de convite' });
         }));
       invitesEl().querySelectorAll('[data-rev]').forEach(b =>
         b.addEventListener('click', async () => {
@@ -278,8 +277,9 @@
     try {
       const d = await api.user.invites.create(role);
       const url = `${window.location.origin}/signup.html?invite=${d.invite.token}`;
-      ui.toast(`Convite (${role}) criado e copiado!`, 'ok');
-      try { await navigator.clipboard.writeText(url); } catch (_) {}
+      const copied = await ui.copy(url);
+      ui.toast(copied ? `Convite (${role}) criado e copiado!` : `Convite (${role}) criado — copie o link abaixo.`, copied ? 'ok' : 'info');
+      if (!copied) ui.prompt('Link do convite:', { value: url, title: 'Convite criado' });
       loadInvites(); loadLogs();
     } catch (e) { ui.toast(e.message, 'err'); }
   }
