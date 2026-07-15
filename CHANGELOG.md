@@ -2,6 +2,11 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.6.1 — Separação do server.js
+
+* **Rotas core extraídas**: criado `routes/core.js` com `/console.html`, páginas de erro (403/404/500), e `/api/stats`.
+* **server.js focado em bootstrap**: agora contém apenas inicialização do Express/WebSocket, middlewares e carregamento de rotas.
+
 ## v0.6.0 — Consolidação
 
 ### Tratamento de erros
