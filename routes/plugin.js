@@ -2,6 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
+const hooks = require('../lib/hooks');
 
 /**
  * Load all user‑generated plugins located in `data/plugins`.
@@ -17,6 +18,7 @@ const express = require('express');
  *   • Serves the plugin's frontend assets under `/plugins/<plugin-id>`.
  *   • Logs clear messages and isolates errors so one failing plugin does not
  *     affect the others.
+ *   • Emits hooks for server:start, login, plugin:install, plugin:uninstall, update:done.
  */
 module.exports = (app) => {
   const pluginsRoot = path.join(__dirname, '..', 'data', 'plugins');
@@ -29,6 +31,9 @@ module.exports = (app) => {
   const pluginDirs = fs.readdirSync(pluginsRoot, { withFileTypes: true })
     .filter((d) => d.isDirectory())
     .map((d) => d.name);
+
+  // Hook: server started
+  hooks.emit('server:start', { timestamp: Date.now() });
 
   pluginDirs.forEach((pluginId) => {
     const pluginPath = path.join(pluginsRoot, pluginId);
@@ -57,7 +62,7 @@ module.exports = (app) => {
           return;
         }
 
-        const pluginApi = {}; // future‑proof placeholder for shared API
+        const pluginApi = { hooks }; // API de hooks para plugins
         const backend = require(backendPath);
         if (typeof backend === 'function') {
           backend(app, pluginApi);

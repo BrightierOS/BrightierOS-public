@@ -1,5 +1,6 @@
 /* ============================================================
    BrightierOS — Dashboard page
+   v0.7.1 - UI traduzida + histórico de métricas
    ============================================================ */
 (function () {
   'use strict';
@@ -19,13 +20,48 @@
     try {
       const d = await api.stats();
       const parts = [];
+      // Sistema info
+      if (d.os) {
+        parts.push(`<div class="metric"><div class="meta"><span class="label">OS</span><span class="val">${ui.escapeHtml(d.os.distro || '')} ${ui.escapeHtml(d.os.release || '')} · ${ui.escapeHtml(d.os.arch || '')}</span></div></div>`);
+        parts.push(`<div class="metric"><div class="meta"><span class="label">Uptime</span><span class="val">${ui.escapeHtml(d.uptime || '')}</span></div></div>`);
+      }
       parts.push(bar('CPU — ' + (d.cpu?.name || ''), d.cpu?.usage, ''));
+      if (d.cpu?.cores) parts.push(`<div class="metric"><div class="meta" style="font-size:12px"><span class="label">Cores</span><span class="val">${ui.escapeHtml(d.cpu.cores)}</span></div></div>`);
       parts.push(bar('RAM', d.ram?.usage, `${d.ram?.used}/${d.ram?.total} GB · `));
       (d.gpu || []).forEach((g, i) => parts.push(bar(`GPU ${i + 1} — ${g.name || ''}`, g.usage)));
-      (d.storage || []).forEach(s => parts.push(bar(`Drive ${s.drive || ''} — ${s.used}/${s.total} GB`, s.usage)));
+      (d.storage || []).forEach(s => parts.push(bar(`Drive ${s.drive || ''}`, s.usage, `${s.used}/${s.total} GB · `)));
       el.innerHTML = parts.join('');
     } catch (e) {
-      el.innerHTML = '<p class="muted">Erro ao carregar métricas.</p>';
+      el.innerHTML = '<p class="muted">Error loading metrics.</p>';
+    }
+  }
+
+  async function loadHistory() {
+    const el = document.getElementById('history');
+    if (!el) return;
+    try {
+      const r = await api.stats();
+      const hist = r.history || [];
+      if (!hist.length) {
+        el.innerHTML = '<p class="muted" style="font-size:12px;margin:0">No history yet.</p>';
+        return;
+      }
+      // Desenhar gráfico de barras simples
+      const maxCpu = Math.max(...hist.map(p => p.cpu));
+      const maxRam = Math.max(...hist.map(p => p.ram));
+      const w = 100 / hist.length;
+      let html = '<svg viewBox="0 0 100 40" style="width:100%;height:100%" fill="none">';
+      hist.forEach((p, i) => {
+        const x = i * w;
+        const cpuH = (p.cpu / maxCpu) * 35;
+        const ramH = (p.ram / maxRam) * 35;
+        html += `<rect x="${x}" y="${40-cpuH}" width="${w-1}" height="${cpuH}" fill="var(--accent)" opacity="0.7"></rect>`;
+        html += `<rect x="${x}" y="${40-ramH}" width="${w-1}" height="${ramH}" fill="#0066ff" opacity="0.4"></rect>`;
+      });
+      html += '</svg>';
+      el.innerHTML = html;
+    } catch (e) {
+      el.innerHTML = '';
     }
   }
 

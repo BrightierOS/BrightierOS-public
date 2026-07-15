@@ -187,6 +187,7 @@
     },
 
     stats: () => fetchJSON('/api/stats'),
+    history: () => fetchJSON('/api/metrics/history'),
 
     plugins: {
       list: () => fetchJSON('/api/plugins'),
