@@ -25,37 +25,38 @@
     <div class="grid cols-3">
 
       <section class="card" style="grid-column: span 2;">
-        <h2>Desempenho</h2>
-        <div id="stats"><p class="muted">Carregando métricas...</p></div>
+        <h2>Performance</h2>
+        <div id="stats"><p class="muted">Loading metrics...</p></div>
+        <div id="history" style="margin-top:12px;height:100px;border-top:1px solid var(--line-soft);padding-top:8px"></div>
       </section>
 
       <section class="card">
-        <h2>Atalhos</h2>
+        <h2>Shortcuts</h2>
         <div class="grid" style="gap:10px;">
-          <a class="btn ghost block" href="/files.html">🗀 Arquivos</a>
-          <a class="btn ghost block" href="/store.html">🛒 Loja</a>
-          <a class="btn ghost block" href="/trash.html">🗑 Lixeira</a>
+          <a class="btn ghost block" href="/files.html">📁 Files</a>
+          <a class="btn ghost block" href="/store.html">🛒 Store</a>
+          <a class="btn ghost block" href="/trash.html">🗑 Trash</a>
         </div>
       </section>
 
       <section class="card" style="grid-column: span 3;">
-        <h2>Meus Plugins</h2>
-        <div id="installed-plugins-list"><p class="muted">Carregando plugins...</p></div>
+        <h2>Installed Plugins</h2>
+        <div id="installed-plugins-list"><p class="muted">Loading plugins...</p></div>
       </section>
 
       <section class="card" style="grid-column: span 3;">
-        <h2>Atualizações inteligentes</h2>
+        <h2>Smart Updates</h2>
         <div id="local-changes" style="display:none"></div>
         <div id="update-status"></div>
         <div class="toolbar">
-          <button id="checkUpdateBtn" class="btn sm">Verificar atualizações</button>
-          <input id="targetVersion" type="text" placeholder="Versão alvo (ex.: 0.4.6) — incremental" style="width:260px" />
-          <button id="applyUpdateBtn" class="btn sm" style="display:none">Atualizar agora</button>
+          <button id="checkUpdateBtn" class="btn sm">Check for updates</button>
+          <input id="targetVersion" type="text" placeholder="Target version (e.g. 0.7.1)" style="width:260px" />
+          <button id="applyUpdateBtn" class="btn sm" style="display:none">Update now</button>
         </div>
         <div class="toolbar" style="margin-top:8px">
-          <button id="backupBtn" class="btn ghost sm">🗄 Fazer backup</button>
-          <button id="changelogBtn" class="btn ghost sm">📝 Ver changelog</button>
-          <button id="restoreBtn" class="btn ghost sm">♻ Restaurar backup</button>
+          <button id="backupBtn" class="btn ghost sm">🗄 Backup</button>
+          <button id="changelogBtn" class="btn ghost sm">📝 Changelog</button>
+          <button id="restoreBtn" class="btn ghost sm">♻ Restore</button>
         </div>
         <div id="update-history"></div>
       </section>

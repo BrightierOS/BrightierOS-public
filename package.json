@@ -1,6 +1,6 @@
 {
   "name": "brightieros",
-    "version": "0.6.1",
+    "version": "0.7.1",
   "description": "BrightierOS - Multiplatform web server system",
   "main": "server.js",
   "scripts": {

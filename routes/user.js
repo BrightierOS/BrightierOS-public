@@ -81,6 +81,8 @@ router.post('/login', (req, res) => {
     }
     users.updateUser(user.id, { lastLogin: new Date().toISOString() });
     const token = users.createSession(user, req);
+    // Log login
+    users.appendAdminLog({ actor: username, action: 'login', detail: 'IP=' + (req.ip || 'unknown') });
     res.json({ success: true, user: { ...users.sanitizeUser(user), permissions: users.ROLE_PERMISSIONS[user.role] || [] }, token });
   } catch (e) {
     res.status(500).json({ success: false, error: 'Falha ao entrar.' });
@@ -91,6 +93,8 @@ router.post('/login', (req, res) => {
 router.post('/logout', users.requirePermission(), (req, res) => {
   try {
     users.terminateSession(req.session.id);
+    // Log logout
+    users.appendAdminLog({ actor: req.session.username, action: 'logout' });
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ success: false, error: 'Falha ao sair.' });
