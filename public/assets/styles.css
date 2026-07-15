@@ -271,3 +271,61 @@ tbody tr:hover { background: rgba(255, 255, 255, 0.025); }
 }
 
 
+/* ---------- Boot loader (tela de carregamento) ---------- */
+#boot-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  background-image: var(--bg-grad);
+  background-attachment: fixed;
+  transition: opacity .45s ease, visibility .45s ease;
+}
+#boot-loader.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.boot-loader-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.boot-logo {
+  width: 88px;
+  height: 88px;
+  border-radius: 24px;
+  background: var(--accent-grad);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 14px 44px rgba(0, 212, 255, 0.35);
+  animation: boot-pulse 1.3s ease-in-out infinite;
+}
+.boot-logo img { width: 56px; height: 56px; object-fit: contain; border-radius: 8px; }
+.boot-name {
+  font-family: "Doto", var(--font);
+  font-size: 26px;
+  letter-spacing: -1px;
+  color: #fff;
+}
+.boot-name b { color: var(--accent); }
+.boot-spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid var(--line);
+  border-top-color: var(--accent);
+  animation: boot-spin .8s linear infinite;
+}
+.boot-text {
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: .3px;
+}
+@keyframes boot-spin { to { transform: rotate(360deg); } }
+@keyframes boot-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+
+

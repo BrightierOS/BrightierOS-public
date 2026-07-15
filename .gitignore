@@ -19,3 +19,4 @@ test_encoding.txt
 *.ps1
 
 data/
+logs/
