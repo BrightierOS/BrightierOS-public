@@ -13,6 +13,7 @@
     logout: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 4h3a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-3M10 12h10M17 9l3 3-3 3"/></svg>',
     reset: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12a8 8 0 1 1 2.3 5.6M4 12V7M4 12h5"/></svg>',
     admin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/></svg>',
+    profile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
   };
 
   const NAV = [
@@ -22,6 +23,7 @@
     { key: 'store', href: '/store.html', label: 'Loja', icon: ICONS.store },
     { key: 'trash', href: '/trash.html', label: 'Lixeira', icon: ICONS.trash },
     { key: 'admin', href: '/admin.html', label: 'Administração', icon: ICONS.admin },
+    { key: 'profile', href: '/profile.html', label: 'Perfil', icon: ICONS.profile },
   ];
 
   const STORAGE_KEY = 'brightieros-user';

@@ -2,6 +2,17 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.5.1 — Meu Perfil
+
+* Nova tela **Meu Perfil** (`/profile.html`) acessível a qualquer usuário logado
+  (item de navegação "Perfil" visível para todos).
+* Visualização dos próprios dados (usuário, papel, nome de exibição, status).
+* **Alteração do nome de exibição** via `PUT /api/users/me` (atualiza apenas o
+  próprio perfil; não permite trocar papel/ativo/username por esta rota).
+* **Troca de senha** com confirmação da senha atual + confirmação da nova senha.
+* **Listagem e encerramento das próprias sessões ativas** (ao encerrar a sessão
+  atual, o usuário é desconectado).
+
 ## v0.5.0 — Administração
 
 ### Usuários

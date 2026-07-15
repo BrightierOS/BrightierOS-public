@@ -33,6 +33,26 @@ router.get('/me', users.requirePermission(), (req, res) => {
   }
 });
 
+// PUT /api/users/me — atualiza apenas o próprio perfil (displayName)
+router.put('/me', users.requirePermission(), (req, res) => {
+  try {
+    const patch = req.body || {};
+    const allowed = {};
+    if (patch.displayName != null) allowed.displayName = String(patch.displayName).trim();
+    // Não permitimos ao próprio usuário alterar role/active/username por aqui.
+    const updated = users.updateUser(req.session.userId, allowed);
+    users.appendAdminLog({
+      actor: req.session.username,
+      action: 'profile.update',
+      target: req.session.username,
+      detail: 'perfil próprio',
+    });
+    res.json({ success: true, user: users.sanitizeUser(updated) });
+  } catch (e) {
+    res.status(400).json({ success: false, error: e.message });
+  }
+});
+
 // GET /api/users/roles — papéis e permissões (roles:view)
 router.get('/roles', users.requirePermission('roles:view'), (req, res) => {
   res.json({ success: true, roles: users.ROLES, permissions: users.ROLE_PERMISSIONS });

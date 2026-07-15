@@ -130,6 +130,7 @@
       setup: () => fetchJSON('/api/users/setup'),
       list: () => fetchJSON('/api/users/list'),
       me: () => fetchJSON('/api/users/me'),
+      updateMe: (patch) => postJSON('/api/users/me', patch, { method: 'PUT' }),
       roles: () => fetchJSON('/api/users/roles'),
       sessions: () => fetchJSON('/api/users/sessions'),
       logout: () => postJSON('/api/users/logout', {}),

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrightierOS — Meu Perfil</title>
+  <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body data-page="profile" data-title="Meu Perfil" data-sub="Gerencie suas informações e segurança.">
+  <main class="page">
+    <div class="grid cols-1">
+      <section class="card">
+        <h2>Meus dados</h2>
+        <div id="profile-form"><p class="muted">Carregando...</p></div>
+      </section>
+
+      <section class="card">
+        <h2>Alterar senha</h2>
+        <div id="password-form"></div>
+      </section>
+
+      <section class="card">
+        <h2>Minhas sessões ativas</h2>
+        <div id="my-sessions"><p class="muted">Carregando...</p></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="assets/api.js"></script>
+  <script src="assets/app.js"></script>
+  <script src="assets/profile.js"></script>
+</body>
+</html>

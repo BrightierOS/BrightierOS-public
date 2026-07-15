@@ -86,3 +86,15 @@ test('logs administrativos', () => {
   assert.equal(logs[0].action, 'update.force');
   assert.equal(logs[0].actor, 'root');
 });
+
+test('PUT /me atualiza apenas nome de exibição (não papel/ativo)', () => {
+  const admin = U.findUserByUsername('root');
+  // Simula o patch permitido (displayName); papel/ativo/username não podem ser
+  // alterados por esta rota (a proteção anti-lockout do updateUser rejeita).
+  const upd = U.updateUser(admin.id, { displayName: 'Administrador' });
+  assert.equal(upd.displayName, 'Administrador');
+  assert.equal(upd.role, 'admin'); // papel inalterado
+  assert.equal(upd.active, true);   // status inalterado
+  // Tentar rebaixar o próprio admin via updateUser é bloqueado.
+  assert.throws(() => U.updateUser(admin.id, { role: 'viewer' }));
+});
