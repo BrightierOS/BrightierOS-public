@@ -2,6 +2,25 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.5.4.7 — Correção definitiva do "role is not defined" + guarda automática
+
+* **Correção definitiva**: o `app.js` referenciava uma variável `role` fora de
+  escopo (`let userRole = role || ''`), causando `ReferenceError: role is not
+  defined` em `mountLayout` (tela em branco em todas as páginas protegidas).
+  Agora `userRole` é inicializado vazio e preenchido a partir do `localStorage`
+  (`userRaw`). Nenhuma leitura de papel depende de variável solta.
+* **Teste de guarda (CI)**: adicionado `test/frontend.no-role-var.test.js` que
+  **falha se** o `app.js` usar a variável `role` como identificador solto, se
+  houver o typo `DOMContentDLoaded`, ou se `guard()/mountLayout` lançar
+  `ReferenceError`. Assim o bug não volta sem o teste avisar.
+* **Dados de instalação ficam em `/data`**: confirmado que `.gitignore` ignora
+  `data/` por completo (usuários, sessões, configurações, convites, backups,
+  plugins, lojas) — nada de estado de instalação específica é versionado. O
+  frontend só lê `localStorage`; o backend persiste tudo em `data/`.
+* **Multiplataforma**: backend usa `child_process.exec` (portátil) e launchers
+  separados (`bOS.sh` Linux/macOS, `bOS.bat` Windows) tratam o restart por
+  código 65.
+
 ## v0.5.4.6 — Correção: telas de auth quebradas (login/setup/signup)
 
 * **Hotfix crítico**: `auth.js` tinha o mesmo typo do app shell — o listener

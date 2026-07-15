@@ -98,7 +98,7 @@
       </a>`).join('');
 
     let username = 'Usuário';
-    let userRole = role || '';
+    let userRole = '';
     try { const u = JSON.parse(userRaw) || {}; username = u.username || username; userRole = u.role || userRole; } catch (_) {}
 
     shell.innerHTML = `
