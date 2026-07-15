@@ -66,6 +66,19 @@
     }
   }
 
+  // Aguarda o servidor voltar após um restart automático e recarrega a página.
+  async function waitForServerAndReload() {
+    if (updateStatusEl) updateStatusEl.innerHTML = '<p class="muted"><span class="spin"></span>Reiniciando o servidor, aguarde...</p>';
+    for (let i = 0; i < 40; i++) {
+      await new Promise((r) => setTimeout(r, 1500));
+      try {
+        const d = await api.update.check();
+        if (d && d.success) { window.location.reload(); return; }
+      } catch (_) { /* servidor ainda está subindo */ }
+    }
+    window.location.reload();
+  }
+
   const updateStatusEl = document.getElementById('update-status');
   const checkBtn = document.getElementById('checkUpdateBtn');
   const applyBtn = document.getElementById('applyUpdateBtn');
@@ -96,10 +109,20 @@
     applyBtn.disabled = true; applyBtn.textContent = 'Atualizando...';
     try {
       const d = await api.update.apply();
-      if (d.success) ui.toast(d.message || 'Atualizado!', 'ok');
-      else ui.toast('Falha ao atualizar.', 'err');
+      if (d && d.success && d.restarted) {
+        ui.toast(d.message || 'Atualizado! Reiniciando o servidor...', 'ok');
+        await waitForServerAndReload();
+        return;
+      }
+      if (d && d.success) ui.toast(d.message || 'Atualizado!', 'ok');
+      else ui.toast((d && d.error) || 'Falha ao atualizar.', 'err');
     } catch (e) { ui.toast(e.message, 'err'); }
-    finally { loadHistory(); checkUpdates(); applyBtn.disabled = false; applyBtn.textContent = 'Atualizar agora'; }
+    finally {
+      applyBtn.disabled = false;
+      applyBtn.textContent = 'Atualizar agora';
+      loadHistory();
+      checkUpdates();
+    }
   }
 
   async function loadHistory() {
@@ -126,8 +149,14 @@
           btn.disabled = true; btn.textContent = 'Revertendo...';
           try {
             const d = await api.update.rollback(target);
-            if (d.success) ui.toast(d.message || `Revertido para v${target}`, 'ok');
-            else ui.toast(d.error || 'Erro.', 'err');
+
+            if (d && d.success && d.restarted) {
+              ui.toast(d.message || `Revertido para v${target}`, 'ok');
+              await waitForServerAndReload();
+              return;
+            }
+            if (d && d.success) ui.toast(d.message || `Revertido para v${target}`, 'ok');
+            else ui.toast((d && d.error) || 'Erro.', 'err');
           } catch (err) { ui.toast(err.message, 'err'); }
           finally { loadHistory(); }
         });

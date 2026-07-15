@@ -24,6 +24,27 @@
 
   const STORAGE_KEY = 'brightieros-user';
 
+  /* ---------- Boot loader (tela de carregamento de 2s) ---------- */
+  const BOOT_MIN_MS = 2000;
+  const bootStart = Date.now();
+
+  function hideBootLoader() {
+    const loader = document.getElementById('boot-loader');
+    if (!loader) return;
+    loader.classList.add('hidden');
+    let removed = false;
+    const remove = () => { if (!removed) { removed = true; loader.remove(); } };
+    loader.addEventListener('transitionend', remove, { once: true });
+    setTimeout(remove, 600); // fallback caso o transitionend não dispare
+  }
+
+  function finishBoot() {
+    const elapsed = Date.now() - bootStart;
+    const wait = Math.max(0, BOOT_MIN_MS - elapsed);
+    setTimeout(hideBootLoader, wait);
+  }
+
+
   function startClock(el) {
     const tick = () => { el.textContent = new Date().toLocaleTimeString('pt-BR'); };
     tick();
@@ -116,6 +137,7 @@
     }
     mountLayout(page);
     document.dispatchEvent(new CustomEvent('brightier:ready'));
+    finishBoot();
   }
 
   if (document.readyState === 'loading') {

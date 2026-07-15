@@ -16,6 +16,10 @@ const REMOTE = "origin";
 const BRANCH = "main";
 const REPO_URL = "https://github.com/BrightierOS/BrightierOS-public.git";
 
+// Código de saída usado para pedir ao launcher (bOS.bat / bOS.sh) que
+// reinicie o servidor após uma atualização/rollback bem-sucedida.
+const RESTART_EXIT_CODE = 65;
+
 // ─── Helpers ────────────────────────────────────────────────────────
 
 function getInstalledVersion() {
@@ -55,6 +59,45 @@ function addHistoryEntry(entry) {
   // Mantém só os últimos 20 registros
   if (history.length > 20) history.length = 20;
   fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2), "utf8");
+}
+
+// ─── Comunicação com o launcher (bOS.bat / bOS.sh) ──────────────────
+// O launcher inicia server.js como processo filho. Quando uma
+// atualização (apply) ou rollback é aplicada, gravamos um flag de
+// diagnóstico e encerramos o processo com RESTART_EXIT_CODE. O launcher
+// detecta esse código, roda `npm install` (caso as deps tenham mudado)
+// e reinicia o servidor. Esse é o "canal" de conversa backend↔launcher.
+function requestRestart(res, opts = {}) {
+  const payload = {
+    at: new Date().toISOString(),
+    reason: opts.reason || "update",
+    from: opts.from,
+    to: opts.to,
+    message: opts.message,
+  };
+  try {
+    ensureHistoryFile();
+    fs.writeFileSync(
+      path.join(DATA_DIR, ".bos-restart"),
+      JSON.stringify(payload, null, 2),
+      "utf8"
+    );
+  } catch (e) {
+    /* o flag é apenas diagnóstico; falhas aqui são ignoradas */
+  }
+
+  res.json({
+    success: true,
+    restarted: true,
+    reason: payload.reason,
+    installedVersion: payload.from,
+    newVersion: payload.to,
+    message: opts.message || "Reiniciando para aplicar a atualização...",
+    details: opts.details,
+  });
+
+  // Garante que a resposta foi totalmente enviada antes de encerrar.
+  res.on("finish", () => process.exit(RESTART_EXIT_CODE));
 }
 
 // ─── Rotas ──────────────────────────────────────────────────────────
@@ -131,13 +174,30 @@ router.post("/apply", async (req, res) => {
         : "Atualização concluída",
     });
 
+    const changed =
+      newVersion !== installed ||
+      (pullResult && pullResult.summary && pullResult.summary.changes > 0);
+
+    // Se houve mudança real, pede ao launcher para reiniciar o servidor.
+    if (changed) {
+      return requestRestart(res, {
+        reason: "update",
+        from: installed,
+        to: newVersion,
+        message:
+          pullResult && pullResult.summary && pullResult.summary.changes
+            ? `Atualizado! ${pullResult.summary.changes} arquivos alterados. Reiniciando...`
+            : "Atualização concluída. Reiniciando...",
+        details: pullResult,
+      });
+    }
+
     res.json({
       success: true,
+      restarted: false,
       installedVersion: installed,
       newVersion,
-      message: pullResult?.summary?.changes
-        ? `Atualizado! ${pullResult.summary.changes} arquivos alterados.`
-        : "Já está na versão mais recente.",
+      message: "Já está na versão mais recente.",
       details: pullResult,
     });
   } catch (err) {
@@ -194,11 +254,12 @@ router.post("/rollback", async (req, res) => {
       message: `Rollback para ${tag}`,
     });
 
-    res.json({
-      success: true,
-      installedVersion: installed,
-      rolledBackTo: newVersion,
-      message: `Revertido para ${tag}. Reinicie para aplicar.`,
+    // Pede ao launcher para reiniciar o servidor para aplicar o checkout.
+    return requestRestart(res, {
+      reason: "rollback",
+      from: installed,
+      to: newVersion,
+      message: `Revertido para ${tag}. Reiniciando para aplicar...`,
     });
   } catch (err) {
     console.error("Erro ao reverter:", err.message);
