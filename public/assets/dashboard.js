@@ -18,7 +18,8 @@
     const el = document.getElementById('stats');
     if (!el) return;
     try {
-      const d = await api.stats();
+      const r = await api.stats();
+      const d = r.data || {};
       const parts = [];
       // Sistema info
       if (d.os) {
@@ -40,8 +41,8 @@
     const el = document.getElementById('history');
     if (!el) return;
     try {
-      const r = await api.stats();
-      const hist = r.history || [];
+      const r = await api.history();
+      const hist = r.data || [];
       if (!hist.length) {
         el.innerHTML = '<p class="muted" style="font-size:12px;margin:0">No history yet.</p>';
         return;

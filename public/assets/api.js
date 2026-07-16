@@ -155,6 +155,7 @@
     fetchJSON,
 
     user: {
+      login: (username, password) => postJSON('/api/users/login', { username, password }),
       setup: () => fetchJSON('/api/users/setup'),
       list: () => fetchJSON('/api/users/list'),
       me: () => fetchJSON('/api/users/me'),

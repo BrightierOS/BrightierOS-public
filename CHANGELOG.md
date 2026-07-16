@@ -2,14 +2,15 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
-## v0.7.1 — UI Monitoring
+## v0.7.1.2 — Hotfix
 
-* **Dashboard traduzido para inglês**: Performance, Shortcuts, Installed Plugins, Smart Updates.
-* **Histórico de métricas**: Gráfico SVG simples mostrando CPU/RAM histórico no dashboard.
-* **Stats expandidos**: Uptime, OS info, CPU cores adicionados à API.
-* **Correção de rotas**: `/api/stats` e `/api/metrics/history` agora respondem na raiz `/api/`.
+* **Correção api.user.login**: adicionado método faltante no api.js.
+* **Correção loadMetrics**: agora usa `r.data` ao invés de resposta direta.
+* **loadHistory**: corrigido para usar `api.history()` com `r.data`.
 
-## v0.7.0 — Plataforma
+## v0.7.1 — Plataforma
+
+* **Monitoramento**: Stats expandidos com uptime, OS (distro, release, arch), CPU cores.
 
 ### Monitoramento
 * **Stats expandidos**: `/api/stats` agora retorna uptime, OS (distro, release, arch), cores CPU, load average.
