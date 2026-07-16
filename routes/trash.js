@@ -1,10 +1,20 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const users = require("../lib/users");
 
 const router = express.Router();
 const ROOT = path.join(__dirname, "..", "data", "home");
 const TRASH = path.join(__dirname, "..", "data", "trash");
+
+// Autenticação da lixeira (v0.8.4): alinha com routes/files.js. Antes as rotas
+// de lixeira não exigiam login — um furo do sistema de arquivos (qualquer um na
+// rede podia listar/restaurar/excluir a lixeira local sem autenticar). Agora:
+// leitura (listar/stats) exige files:read; escrita (mover p/ lixeira, restaurar,
+// excluir, esvaziar) exige files:all. O proxy de nós remotos envia o Bearer do
+// nó remoto, então dois BrightierOS continuam interoperando.
+const authRead = users.requirePermission("files:read");
+const authWrite = users.requirePermission("files:all");
 
 if (!fs.existsSync(TRASH)) {
   fs.mkdirSync(TRASH, { recursive: true });
@@ -59,7 +69,7 @@ function recoverOriginalName(safeName) {
   return name + ext;
 }
 
-router.post("/trash", express.json(), (req, res) => {
+router.post("/trash", authWrite, express.json(), (req, res) => {
   try {
     const targetPath = req.body.path;
     if (!targetPath) return res.status(400).json({ success: false });
@@ -71,7 +81,7 @@ router.post("/trash", express.json(), (req, res) => {
   }
 });
 
-router.get("/trash", (req, res) => {
+router.get("/trash", authRead, (req, res) => {
   try {
     const entries = fs.readdirSync(TRASH, { withFileTypes: true });
     const items = entries
@@ -97,7 +107,7 @@ router.get("/trash", (req, res) => {
   }
 });
 
-router.post("/trash/restore", express.json(), (req, res) => {
+router.post("/trash/restore", authWrite, express.json(), (req, res) => {
   try {
     const trashPath = req.body.trashPath;
     const item = fs.readdirSync(TRASH, { withFileTypes: true }).find(
@@ -114,7 +124,7 @@ router.post("/trash/restore", express.json(), (req, res) => {
   }
 });
 
-router.delete("/trash/:trashPath", (req, res) => {
+router.delete("/trash/:trashPath", authWrite, (req, res) => {
   try {
     const trashPath = req.params.trashPath;
     const item = fs.readdirSync(TRASH, { withFileTypes: true }).find(
@@ -129,7 +139,7 @@ router.delete("/trash/:trashPath", (req, res) => {
   }
 });
 
-router.delete("/trash", (req, res) => {
+router.delete("/trash", authWrite, (req, res) => {
   try {
     const items = fs.readdirSync(TRASH, { withFileTypes: true });
     for (const item of items) {
@@ -141,7 +151,7 @@ router.delete("/trash", (req, res) => {
   }
 });
 
-router.get("/trash/stats", (req, res) => {
+router.get("/trash/stats", authRead, (req, res) => {
   try {
     let count = 0;
     let totalBytes = 0;

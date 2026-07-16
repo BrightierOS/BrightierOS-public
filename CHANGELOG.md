@@ -2,6 +2,61 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.8.4 — Lixeira de nós remotos + autenticação das rotas de lixeira
+
+Completa o acesso a arquivos de outros servidores da infraestrutura (v0.8.3) na
+página de **Lixeira** e fecha um furo de segurança do sistema de arquivos.
+
+### Lixeira de nós remotos
+* A página **Lixeira** agora tem um **seletor de servidor** (igual à página
+  Arquivos): lista/restaura/exclui/esvazia a lixeira do nó local **ou** de um nó
+  remoto, via proxy `/api/infrastructure/nodes/:id/proxy/files/trash*`.
+* Antes, ao mover um arquivo de um servidor remoto para a lixeira (botão
+  "Lixeira" na página Arquivos), o item ia para a lixeira **do remoto** — mas a
+  página Lixeira só mostrava a lixeira local, então o item "sumia". Agora a
+  lixeira do remoto é navegável de forma consistente com a de Arquivos.
+* Ações de escrita (restaurar, excluir, esvaziar) ficam restritas a quem tem
+  `files:all` (admin/editor); visualizadores veem somente leitura, igual à
+  página Arquivos.
+* O modal de credenciais de nó remoto foi extraído para `ui.nodeCredentialsModal`
+  (compartilhado entre Arquivos e Lixeira), removendo duplicação de código.
+
+### Segurança: rotas de lixeira agora exigem autenticação
+* `routes/trash.js` não tinha **nenhum** middleware de auth — qualquer um na rede
+  podia listar/restaurar/excluir/esvaziar a lixeira local sem login. Agora:
+  listar/stats exigem `files:read`; mover para lixeira, restaurar, excluir e
+  esvaziar exigem `files:all` (alinhado a `routes/files.js`).
+* O proxy de nós remotos já envia o Bearer do nó remoto, então dois BrightierOS
+  continuam interoperando; a lixeira local deixa de ficar exposta sem login.
+
+### Testes
+* `test/infrastructure-proxy-route.test.js` (novo): integração ponta-a-ponta da
+  rota HTTP do proxy (listar, ler, criar pasta, upload multipart, download
+  binário, lixeira via proxy, auth, nó sem credenciais, nó local recusado) e da
+  auth das rotas de lixeira (401 sem token, 200 com admin, 403 para viewer na
+  escrita).
+
+## v0.8.3.1 — Hotfix: "Not found" ao acessar arquivos de nó não-BrightierOS
+
+Corrige a confusão ao acessar arquivos de um nó remoto que **não é um BrightierOS**
+(ou é uma versão muito antiga): o proxy encaminhava o 404 "Not found" cru do
+remoto, sem explicar o motivo real.
+
+### Correção
+* **404 do remoto traduzido**: agora o proxy retorna uma mensagem clara — *"O nó
+  remoto não expõe /api/files/* — verifique se ele é um BrightierOS compatível
+  (v0.8.0+) e se está online na porta correta."*
+* **Validação ao salvar credenciais**: ao definir credenciais de um nó, o sistema
+  testa imediatamente se o nó é compatível (GET `files/list` raiz) e avisa no
+  toast: *"Credenciais salvas, mas o nó remoto não é compatível..."* ou
+  *"Credenciais salvas e nó compatível."*
+
+### Esclarecimento importante
+O acesso a arquivos remotos só funciona entre **BrightierOS ↔ BrightierOS**
+(ambos v0.8.0+). Um nó que seja outro software (ex.: Umbrel, Nextcloud, um
+servidor web genérico) não expõe `/api/files/*` e, portanto, não pode ter seus
+arquivos acessados por este proxy — ele deve ser um BrightierOS rodando.
+
 ## v0.8.3 — Acessar arquivos de outros servidores da infraestrutura (proxy)
 
 Permite que a página **Arquivos** navegue nos arquivos de outros nós (servidores)

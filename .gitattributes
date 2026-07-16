@@ -1,0 +1,15 @@
+# BrightierOS — fins de linha consistentes entre plataformas.
+# Sem este arquivo, o git decide text/binary por heurística e arquivos .bat com
+# emojis/UTF-8 eram tratados como binários, ficando com LF no checkout do Windows
+# — o cmd.exe não parseia .bat com LF e quebra o launcher (bOS.bat). Estas regras
+# garantem o fim de linha correto por plataforma de forma explícita.
+
+# Windows: .bat/.cmd/.ps1 EXIGEM CRLF (cmd.exe quebra com LF).
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# Unix/mac: shells e units exigem LF.
+*.sh       text eol=lf
+*.service  text eol=lf
+*.plist    text eol=lf

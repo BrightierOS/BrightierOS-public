@@ -109,12 +109,21 @@ router.get('/nodes/:id/credentials', requireManage, (req, res) => {
   res.json({ success: true, configured: infra.hasNodeCredentials(req.params.id) });
 });
 
-// POST /api/infrastructure/nodes/:id/credentials — define credenciais (admin)
-router.post('/nodes/:id/credentials', requireManage, express.json(), (req, res) => {
+// POST /api/infrastructure/nodes/:id/credentials — define credenciais (admin).
+// v0.8.3.1: após salvar, testa se o nó é compatível (GET files/list raiz) e
+// retorna `compatible` para a UI avisar o usuário imediatamente.
+router.post('/nodes/:id/credentials', requireManage, express.json(), async (req, res) => {
   try {
     infra.setNodeCredentials(req.params.id, req.body || {});
     users.appendAdminLog({ actor: req.session.username, action: 'infra.node.credentials', target: req.params.id, detail: 'credenciais definidas' });
-    res.json({ success: true });
+    let compatible = null, compatError = null;
+    try {
+      const node = infra.findNode(req.params.id);
+      const r = await infra.remoteProxy(node, 'files/list', { method: 'GET', query: { path: '' } });
+      compatible = r.ok; // 200 = compatível; 404/outros = incompatível
+      if (!compatible && r.status === 404) compatError = 'O nó não expõe /api/files/* (não é um BrightierOS compatível).';
+    } catch (e) { compatError = e.message; }
+    res.json({ success: true, compatible, compatError });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }
@@ -166,6 +175,17 @@ router.use('/nodes/:id/proxy', (req, res, next) => {
     }
 
     const remoteRes = await infra.remoteProxy(node, remPath, { method: req.method, query: req.query, headers, body });
+
+    // v0.8.3.1: traduz um 404 do remoto numa mensagem útil. O proxy só funciona
+    // entre BrightierOS ↔ BrightierOS; se o remoto não expõe /api/files/* (não é
+    // um BrightierOS ou é uma versão muito antiga), devolve 404 "Not found" cru —
+    // o que confunde o usuário. Avisamos o motivo real.
+    if (remoteRes.status === 404) {
+      return res.status(502).json({
+        success: false,
+        error: 'O nó remoto não expõe /api/files/* — verifique se ele é um BrightierOS compatível (v0.8.0+) e se está online na porta correta.',
+      });
+    }
 
     // Encaminha status + headers relevantes + corpo (stream).
     res.status(remoteRes.status);

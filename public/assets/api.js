@@ -157,6 +157,45 @@
         return false;
       }
     },
+
+    // v0.8.4 — Modal compartilhado de credenciais de nó remoto (usado pela
+    // página de Arquivos e pela de Lixeira). Resolve true quando as credenciais
+    // foram salvas com sucesso, ou false se o usuário cancelou. Em caso de erro
+    // (ex.: 403 para não-admin), mantém o modal aberto para tentar de novo.
+    // O chamador é responsável por recarregar a lista de nós/após salvar.
+    nodeCredentialsModal(node) {
+      return new Promise((resolve) => {
+        if (!node || !node.id) { resolve(false); return; }
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop';
+        backdrop.innerHTML = `<div class="modal" role="dialog" aria-modal="true">
+        <h3>Credenciais — ${ui.escapeHtml(node.name)}</h3>
+        <p class="muted" style="font-size:13px">Informe uma conta de <b>administrador</b> (ou editor) deste nó remoto. Ela é usada apenas para acessar os arquivos dele a partir daqui.</p>
+        <label>Usuário</label>
+        <input data-f="username" />
+        <label style="margin-top:10px">Senha</label>
+        <input data-f="password" type="password" />
+        <div class="row"><button class="btn ghost" data-cancel>Cancelar</button><button class="btn" data-save>Salvar</button></div>
+      </div>`;
+        document.body.appendChild(backdrop);
+        const val = (f) => backdrop.querySelector(`[data-f="${f}"]`);
+        const close = () => backdrop.remove();
+        backdrop.querySelector('[data-cancel]').onclick = () => { close(); resolve(false); };
+        backdrop.addEventListener('click', (e) => { if (e.target === backdrop) { close(); resolve(false); } });
+        backdrop.querySelector('[data-save]').onclick = async () => {
+          try {
+            const d = await api.infrastructure.setCredentials(node.id, { username: val('username').value.trim(), password: val('password').value });
+            if (d && d.compatible === false) {
+              ui.toast('Credenciais salvas, mas ' + (d.compatError || 'o nó remoto não é compatível (não é um BrightierOS v0.8.0+).'), 'err');
+            } else {
+              ui.toast('Credenciais salvas e nó compatível.', 'ok');
+            }
+            close();
+            resolve(true);
+          } catch (e) { ui.toast(e.message, 'err'); }
+        };
+      });
+    },
   };
 
   const api = {

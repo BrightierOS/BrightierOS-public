@@ -23,9 +23,11 @@
 
   <main class="page">
     <section class="card">
-      <div class="toolbar" style="justify-content:space-between; margin-bottom:12px;">
+      <div class="toolbar" style="justify-content:space-between; margin-bottom:12px; align-items:center;">
         <div id="trashStats" class="muted">—</div>
-        <div class="row-actions">
+        <div class="row-actions" style="align-items:center; gap:8px;">
+          <span class="muted" style="font-size:12px">Servidor</span>
+          <select id="nodeSelect" class="btn ghost sm" style="padding:4px 10px"></select>
           <a class="btn ghost sm" href="/files.html">← Arquivos</a>
           <button id="emptyTrash" class="btn danger sm" style="display:none;">Esvaziar</button>
         </div>

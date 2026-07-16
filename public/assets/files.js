@@ -57,7 +57,8 @@
         const node = ((d && d.data) || []).find(n => n.id === id);
         if (node && !node.credentialsConfigured) {
           ui.toast('Configure as credenciais deste nó para acessar os arquivos.', 'info');
-          openCredentialsModal(node);
+          const saved = await ui.nodeCredentialsModal(node);
+          if (saved) { await loadNodeSelector(); updateSub(); }
         }
       } catch (_) {}
     }
@@ -65,34 +66,6 @@
     load();
   }
   if (nodeSelect) nodeSelect.addEventListener('change', () => selectNode(nodeSelect.value));
-
-  function openCredentialsModal(node) {
-    const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop';
-    backdrop.innerHTML = `<div class="modal" role="dialog" aria-modal="true">
-      <h3>Credenciais — ${ui.escapeHtml(node.name)}</h3>
-      <p class="muted" style="font-size:13px">Informe uma conta de <b>administrador</b> (ou editor) deste nó remoto. Ela é usada apenas para acessar os arquivos dele a partir daqui.</p>
-      <label>Usuário</label>
-      <input data-f="username" />
-      <label style="margin-top:10px">Senha</label>
-      <input data-f="password" type="password" />
-      <div class="row"><button class="btn ghost" data-cancel>Cancelar</button><button class="btn" data-save>Salvar</button></div>
-    </div>`;
-    document.body.appendChild(backdrop);
-    const val = (f) => backdrop.querySelector(`[data-f="${f}"]`);
-    backdrop.querySelector('[data-cancel]').onclick = () => backdrop.remove();
-    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
-    backdrop.querySelector('[data-save]').onclick = async () => {
-      try {
-        await api.infrastructure.setCredentials(node.id, { username: val('username').value.trim(), password: val('password').value });
-        ui.toast('Credenciais salvas.', 'ok');
-        backdrop.remove();
-        await loadNodeSelector();
-        updateSub();
-        load();
-      } catch (e) { ui.toast(e.message, 'err'); }
-    };
-  }
 
   function renderBreadcrumb() {
     const parts = currentPath ? currentPath.split('/') : [];
