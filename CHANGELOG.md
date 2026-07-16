@@ -2,6 +2,37 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.8.5.1 — Hotfix: lista de serviços do sistema não aparecia no Windows em português
+
+Corrige o bug em que a aba "Todos" da página Serviços não exibia os serviços
+do sistema operacional em **Windows com idioma diferente do inglês** (ex.:
+português, espanhol, alemão...) e limitava a ~100 serviços no Windows.
+
+### Causa
+* `lib/services.js` usava `sc query state= all` e parseava a saída com regex
+  procurando cabeçalhos em inglês (`SERVICE_NAME`, `DISPLAY_NAME`, `STATE`).
+  No Windows em português o `sc` retorna `NOME_DO_SERVIÇO`, `NOME_PARA_EXIBIÇÃO`,
+  `ESTADO` — os regex não casavam e **nenhum serviço do sistema era listado**.
+* `sc query` tem buffer padrão de 4KB (~100 serviços), deixando de fora a
+  maioria dos serviços em sistemas com centenas deles.
+
+### Correção
+* Substituído `sc query` por **PowerShell `Get-Service`** (sempre retorna os
+  nomes das propriedades em inglês `Name`/`DisplayName`/`Status`,
+  independente do idioma do sistema). Saída parseada como JSON.
+* `maxBuffer` do `exec` aumentado de 1MB para 8MB para suportar o JSON
+  completo de centenas de serviços.
+* `status` corrigido: o `ServiceControllerStatus` do PowerShell é **número**
+  (`1` = Stopped, `4` = Running), não string — agora compara corretamente.
+* Linux: `systemctl list-units` ganhou `--all` para incluir unidades paradas
+  que não estão carregadas em memória.
+* `catch` silencioso agora emite `console.warn` para diagnóstico.
+
+### Testes
+* Smoke live no Windows: `Get-Service` retornou **328 serviços** (150 running,
+  178 stopped) — todos parseados com `category: 'system'`.
+* 94/94 testes da suíte passam.
+
 ## v0.8.5 — Categorias de serviços (BrightierOS / Todos) + plugins como processos internos
 
 Adiciona **categorias** na página Serviços: a aba **BrightierOS** mostra apenas os
