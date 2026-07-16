@@ -2,6 +2,19 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.8.1 — Hotfix: force update via git checkout
+
+* **Force update agora usa `git checkout`**: quando uma atualização é forçada
+  (`force: true`), o sistema faz `git fetch` + `git checkout` + `git reset --hard`
+  em vez de `git pull` (merge). Isso garante que os arquivos fiquem idênticos ao
+  remote, sem merge conflicts nem commits de merge — resolvendo casos onde o
+  force update anterior (com `pull`) não atualizava os arquivos corretamente,
+  deixando rotas novas (Serviços, Infraestrutura) respondendo "Not found".
+* **Incremental com force**: descarta alterações locais (`reset --hard` +
+  `clean -fd`) antes do `checkout` da tag alvo, evitando falhas.
+* Compatibilidade mantida: atualização normal (sem force) continua usando
+  `git pull`; rollback já usava `git checkout`.
+
 ## v0.8.0 — Infraestrutura e Serviços
 
 Versão focada em transformar o BrightierOS numa plataforma completa de

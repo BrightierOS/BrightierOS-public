@@ -386,7 +386,7 @@ router.post("/apply", requireManage, async (req, res) => {
     let newVersion = installed;
 
     if (targetVersion) {
-      // Atualização incremental: vai exatamente para a tag alvo.
+      // Atualização incremental: vai exatamente para a tag alvo via checkout.
       incremental = true;
       await git.fetch([REMOTE, "--tags", "--quiet"]);
       const targetTag = `v${String(targetVersion).replace(/^v/, "")}`;
@@ -398,13 +398,29 @@ router.post("/apply", requireManage, async (req, res) => {
           backupId: backup && backup.id,
         });
       }
+      // Forçar: descarta alterações locais antes do checkout para não falhar.
+      if (force) {
+        await git.reset(["--hard", "HEAD"]).catch(() => {});
+        await git.clean(["-fd"]).catch(() => {});
+      }
       pullResult = await git.checkout(targetTag);
       changelog = await getIncrementalChangelog(git, `v${String(installed).replace(/^v/, "")}`, targetTag);
     } else {
-      // Atualização normal (branch main). Volta para a branch caso esteja
-      // em HEAD destacado (após rollback/incremental anterior).
-      await git.checkout(BRANCH).catch(() => {});
-      pullResult = await git.pull(REMOTE, BRANCH);
+      // Atualização normal (branch main).
+      if (force) {
+        // v0.8.1 — Forçar usa git checkout (em vez de pull/merge): fetch +
+        // checkout da branch + reset --hard para o remote. Garante arquivos
+        // idênticos ao remote, sem merge conflicts nem commits de merge.
+        await git.fetch([REMOTE, BRANCH, "--quiet"]).catch(() => {});
+        await git.checkout(BRANCH).catch(() => {});
+        await git.reset(["--hard", `${REMOTE}/${BRANCH}`]).catch(() => {});
+        pullResult = { forced: true, message: "Atualização forçada via checkout (sem merge)." };
+      } else {
+        // Volta para a branch caso esteja em HEAD destacado (após rollback
+        // ou incremental anterior) e faz pull normal.
+        await git.checkout(BRANCH).catch(() => {});
+        pullResult = await git.pull(REMOTE, BRANCH);
+      }
       try {
         const allTags = await git.tags(["--list", "--sort=-v:refname"]);
         const latestTag = allTags.latest || `v${String(installed).replace(/^v/, "")}`;
