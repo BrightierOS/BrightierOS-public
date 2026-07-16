@@ -2,6 +2,45 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.8.2 — Adicionar/remover nós da infraestrutura (funcional) + fix de permissão na UI
+
+Versão que torna o gerenciamento de nós da infraestrutura realmente utilizável:
+corrigida a checagem de permissão no frontend (que escondia os botões de
+adicionar/remover até para administradores) e adicionada verificação real de
+conectividade ao adicionar/testar nós.
+
+### Infraestrutura — Nós
+* **Adicionar e remover nós funcionando de ponta a ponta**: o botão
+  "+ Adicionar nó" e as ações "Editar"/"Remover" agora aparecem para
+  administradores (antes ficavam ocultos por um bug de permissão no frontend).
+* **Verificação de conectividade (healthcheck)**: ao adicionar um nó ou clicar
+  em "Testar", o sistema faz um probe HTTP ao endpoint `/api/health` do nó
+  (host:porta) e atualiza o status para `online`/`offline` em tempo real, com
+  latência (ms) e data da última verificação. Antes o status era sempre
+  `offline` (placeholder da v0.8.0).
+* **"↻ Atualizar status"**: testa a conectividade de todos os nós remotos de
+  uma vez (nova coluna "Verificado" na tabela).
+* Novos endpoints: `POST /api/infrastructure/nodes/:id/check` e
+  `POST /api/infrastructure/nodes/check`. O `POST /nodes` agora retorna o nó já
+  com o status verificado.
+* O **nó local** não pode ser removido e é sempre considerado ativo (`local`).
+
+### Correção de permissão (frontend)
+* **`bosCan` agora replica a permissão hierárquica do backend**: `<grupo>:all`
+  concede qualquer `<grupo>:<ação>`. Antes, a UI checava `infrastructure:control`
+  e `services:control` literalmente — como administradores têm
+  `infrastructure:all`/`services:all`, os botões de **adicionar/remover nós** e
+  **iniciar/parar/reiniciar serviços** nunca apareciam. Agora aparecem.
+* O backend (`lib/users.js`) já tinha essa lógica hierárquica desde v0.5.4.5;
+  o frontend é que não a espelhava. Esta versão alinha os dois.
+
+### Testes
+* `test/infrastructure-check.test.js`: healthcheck online/offline com servidor
+  HTTP efêmero, nó local e id inexistente.
+* `test/infrastructure-permissions.test.js`: `bosCan` hierárquico no frontend.
+* `test/admin.test.js`: confirma que `infrastructure:all`/`services:all`
+  concedem `:control` no backend.
+
 ## v0.8.1 — Hotfix: force update via git checkout
 
 * **Force update agora usa `git checkout`**: quando uma atualização é forçada

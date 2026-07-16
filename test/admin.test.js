@@ -147,3 +147,14 @@ test('PUT /me atualiza apenas nome de exibição (não papel/ativo)', () => {
   // Tentar rebaixar o próprio admin via updateUser é bloqueado.
   assert.throws(() => U.updateUser(admin.id, { role: 'viewer' }));
 });
+
+test('permissão hierárquica cobre infraestrutura e serviços (v0.8.2)', () => {
+  // admin tem infrastructure:all e services:all -> concede :control e :view
+  assert.equal(U.hasPermission('admin', 'infrastructure:control'), true);
+  assert.equal(U.hasPermission('admin', 'infrastructure:view'), true);
+  assert.equal(U.hasPermission('admin', 'services:control'), true);
+  // editor/viewer só têm :view -> NÃO controlam
+  assert.equal(U.hasPermission('editor', 'infrastructure:control'), false);
+  assert.equal(U.hasPermission('viewer', 'services:control'), false);
+  assert.equal(U.hasPermission('viewer', 'infrastructure:view'), true);
+});

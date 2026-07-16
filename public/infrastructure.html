@@ -31,9 +31,12 @@
       <section class="card">
         <div class="section-head">
           <h2>Nós / Servidores</h2>
-          <button id="addNodeBtn" class="btn sm">+ Adicionar nó</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button id="refreshNodesBtn" class="btn ghost sm">↻ Atualizar status</button>
+            <button id="addNodeBtn" class="btn sm">+ Adicionar nó</button>
+          </div>
         </div>
-        <p class="muted" style="font-size:13px;margin-bottom:10px">Registro de nós preparado para múltiplos servidores e futuras conexões remotas. O <b>nó local</b> representa esta instalação e não pode ser removido. Adicionar e remover nós exige papel de administrador.</p>
+        <p class="muted" style="font-size:13px;margin-bottom:10px">Registre nós remotos do BrightierOS (host:porta). Ao adicionar ou <b>Testar</b>, o sistema verifica a conectividade pelo endpoint <code>/api/health</code> e mostra o status real (online/offline). O <b>nó local</b> representa esta instalação e não pode ser removido. Adicionar, remover e testar exigem papel de administrador.</p>
         <div id="nodes-list"><p class="muted">Carregando...</p></div>
       </section>
     </div>

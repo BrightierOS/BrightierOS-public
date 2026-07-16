@@ -260,6 +260,8 @@
       addNode: (data) => postJSON('/api/infrastructure/nodes', data),
       updateNode: (id, data) => postJSON(`/api/infrastructure/nodes/${encodeURIComponent(id)}`, data, { method: 'PUT' }),
       removeNode: (id) => fetchJSON(`/api/infrastructure/nodes/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+      checkNode: (id) => postJSON(`/api/infrastructure/nodes/${encodeURIComponent(id)}/check`, {}),
+      checkAllNodes: () => postJSON('/api/infrastructure/nodes/check', {}),
     },
 
     notifications: {

@@ -1,5 +1,6 @@
 /* ============================================================
-   BrightierOS v0.8.0 — Infraestrutura (nós/servidores)
+   BrightierOS v0.8.2 — Infraestrutura (nós/servidores)
+   Adicionar/remover nós + verificação de conectividade (healthcheck).
    ============================================================ */
 (function () {
   'use strict';
@@ -8,6 +9,12 @@
   const nodesEl = () => document.getElementById('nodes-list');
 
   function canManage() { return !!(window.bosCan && window.bosCan('infrastructure:control')); }
+
+  function fmtChecked(n) {
+    if (!n || !n.lastCheckedAt) return '—';
+    try { return new Date(n.lastCheckedAt).toLocaleString('pt-BR') + (n.latencyMs != null ? ` · ${n.latencyMs}ms` : ''); }
+    catch (_) { return ui.escapeHtml(String(n.lastCheckedAt)); }
+  }
 
   function statusPill(status) {
     const s = String(status || 'unknown').toLowerCase();
@@ -41,7 +48,7 @@
       if (!list.length) { el.innerHTML = '<p class="muted">Nenhum nó registrado.</p>'; return; }
       const manage = canManage();
       el.innerHTML = `<div class="table-wrap"><table>
-        <thead><tr><th>Nome</th><th>Host</th><th>Plataforma</th><th>Tipo</th><th>Status</th><th>Tags</th><th></th></tr></thead>
+        <thead><tr><th>Nome</th><th>Host</th><th>Plataforma</th><th>Tipo</th><th>Status</th><th>Verificado</th><th>Tags</th><th></th></tr></thead>
         <tbody>${list.map(n => `
           <tr>
             <td style="font-weight:600">${ui.escapeHtml(n.name)}${n.id === 'local' ? ' <span class="muted" style="font-size:11px">(este)</span>' : ''}</td>
@@ -49,13 +56,16 @@
             <td class="muted" style="font-size:12px">${ui.escapeHtml(n.platform || '—')} · ${ui.escapeHtml(n.arch || '')}</td>
             <td>${ui.escapeHtml(n.kind || '—')}</td>
             <td>${statusPill(n.status)}</td>
+            <td class="muted" style="font-size:12px">${fmtChecked(n)}</td>
             <td class="muted" style="font-size:12px">${(n.tags || []).map(ui.escapeHtml).join(', ') || '—'}</td>
             <td class="row-actions">${manage ? `
+              <button class="btn ghost sm" data-check="${ui.escapeHtml(n.id)}">Testar</button>
               <button class="btn ghost sm" data-edit="${ui.escapeHtml(n.id)}">Editar</button>
               ${n.id !== 'local' ? `<button class="btn danger sm" data-del="${ui.escapeHtml(n.id)}">Remover</button>` : ''}`
               : '<span class="muted" style="font-size:12px">somente leitura</span>'}</td>
           </tr>`).join('')}</tbody></table></div>`;
       if (manage) {
+        el.querySelectorAll('[data-check]').forEach(b => b.addEventListener('click', () => checkNode(b.getAttribute('data-check'))));
         el.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => editNode(list.find(n => n.id === b.getAttribute('data-edit')))));
         el.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => removeNode(b.getAttribute('data-del'))));
       }
@@ -97,7 +107,12 @@
   function addNode() {
     const { backdrop, val } = nodeModal(null);
     backdrop.querySelector('[data-save]').onclick = async () => {
-      try { await saveNode(backdrop, val, null); ui.toast('Nó adicionado.', 'ok'); backdrop.remove(); loadOverview(); loadNodes(); }
+      try {
+        const d = await saveNode(backdrop, val, null);
+        const node = (d && d.data) || {};
+        ui.toast(`Nó "${node.name}" adicionado (${node.status || 'offline'}).`, node.status === 'online' ? 'ok' : 'info');
+        backdrop.remove(); loadOverview(); loadNodes();
+      }
       catch (e) { ui.toast(e.message, 'err'); }
     };
   }
@@ -117,10 +132,30 @@
     catch (e) { ui.toast(e.message, 'err'); }
   }
 
+  async function checkNode(id) {
+    try {
+      const d = await api.infrastructure.checkNode(id);
+      const node = (d && d.data) || {};
+      ui.toast(`Nó "${node.name || id}": ${node.status === 'online' ? 'online' : 'offline'}.`, node.status === 'online' ? 'ok' : 'err');
+      loadOverview(); loadNodes();
+    } catch (e) { ui.toast(e.message, 'err'); }
+  }
+
+  async function checkAll() {
+    const btn = document.getElementById('refreshNodesBtn');
+    if (btn) { btn.disabled = true; }
+    try { await api.infrastructure.checkAllNodes(); ui.toast('Status dos nós atualizado.', 'ok'); loadOverview(); loadNodes(); }
+    catch (e) { ui.toast(e.message, 'err'); }
+    if (btn) { btn.disabled = false; }
+  }
+
   function init() {
     const ab = document.getElementById('addNodeBtn');
     if (ab && canManage()) ab.addEventListener('click', addNode);
     else if (ab) ab.style.display = 'none';
+    const rb = document.getElementById('refreshNodesBtn');
+    if (rb && canManage()) rb.addEventListener('click', checkAll);
+    else if (rb) rb.style.display = 'none';
     loadOverview(); loadNodes();
   }
 

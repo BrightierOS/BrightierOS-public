@@ -218,7 +218,14 @@
     try {
       const u = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
       const perms = u.permissions || [];
-      return perms.includes('*') || perms.includes(perm);
+      if (perms.includes('*')) return true;
+      if (perms.includes(perm)) return true;
+      // Permissão hierárquica (espelha o backend em lib/users.js):
+      // "<grupo>:all" concede qualquer "<grupo>:<ação>".
+      // Ex.: 'infrastructure:all' também autoriza 'infrastructure:control'.
+      const sep = perm.indexOf(':');
+      if (sep > -1 && perms.includes(perm.slice(0, sep) + ':all')) return true;
+      return false;
     } catch (_) { return false; }
   };
 

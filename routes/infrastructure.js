@@ -1,6 +1,6 @@
 // routes/infrastructure.js
-// BrightierOS v0.8.0 — Endpoints de infraestrutura (nós/servidores)
-// Base preparada para múltiplos nós e futuras conexões remotas.
+// BrightierOS v0.8.2 — Endpoints de infraestrutura (nós/servidores)
+// CRUD de nós + verificação de conectividade (healthcheck via /api/health).
 const express = require('express');
 const infra = require('../lib/infrastructure');
 const users = require('../lib/users');
@@ -27,12 +27,38 @@ router.get('/nodes', users.requirePermission(), (req, res) => {
   }
 });
 
-// POST /api/infrastructure/nodes — adiciona um nó remoto (admin)
-router.post('/nodes', requireManage, express.json(), (req, res) => {
+// POST /api/infrastructure/nodes — adiciona um nó remoto (admin). v0.8.2: testa
+// a conectividade imediatamente após adicionar e retorna o status real.
+router.post('/nodes', requireManage, express.json(), async (req, res) => {
   try {
     const node = infra.addNode(req.body || {});
-    users.appendAdminLog({ actor: req.session.username, action: 'infra.node.add', target: node.id, detail: node.name + ' @ ' + node.host });
-    notifications.add('info', `Nó "${node.name}" adicionado à infraestrutura.`, { category: 'infrastructure' });
+    let checked = node;
+    try { checked = await infra.checkNode(node.id); } catch (_) {}
+    users.appendAdminLog({ actor: req.session.username, action: 'infra.node.add', target: node.id, detail: node.name + ' @ ' + node.host + ' → ' + checked.status });
+    notifications.add(checked.status === 'online' ? 'ok' : 'warn', `Nó "${node.name}" adicionado (${checked.status}).`, { category: 'infrastructure' });
+    res.json({ success: true, data: checked });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/infrastructure/nodes/check — testa a conectividade de todos os nós (admin)
+router.post('/nodes/check', requireManage, async (req, res) => {
+  try {
+    const nodes = await infra.checkAllNodes();
+    users.appendAdminLog({ actor: req.session.username, action: 'infra.node.checkAll', detail: nodes.length + ' nós verificados' });
+    res.json({ success: true, data: nodes });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Falha ao verificar nós.' });
+  }
+});
+
+// POST /api/infrastructure/nodes/:id/check — testa a conectividade de um nó (admin)
+router.post('/nodes/:id/check', requireManage, async (req, res) => {
+  try {
+    const node = await infra.checkNode(req.params.id);
+    users.appendAdminLog({ actor: req.session.username, action: 'infra.node.check', target: req.params.id, detail: node.status });
+    notifications.add(node.status === 'online' ? 'ok' : 'warn', `Nó "${node.name || req.params.id}" ${node.status === 'online' ? 'online' : 'offline'}.`, { category: 'infrastructure' });
     res.json({ success: true, data: node });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
