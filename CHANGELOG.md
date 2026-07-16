@@ -2,6 +2,28 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.8.5.2 — Hotfix: parsing do systemctl no Linux estava quebrado (status errado)
+
+Corrige o bug em que o `listServices()` no Linux retornava status incorreto
+(`"active"`/`"inactive"` em vez de `"running"`/`"stopped"`) e não listava
+serviços quando o `systemctl` não estava disponível (SysV init, containers).
+
+### Causa
+* O regex do `systemctl list-units` capturava as colunas corretamente, mas o
+  código checava `m[2]` (coluna **LOAD**, sempre `"loaded"`) contra `"active"`
+  em vez de `m[3]` (coluna **ACTIVE**). A condição nunca era verdadeira e o
+  status virava `m[3]` literal — `"active"` em vez de `"running"`,
+  `"inactive"` em vez de `"stopped"`. Bug desde a v0.8.0.
+* Se o `systemctl` não existia no PATH (SysV init, containers leves), o `err`
+  do `exec` era ignorado: `const { stdout } = await run(...)` — sem serviços
+  listados e sem aviso.
+
+### Correção
+* `m[3] === 'active' ? 'running' : 'stopped'` — checa a coluna ACTIVE (m[3]).
+* Se `systemctl` falha (`err || !stdout`), faz fallback para
+  `service --status-all` (compatível com SysV e containeres).
+* Adicionado `console.warn` informativo quando cai no fallback.
+
 ## v0.8.5.1 — Hotfix: lista de serviços do sistema não aparecia no Windows em português
 
 Corrige o bug em que a aba "Todos" da página Serviços não exibia os serviços
