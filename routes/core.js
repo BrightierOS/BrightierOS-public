@@ -104,12 +104,8 @@ router.get('/api/stats', async (req, res) => {
 // Endpoint para histórico de métricas
 router.get('/api/metrics/history', (req, res) => {
   try {
-    const histFile = path.join(__dirname, '..', 'data', 'metrics-history.json');
-    let history = [];
-    if (fs.existsSync(histFile)) {
-      const content = fs.readFileSync(histFile, 'utf8').trim();
-      history = content ? JSON.parse(content) : [];
-    }
+    // Usa a API do metrics para respeitar BOS_DATA_DIR.
+    const history = metrics.readHistory().slice(-1000);
     res.json({ success: true, data: history });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Failed to read metrics history.' });

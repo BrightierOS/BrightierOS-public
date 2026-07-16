@@ -18,8 +18,12 @@ function isTextFile(filePath) {
 
 const router = express.Router();
 
-const ROOT = path.join(__dirname, "..", "data", "home");
-const TRASH = path.join(__dirname, "..", "data", "trash");
+const DATA_DIR = process.env.BOS_DATA_DIR
+    ? path.resolve(process.env.BOS_DATA_DIR)
+    : path.join(__dirname, "..", "data");
+
+const ROOT = path.join(DATA_DIR, "home");
+const TRASH = path.join(DATA_DIR, "trash");
 
 if (!fs.existsSync(ROOT)) {
     fs.mkdirSync(ROOT, { recursive: true });

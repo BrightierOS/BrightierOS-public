@@ -3,9 +3,13 @@ const fs = require("fs");
 const path = require("path");
 const users = require("../lib/users");
 
+const DATA_DIR = process.env.BOS_DATA_DIR
+    ? path.resolve(process.env.BOS_DATA_DIR)
+    : path.join(__dirname, "..", "data");
+
 const router = express.Router();
-const ROOT = path.join(__dirname, "..", "data", "home");
-const TRASH = path.join(__dirname, "..", "data", "trash");
+const ROOT = path.join(DATA_DIR, "home");
+const TRASH = path.join(DATA_DIR, "trash");
 
 // Autenticação da lixeira (v0.8.4): alinha com routes/files.js. Antes as rotas
 // de lixeira não exigiam login — um furo do sistema de arquivos (qualquer um na

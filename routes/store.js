@@ -28,9 +28,13 @@ function readJson(file) {
 }
 
 
+const DATA_DIR = process.env.BOS_DATA_DIR
+  ? path.resolve(process.env.BOS_DATA_DIR)
+  : path.join(__dirname, '..', 'data');
+
 module.exports = (app) => {
-  const storesFile = path.join(__dirname, '..', 'data', 'stores.json');
-  const cachesRoot = path.join(__dirname, '..', 'data', 'community-stores');
+  const storesFile = path.join(DATA_DIR, 'stores.json');
+  const cachesRoot = path.join(DATA_DIR, 'community-stores');
 
   // Ensure persistence files exist
   if (!fs.existsSync(storesFile)) {
@@ -122,7 +126,7 @@ module.exports = (app) => {
       return res.status(404).json({ success: false, error: 'Plugin repository not found in store catalog.' });
     }
 
-    const dest = path.join(__dirname, '..', 'data', 'plugins', pluginId);
+    const dest = path.join(DATA_DIR, 'plugins', pluginId);
     if (fs.existsSync(dest)) {
       return res.status(409).json({ success: false, error: 'Plugin already installed.' });
     }

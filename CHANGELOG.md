@@ -2,6 +2,42 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.8.5.3 — Hotfix: dados persistentes isolados em /var/lib/brightieros (Linux)
+
+Corrige o problema em que, após reiniciar o servidor Linux, todos os dados
+(usuários, arquivos, configurações, plugins, painel) eram perdidos ou o
+painel voltava para a tela de setup.
+
+### Causa
+* O instalador `scripts/install-linux.sh` colocava a aplicação **e** os dados
+  em `/opt/brightieros`, sem separar estado persistente. Em alguns servidores
+  `/opt` pode ser reinstalado ou limpo, apagando `data/` junto.
+* O serviço rodava como `SUDO_USER`, sem um usuário dedicado, e dependia apenas
+  de `network.target`, sem garantir que o filesystem estivesse montado.
+* Várias rotas (`routes/files.js`, `routes/trash.js`, `routes/core.js`,
+  `routes/plugin.js`, `routes/store.js`) tinham caminhos hardcoded para
+  `data/...`, ignorando a variável `BOS_DATA_DIR` que o restante do core já
+  respeitava. Mesmo que `BOS_DATA_DIR` fosse configurado, arquivos do usuário,
+  lixeira e plugins continuavam indo para dentro de `/opt/brightieros/data`.
+
+### Correção
+* `scripts/install-linux.sh` reescrito:
+  * Cria usuário de serviço dedicado `brightieros`.
+  * Dados persistentes movidos para `/var/lib/brightieros` (FHS).
+  * Logs movidos para `/var/log/brightieros`.
+  * Configura `Environment=BOS_DATA_DIR=/var/lib/brightieros` no systemd.
+  * Adiciona `Requires=local-fs.target` e `After=network-online.target`.
+  * `ExecStartPre` recria e ajusta permissões dos diretórios após boot.
+  * Backup automático e migração dos dados legados de `/opt/brightieros/data`.
+  * Instalação/reinstalação nunca sobrescreve `data/` ou `logs/`.
+  * Teste de persistência ao final da instalação.
+* `scripts/uninstaller.sh` atualizado para perguntar se remove os dados
+  persistentes e o usuário de serviço.
+* `routes/files.js`, `routes/trash.js`, `routes/core.js`, `routes/plugin.js` e
+  `routes/store.js` agora respeitam `BOS_DATA_DIR`.
+* `bOS.sh` e `bOS-console.js` também passaram a respeitar `BOS_DATA_DIR` e
+  `BOS_LOGS_DIR` quando definidos.
+
 ## v0.8.5.2 — Hotfix: parsing do systemctl no Linux estava quebrado (status errado)
 
 Corrige o bug em que o `listServices()` no Linux retornava status incorreto

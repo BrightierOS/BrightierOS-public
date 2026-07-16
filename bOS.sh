@@ -8,18 +8,24 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT"
 export PORT="${PORT:-3000}"
-PIDFILE="data/bos.pid"
-LOGFILE="logs/bos.log"
-RESTART_FLAG="data/.bos-restart"
+
+# Respeita BOS_DATA_DIR se definido (ex: systemd), senão usa data/ local.
+DATA_DIR="${BOS_DATA_DIR:-$ROOT/data}"
+LOGS_DIR="${BOS_LOGS_DIR:-$ROOT/logs}"
+
+PIDFILE="$DATA_DIR/bos.pid"
+LOGFILE="$LOGS_DIR/bos.log"
+RESTART_FLAG="$DATA_DIR/.bos-restart"
 RESTART_CODE=65
 
 # ---------- helpers ----------
+mkdir -p "$DATA_DIR" "$LOGS_DIR"
+
 is_running() {
   [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null
 }
 
 start_server() {
-  mkdir -p logs
   nohup node server.js >> "$LOGFILE" 2>&1 &
   echo $! > "$PIDFILE"
   sleep 1
@@ -104,7 +110,6 @@ menu() {
 
 # ---------- supervisor em foreground (comportamento anterior) ----------
 run_mode() {
-  mkdir -p logs
   if [ ! -d node_modules ]; then echo "Instalando dependencias..."; npm install; fi
   while true; do
     echo ""

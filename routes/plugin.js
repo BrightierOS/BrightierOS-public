@@ -20,8 +20,12 @@ const hooks = require('../lib/hooks');
  *     affect the others.
  *   • Emits hooks for server:start, login, plugin:install, plugin:uninstall, update:done.
  */
+const DATA_DIR = process.env.BOS_DATA_DIR
+  ? path.resolve(process.env.BOS_DATA_DIR)
+  : path.join(__dirname, '..', 'data');
+
 module.exports = (app) => {
-  const pluginsRoot = path.join(__dirname, '..', 'data', 'plugins');
+  const pluginsRoot = path.join(DATA_DIR, 'plugins');
   // Always register the plugins API. Create the directory if it does not
   // exist yet so listing/installing/uninstalling works out of the box.
   if (!fs.existsSync(pluginsRoot)) {

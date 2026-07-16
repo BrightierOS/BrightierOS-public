@@ -8,6 +8,12 @@ const { execSync } = require('child_process');
 
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
+const DATA_DIR = process.env.BOS_DATA_DIR
+  ? path.resolve(process.env.BOS_DATA_DIR)
+  : path.join(ROOT, 'data');
+const LOGS_DIR = process.env.BOS_LOGS_DIR
+  ? path.resolve(process.env.BOS_LOGS_DIR)
+  : path.join(ROOT, 'logs');
 
 function getJSON(url) {
   return new Promise((resolve, reject) => {
@@ -51,7 +57,7 @@ async function config() {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
   console.log('  Nome:', pkg.name, 'v' + pkg.version);
   console.log('  Porta (PORT):', PORT);
-  const cfgPath = path.join(ROOT, 'data', 'config.json');
+  const cfgPath = path.join(DATA_DIR, 'config.json');
   if (fs.existsSync(cfgPath)) {
     try { console.log('  data/config.json:', JSON.stringify(JSON.parse(fs.readFileSync(cfgPath, 'utf8')))); }
     catch (e) { console.log('  data/config.json: (invalido)'); }
@@ -75,7 +81,7 @@ async function diagnose() {
   catch (e) { console.log('  [!] Dependencias inconsistentes.'); }
   try { const r = await getJSON(`http://localhost:${PORT}/api/stats`); console.log('  Healthcheck /api/stats: HTTP', r.status); }
   catch (e) { console.log('  Healthcheck: offline'); }
-  const logPath = path.join(ROOT, 'logs', 'bos.log');
+  const logPath = path.join(LOGS_DIR, 'bos.log');
   if (fs.existsSync(logPath)) {
     console.log('  Ultimas 20 linhas de log:');
     fs.readFileSync(logPath, 'utf8').split('\n').slice(-20).forEach((l) => console.log('    ' + l));
