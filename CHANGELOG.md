@@ -2,6 +2,25 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.8.2.1 — Hotfix multiplataforma: consistência do lockfile + documentação
+
+Hotfix de compatibilidade multiplataforma (Windows, Linux, macOS) sobre a v0.8.2.
+Sem mudanças funcionais — apenas higiene de empacotamento e documentação.
+
+### Instalação / Lockfile
+* **`package-lock.json` sincronizado com `package.json`**: antes divergia como
+  `1.0.0` enquanto o `package.json` estava em `0.8.2`. Agora ambos refletem a
+  versão instalada, garantindo `npm ci` limpo e reproduzível — importante para
+  o instalador Linux (`scripts/install-linux.sh`), que usa `npm ci --omit=dev`.
+* **`node_modules/.package-lock.json` removido do versionamento**: o arquivo era
+  rastreado desde `v0.0.1-dev` (antes de `node_modules/` entrar no `.gitignore`)
+  e podia divergir entre plataformas. Agora cada instalação o regenera via
+  `npm ci`, como esperado em Windows, Linux e macOS.
+
+### Documentação
+* **README**: adicionadas as seções v0.8.1, v0.8.2 e v0.8.2.1 (o roadmap havia
+  parado em v0.8.0).
+
 ## v0.8.2 — Adicionar/remover nós da infraestrutura (funcional) + fix de permissão na UI
 
 Versão que torna o gerenciamento de nós da infraestrutura realmente utilizável:

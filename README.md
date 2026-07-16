@@ -260,6 +260,34 @@ Expansão:
   lixeira, `JSON.parse` sem proteção na loja.
 * Compatibilidade total com versões anteriores mantida.
 
+## v0.8.1 — Hotfix: force update via git checkout
+
+* **Force update via `git checkout`**: atualização forçada agora faz `fetch` +
+  `checkout` + `reset --hard` (em vez de `pull`/merge), garantindo arquivos
+  idênticos ao remote — resolvendo casos onde rotas novas respondiam "Not found".
+
+## v0.8.2 — Adicionar/remover nós da infraestrutura (funcional) + fix de permissão
+
+* **Adicionar e remover nós funcionando de ponta a ponta**: os botões
+  "+ Adicionar nó", "Editar" e "Remover" agora aparecem para administradores
+  (antes ficavam ocultos por um bug de permissão no frontend).
+* **Verificação de conectividade (healthcheck)**: ao adicionar um nó ou clicar
+  em "Testar", o sistema faz um probe HTTP ao `/api/health` do nó (host:porta) e
+  mostra o status real `online`/`offline` com latência — multiplataforma
+  (funciona com qualquer BrightierOS em Windows, Linux ou macOS).
+* **"↻ Atualizar status"**: testa a conectividade de todos os nós de uma vez.
+* **Correção de permissão hierárquica no frontend** (`bosCan`): `<grupo>:all`
+  agora concede `<grupo>:ação` no cliente (igual ao backend) — os botões de
+  **controlar serviços** (iniciar/parar/reiniciar) também voltam a aparecer.
+
+## v0.8.2.1 — Hotfix multiplataforma: consistência do lockfile + documentação
+
+* **`package-lock.json` sincronizado** com `package.json` (antes divergia como
+  `1.0.0`), garantindo `npm ci` limpo no instalador Linux (`npm ci --omit=dev`).
+* **`node_modules/.package-lock.json` removido do versionamento** (era rastreado
+  desde `v0.0.1-dev` e podia divergir entre Windows/Linux/macOS).
+* **README**: adicionadas as seções v0.8.1, v0.8.2 e v0.8.2.1.
+
 ## Futuro
 
 Possíveis melhorias:
