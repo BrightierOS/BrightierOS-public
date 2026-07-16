@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrightierOS — Infraestrutura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body data-page="infra" data-title="Infraestrutura" data-sub="Administre nós e servidores.">
+  <div id="boot-loader" aria-hidden="true">
+    <div class="boot-loader-inner">
+      <div class="boot-logo">
+        <img src="assets/BrightierOS.png" alt="BrightierOS" onerror="this.style.display='none'">
+      </div>
+      <div class="boot-name">Brightier<b>OS</b></div>
+      <div class="boot-spinner"></div>
+      <div class="boot-text">Inicializando o sistema…</div>
+    </div>
+  </div>
+
+  <main class="page">
+    <div class="grid cols-1">
+      <section class="card">
+        <h2>Visão geral</h2>
+        <div id="infra-overview"><p class="muted">Carregando...</p></div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>Nós / Servidores</h2>
+          <button id="addNodeBtn" class="btn sm">+ Adicionar nó</button>
+        </div>
+        <p class="muted" style="font-size:13px;margin-bottom:10px">Registro de nós preparado para múltiplos servidores e futuras conexões remotas. O <b>nó local</b> representa esta instalação e não pode ser removido. Adicionar e remover nós exige papel de administrador.</p>
+        <div id="nodes-list"><p class="muted">Carregando...</p></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="assets/api.js"></script>
+  <script src="assets/app.js"></script>
+  <script src="assets/infrastructure.js"></script>
+</body>
+</html>

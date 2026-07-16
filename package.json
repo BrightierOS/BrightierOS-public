@@ -1,11 +1,11 @@
 {
   "name": "brightieros",
-    "version": "0.7.1.2",
+    "version": "0.8.0",
   "description": "BrightierOS - Multiplatform web server system",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",

@@ -7,6 +7,8 @@ const { exec } = require("child_process");
 const os = require("os");
 const si = require("systeminformation");
 const users = require("./lib/users");
+const metrics = require("./lib/metrics");
+const infrastructure = require("./lib/infrastructure");
 
 const app = express();
 const server = http.createServer(app);
@@ -35,6 +37,7 @@ const handleStartupError = (err) => {
 
 process.on("SIGINT", () => {
   console.log("\nStopping BrightierOS...");
+  try { metrics.stop(); } catch (_) {}
   wss.clients.forEach((c) => c.close());
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(1), 3000);
@@ -42,6 +45,7 @@ process.on("SIGINT", () => {
 
 process.on("SIGTERM", () => {
   console.log("Stopping BrightierOS...");
+  try { metrics.stop(); } catch (_) {}
   wss.clients.forEach((c) => c.close());
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(1), 3000);
@@ -71,6 +75,11 @@ app.use("/api/users", userRouter);
 // Rotas - admin
 const adminRouter = require("./routes/admin");
 app.use("/api/admin", adminRouter);
+
+// Rotas - métricas, serviços e infraestrutura (v0.8.0)
+app.use("/api/metrics", require("./routes/metrics"));
+app.use("/api/services", require("./routes/services"));
+app.use("/api/infrastructure", require("./routes/infrastructure"));
 
 // Rotas - update
 const updateRouter = require("./routes/update");
@@ -184,4 +193,8 @@ wss.on("error", (err) => {
 server.listen(PORT, () => {
   const actualPort = server.address().port;
   console.log(`BrightierOS running at http://localhost:${actualPort}`);
+  // v0.8.0: registra o nó local na infraestrutura e inicia o coletor periódico
+  // de métricas em background (o histórico passa a ser registrado continuamente).
+  try { infrastructure.ensureLocalNode(); } catch (e) { console.warn("[Infra] Falha ao registrar nó local:", e.message); }
+  try { metrics.start(); console.log("[Metrics] Coletor periódico de métricas iniciado."); } catch (e) { console.warn("[Metrics] Falha ao iniciar coletor:", e.message); }
 });

@@ -2,6 +2,87 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.8.0 — Infraestrutura e Serviços
+
+Versão focada em transformar o BrightierOS numa plataforma completa de
+gerenciamento de infraestrutura, mantendo total compatibilidade com versões
+anteriores.
+
+### Dashboard
+* **Gráficos em tempo real**: gráfico de linha multi-série (CPU/RAM/Rede) que
+  atualiza automaticamente a cada 5s.
+* **Métricas expandidas**: uso de CPU, memória, armazenamento, uptime,
+  processos (top 5), temperatura (quando disponível) e utilização de rede.
+* **Cards dedicados**: Performance, Sistema, Armazenamento, Rede, Processos.
+* **Atualização automática** de todas as informações sem recarregar a página.
+
+### Histórico de Métricas
+* **Coletor periódico em background** (`lib/metrics.js`): registra CPU, RAM,
+  Disco e Rede continuamente (a cada 15s), independente de alguém visualizar o
+  dashboard. Histórico retido até 1000 pontos.
+* **Endpoints dedicados**: `/api/metrics/current`, `/api/metrics/history`,
+  `/api/metrics/summary` (média/máx/mín — base para futuras estatísticas).
+
+### Serviços
+* **Gerenciamento de serviços** (`lib/services.js` + `routes/services.js`):
+  listar, iniciar, parar, reiniciar, visualizar status e logs.
+* **Multiplataforma**: systemd (Linux), sc (Windows), launchctl (macOS).
+* **BrightierOS como serviço virtual**: status/logs próprios; reinício delega
+  ao launcher (mesmo mecanismo seguro do admin).
+* Ações de controle restritas a administradores; status/logs abertos a
+  editores/viewers.
+
+### Infraestrutura
+* **Base para múltiplos nós/servidores** (`lib/infrastructure.js` +
+  `routes/infrastructure.js`): registro CRUD de nós com nó local
+  auto-registrado. Preparado para conexões remotas e futuras integrações
+  distribuídas (sem gerenciamento remoto completo nesta versão).
+* **Página Infraestrutura** com visão geral e tabela de nós.
+
+### Notificações
+* **Tempo real via SSE** (`/api/notifications/stream`): atualiza sem recarregar
+  páginas. Sino com badge de não-lidas no topbar.
+* **Categorias**: system, service, security, update, infrastructure, general.
+* **Persistência** mantida (JSON) + `markAllRead` e contagem de não-lidas.
+
+### Auditoria
+* Ações em serviços (start/stop/restart e falhas) registradas em
+  `data/admin-logs.json`.
+* Falhas importantes e erros internos (ex.: coleta de métricas) auditados.
+
+### Interface
+* Indicadores visuais (status pills), estados de carregamento (spinner),
+  feedback de ações (toasts), páginas consistentes e pequenas melhorias de UX.
+
+### APIs
+* Novos endpoints organizados: `/api/metrics/*`, `/api/services/*`,
+  `/api/infrastructure/*`, `/api/notifications/*`, `/api/health`.
+* Compatibilidade mantida: `/api/stats` e `/api/metrics/history` (legado)
+  continuam funcionando.
+
+### Correções de bugs
+* **Dashboard — divisão por zero**: o gráfico de histórico quebrava (NaN) quando
+  o sistema estava ocioso (CPU/RAM em 0). Agora usa `Math.max(1, …)`.
+* **Dashboard — `loadHistory` sombreado**: existiam duas funções `loadHistory`;
+  a do gráfico de métricas era sobrescrita pela de histórico de updates e nunca
+  rodava. Renomeada para `loadMetricsHistory` com auto-refresh.
+* **Lixeira — nome restaurado incorreto**: `report__1234567890.txt` era
+  restaurado/listado como `1234567890.txt`. Corrigido via `recoverOriginalName`.
+* **Store — `JSON.parse` sem try/catch**: arquivos corrompidos/vazios podiam
+  derrubar requisições. Adicionados helpers de leitura segura.
+* **Stats — `avgLoad`/`graphics`/`disks` nulos**: tratados defensivamente (já em
+  hotfix anterior, mantido).
+
+### Compatibilidade
+Nenhuma funcionalidade existente deixou de funcionar. Verificado: autenticação,
+dashboard, arquivos, plugins, atualizações, auditoria, monitoramento e
+notificações. Permissões novas (`services:*`, `infrastructure:*`) foram
+adicionadas de forma aditiva, sem alterar as existentes.
+
+> **Sugestão para versões futuras**: o registro de infraestrutura está preparado
+> para healthcheck real e conexões remotas (agentes/nós distribuídos); a
+> implementação completa exigiria uma refatoração maior e foi apenas documentada.
+
 ## v0.7.1.2 — Hotfix
 
 * **Correção api.user.login**: adicionado método faltante no api.js.

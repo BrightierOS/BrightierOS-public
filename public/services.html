@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrightierOS — Serviços</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body data-page="services" data-title="Serviços" data-sub="Gerencie serviços do sistema e do BrightierOS.">
+  <div id="boot-loader" aria-hidden="true">
+    <div class="boot-loader-inner">
+      <div class="boot-logo">
+        <img src="assets/BrightierOS.png" alt="BrightierOS" onerror="this.style.display='none'">
+      </div>
+      <div class="boot-name">Brightier<b>OS</b></div>
+      <div class="boot-spinner"></div>
+      <div class="boot-text">Inicializando o sistema…</div>
+    </div>
+  </div>
+
+  <main class="page">
+    <div class="grid cols-1">
+      <section class="card">
+        <div class="section-head">
+          <h2>Serviços</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input id="svcSearch" type="text" placeholder="Filtrar serviços..." style="width:220px" />
+            <button id="svcRefresh" class="btn ghost sm">↻ Atualizar</button>
+          </div>
+        </div>
+        <p class="muted" style="font-size:13px;margin-bottom:10px">Inicie, pare, reinicie e visualize o status e os logs dos serviços. O <b>BrightierOS</b> aparece como serviço virtual (reinício delegado ao launcher). Ações de controle exigem papel de administrador.</p>
+        <div id="services-list"><p class="muted">Carregando serviços...</p></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="assets/api.js"></script>
+  <script src="assets/app.js"></script>
+  <script src="assets/services.js"></script>
+</body>
+</html>

@@ -14,6 +14,9 @@
     reset: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12a8 8 0 1 1 2.3 5.6M4 12V7M4 12h5"/></svg>',
     admin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/></svg>',
     profile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+    services: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>',
+    infra: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><circle cx="7" cy="7" r="1"/><circle cx="7" cy="17" r="1"/></svg>',
+    bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>',
   };
 
   const NAV = [
@@ -21,6 +24,8 @@
     { key: 'files', href: '/files.html', label: 'Arquivos', icon: ICONS.files },
     { key: 'store', href: '/store.html', label: 'Loja', icon: ICONS.store },
     { key: 'trash', href: '/trash.html', label: 'Lixeira', icon: ICONS.trash },
+    { key: 'services', href: '/services.html', label: 'Serviços', icon: ICONS.services },
+    { key: 'infra', href: '/infrastructure.html', label: 'Infra', icon: ICONS.infra },
     { key: 'admin', href: '/admin.html', label: 'Administração', icon: ICONS.admin, role: 'admin' },
     { key: 'console', href: '/console.html', label: 'Console', icon: ICONS.console, role: 'admin' },
     { key: 'profile', href: '/profile.html', label: 'Perfil', icon: ICONS.profile },
@@ -86,6 +91,74 @@
     }
   }
 
+  function startNotifications(shell) {
+    const btn = shell.querySelector('#notifBtn');
+    const badge = shell.querySelector('#notifBadge');
+    if (!btn || !badge) return;
+    let panel = null;
+
+    function updateBadge(count) {
+      if (count > 0) { badge.textContent = count > 99 ? '99+' : count; badge.style.display = ''; }
+      else { badge.style.display = 'none'; }
+    }
+
+    function renderList(list) {
+      if (!panel) return;
+      const items = (list || []).slice(0, 25);
+      if (!items.length) { panel.innerHTML = '<div class="notif-empty">Nenhuma notificação.</div>'; return; }
+      panel.innerHTML = items.map(n => `<div class="notif-item ${n.read ? 'read' : ''}">
+          <span class="notif-dot type-${ui.escapeHtml(n.type || 'info')}"></span>
+          <div><div class="notif-msg">${ui.escapeHtml(n.message || '')}</div>
+          <div class="notif-meta">${ui.escapeHtml(n.category || 'general')} · ${new Date(n.timestamp).toLocaleTimeString('pt-BR')}</div></div>
+        </div>`).join('');
+    }
+
+    function positionPanel() {
+      if (!panel) return;
+      const r = btn.getBoundingClientRect();
+      panel.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
+      panel.style.top = (r.bottom + 8) + 'px';
+    }
+
+    async function open() {
+      if (panel) { panel.remove(); panel = null; return; }
+      panel = document.createElement('div');
+      panel.className = 'notif-panel';
+      panel.innerHTML = '<div class="notif-loading">Carregando...</div>';
+      document.body.appendChild(panel);
+      positionPanel();
+      try {
+        const d = await api.notifications.list();
+        renderList(d && d.data ? d.data : d);
+      } catch (e) { panel.innerHTML = '<div class="notif-empty">Erro ao carregar.</div>'; }
+      try { await api.notifications.readAll(); updateBadge(0); } catch (_) {}
+    }
+
+    btn.addEventListener('click', (e) => { e.stopPropagation(); open(); });
+    document.addEventListener('click', (e) => {
+      if (panel && !panel.contains(e.target) && !btn.contains(e.target)) { panel.remove(); panel = null; }
+    });
+    window.addEventListener('resize', positionPanel);
+
+    api.notifications.unread().then(d => updateBadge((d && d.count) || 0)).catch(() => {});
+
+    // SSE em tempo real: atualiza sem recarregar a página (v0.8.0).
+    try {
+      const es = new EventSource(api.notifications.streamUrl());
+      es.onmessage = (ev) => {
+        try {
+          const note = JSON.parse(ev.data);
+          api.notifications.unread().then(d => updateBadge((d && d.count) || 0)).catch(() => {});
+          if (panel) api.notifications.list().then(d => renderList(d && d.data ? d.data : d)).catch(() => {});
+          const t = note.type === 'success' ? 'ok' : note.type === 'error' ? 'err' : note.type === 'warning' ? 'warn' : 'info';
+          ui.toast(note.message || 'Nova notificação', t);
+        } catch (_) {}
+      };
+      es.addEventListener('clear', () => { updateBadge(0); if (panel) renderList([]); });
+      es.onerror = () => { /* EventSource reconecta automaticamente */ };
+    } catch (_) { /* SSE indisponível — fallback silencioso */ }
+  }
+
   function mountLayout(pageKey) {
     const pageMain = document.querySelector('main.page');
     const shell = document.createElement('div');
@@ -115,6 +188,7 @@
             </div>
           </div>
           <div class="topbar-actions">
+            <button class="btn ghost sm notif-btn" id="notifBtn" title="Notificações">${ICONS.bell}<span class="badge" id="notifBadge" style="display:none">0</span></button>
             <span class="clock" id="clock">--:--:--</span>
             <span class="user-chip"><span class="avatar">${ui.escapeHtml(username.charAt(0).toUpperCase())}</span><span>${ui.escapeHtml(username)}</span>${userRole ? `<span class="role-badge role-${ui.escapeHtml(userRole)}">${ui.escapeHtml(userRole)}</span>` : ''}</span>
             <button class="btn ghost sm" id="resetBtn" title="Resetar sistema">${ICONS.reset}<span class="txt">Reset</span></button>
@@ -136,6 +210,7 @@
     startClock(shell.querySelector('#clock'));
     shell.querySelector('#logoutBtn').addEventListener('click', logout);
     shell.querySelector('#resetBtn').addEventListener('click', resetSystem);
+    startNotifications(shell);
   }
 
   /* Helper global: verifica se o usuário logado tem a permissão. */

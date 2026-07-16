@@ -21,49 +21,80 @@
       const r = await api.stats();
       const d = r.data || {};
       const parts = [];
-      // Sistema info
-      if (d.os) {
-        parts.push(`<div class="metric"><div class="meta"><span class="label">OS</span><span class="val">${ui.escapeHtml(d.os.distro || '')} ${ui.escapeHtml(d.os.release || '')} · ${ui.escapeHtml(d.os.arch || '')}</span></div></div>`);
-        parts.push(`<div class="metric"><div class="meta"><span class="label">Uptime</span><span class="val">${ui.escapeHtml(d.uptime || '')}</span></div></div>`);
-      }
       parts.push(bar('CPU — ' + (d.cpu?.name || ''), d.cpu?.usage, ''));
       if (d.cpu?.cores) parts.push(`<div class="metric"><div class="meta" style="font-size:12px"><span class="label">Cores</span><span class="val">${ui.escapeHtml(d.cpu.cores)}</span></div></div>`);
       parts.push(bar('RAM', d.ram?.usage, `${d.ram?.used}/${d.ram?.total} GB · `));
       (d.gpu || []).forEach((g, i) => parts.push(bar(`GPU ${i + 1} — ${g.name || ''}`, g.usage)));
-      (d.storage || []).forEach(s => parts.push(bar(`Drive ${s.drive || ''}`, s.usage, `${s.used}/${s.total} GB · `)));
       el.innerHTML = parts.join('');
+
+      // Sistema (v0.8.0)
+      const sys = document.getElementById('system-info');
+      if (sys) {
+        const osLine = d.os ? `${ui.escapeHtml(d.os.distro || '')} ${ui.escapeHtml(d.os.release || '')}` : '—';
+        sys.innerHTML = `
+          <div class="kv"><span class="muted">Sistema</span><span>${osLine}</span></div>
+          <div class="kv"><span class="muted">Arquitetura</span><span>${ui.escapeHtml(d.os?.arch || '—')}</span></div>
+          <div class="kv"><span class="muted">Hostname</span><span>${ui.escapeHtml(d.os?.hostname || '—')}</span></div>
+          <div class="kv"><span class="muted">Uptime</span><span>${ui.escapeHtml(d.uptime || '—')}</span></div>
+          <div class="kv"><span class="muted">Carga</span><span>${(d.cpu?.load || []).map(ui.escapeHtml).join(' · ') || '—'}</span></div>
+          <div class="kv"><span class="muted">Temperatura</span><span>${d.temperature != null ? ui.escapeHtml(d.temperature) + ' °C' : 'n/d'}</span></div>
+          <div class="kv"><span class="muted">Processos</span><span>${d.processes ? ui.escapeHtml(d.processes.all) + ' (' + ui.escapeHtml(d.processes.running) + ' ativos)' : 'n/d'}</span></div>`;
+      }
+      // Armazenamento (v0.8.0)
+      const st = document.getElementById('storage');
+      if (st) {
+        const drives = d.storage || [];
+        st.innerHTML = drives.length ? drives.map(s => bar(`Drive ${s.drive || ''}`, s.usage, `${s.used}/${s.total} GB · `)).join('') : '<p class="muted">n/d</p>';
+      }
+      // Rede (v0.8.0)
+      const net = document.getElementById('network');
+      if (net) {
+        const n = d.network || null;
+        net.innerHTML = n ? `
+          <div class="kv"><span class="muted">Interface</span><span>${ui.escapeHtml(n.iface || '—')}</span></div>
+          <div class="kv"><span class="muted">Download</span><span>${ui.escapeHtml(n.rx)} KB/s</span></div>
+          <div class="kv"><span class="muted">Upload</span><span>${ui.escapeHtml(n.tx)} KB/s</span></div>` : '<p class="muted">n/d</p>';
+      }
+      // Processos (v0.8.0)
+      const proc = document.getElementById('processes');
+      if (proc) {
+        const p = d.processes || null;
+        proc.innerHTML = p && p.top ? `<div class="table-wrap"><table>
+          <thead><tr><th>Processo</th><th>CPU %</th><th>MEM %</th></tr></thead>
+          <tbody>${p.top.map(x => `<tr><td>${ui.escapeHtml(x.name)}</td><td class="muted">${ui.escapeHtml(x.cpu)}</td><td class="muted">${ui.escapeHtml(x.mem)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">n/d</p>';
+      }
     } catch (e) {
-      el.innerHTML = '<p class="muted">Error loading metrics.</p>';
+      el.innerHTML = '<p class="muted">Erro ao carregar métricas.</p>';
     }
   }
 
-  async function loadHistory() {
-    const el = document.getElementById('history');
+  // Gráfico de histórico em tempo real (CPU/RAM/Rede). Corrige a divisão por zero
+  // quando o sistema está ocioso e agora atualiza automaticamente (v0.8.0).
+  async function loadMetricsHistory() {
+    const el = document.getElementById('metrics-chart');
     if (!el) return;
     try {
-      const r = await api.history();
-      const hist = r.data || [];
-      if (!hist.length) {
-        el.innerHTML = '<p class="muted" style="font-size:12px;margin:0">No history yet.</p>';
-        return;
-      }
-      // Desenhar gráfico de barras simples
-      const maxCpu = Math.max(...hist.map(p => p.cpu));
-      const maxRam = Math.max(...hist.map(p => p.ram));
-      const w = 100 / hist.length;
-      let html = '<svg viewBox="0 0 100 40" style="width:100%;height:100%" fill="none">';
-      hist.forEach((p, i) => {
-        const x = i * w;
-        const cpuH = (p.cpu / maxCpu) * 35;
-        const ramH = (p.ram / maxRam) * 35;
-        html += `<rect x="${x}" y="${40-cpuH}" width="${w-1}" height="${cpuH}" fill="var(--accent)" opacity="0.7"></rect>`;
-        html += `<rect x="${x}" y="${40-ramH}" width="${w-1}" height="${ramH}" fill="#0066ff" opacity="0.4"></rect>`;
-      });
-      html += '</svg>';
-      el.innerHTML = html;
-    } catch (e) {
-      el.innerHTML = '';
-    }
+      const r = await api.metrics.history(60);
+      const hist = (r && r.data) || [];
+      if (!hist.length) { el.innerHTML = '<p class="muted" style="font-size:12px;margin:0">Aguardando dados...</p>'; return; }
+      const vals = (key) => hist.map(p => Number(p[key])).filter(v => v != null && !isNaN(v));
+      const maxCpu = Math.max(1, ...vals('cpu')), maxRam = Math.max(1, ...vals('ram')), maxNet = Math.max(0.01, ...vals('netRx'));
+      const W = 100, H = 40, n = hist.length;
+      const x = (i) => (i / Math.max(1, n - 1)) * W;
+      const line = (key, maxv, color) => {
+        const pts = hist.map((p, i) => {
+          const v = Number(p[key]); if (v == null || isNaN(v)) return null;
+          return `${x(i).toFixed(2)},${(H - (v / maxv) * (H - 4) - 2).toFixed(2)}`;
+        }).filter(Boolean).join(' ');
+        return pts ? `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.2" opacity="0.9" />` : '';
+      };
+      el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:100%">
+        ${line('cpu', maxCpu, 'var(--accent)')}${line('ram', maxRam, '#1f7cff')}${line('netRx', maxNet, '#2ee6a6')}
+      </svg>
+      <div class="chart-legend"><span class="ld"><i style="background:var(--accent)"></i>CPU</span>
+        <span class="ld"><i style="background:#1f7cff"></i>RAM</span>
+        <span class="ld"><i style="background:#2ee6a6"></i>Rede</span></div>`;
+    } catch (e) { el.innerHTML = ''; }
   }
 
   async function loadPlugins() {
@@ -356,6 +387,8 @@
   restoreBtn && restoreBtn.addEventListener('click', showRestore);
   loadMetrics();
   setInterval(loadMetrics, 5000);
+  loadMetricsHistory();
+  setInterval(loadMetricsHistory, 5000);
   loadPlugins();
   loadHistory();
 })();

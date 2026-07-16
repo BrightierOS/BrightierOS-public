@@ -48,6 +48,17 @@ function formatSize(size) {
   return `${size}`;
 }
 
+// Recupera o nome original a partir do nome seguro "{name}__{timestamp}{ext}".
+// Corrige o bug onde "report__1234567890.txt" era restaurado como "1234567890.txt".
+function recoverOriginalName(safeName) {
+  const idx = String(safeName).lastIndexOf("__");
+  if (idx < 0) return safeName;
+  const name = safeName.slice(0, idx);
+  const rest = safeName.slice(idx + 2); // timestamp + extensão
+  const ext = rest.replace(/^\d+/, "");
+  return name + ext;
+}
+
 router.post("/trash", express.json(), (req, res) => {
   try {
     const targetPath = req.body.path;
@@ -73,7 +84,7 @@ router.get("/trash", (req, res) => {
           : stat.size;
         return {
           trashPath: entry.name,
-          name: entry.name.split("__").slice(1).join("__").replace(/^.+?__/, ""),
+          name: recoverOriginalName(entry.name),
           type: stat.isDirectory() ? "folder" : "file",
           size,
           sizeFormatted: formatSize(size),
@@ -94,9 +105,7 @@ router.post("/trash/restore", express.json(), (req, res) => {
     );
     if (!item) return res.status(404).json({ success: false, error: "Item not found in trash." });
     const source = path.join(TRASH, trashPath);
-    const baseName = item.name.includes("__")
-      ? item.name.split("__").slice(1).join("__").replace(/^.+?__/, "")
-      : item.name;
+    const baseName = recoverOriginalName(item.name);
     const dest = path.join(ROOT, baseName);
     fs.renameSync(source, dest);
     res.json({ success: true });
@@ -159,4 +168,5 @@ router.get("/trash/stats", (req, res) => {
   }
 });
 
+router.recoverOriginalName = recoverOriginalName;
 module.exports = router;

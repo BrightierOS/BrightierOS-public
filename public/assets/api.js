@@ -238,6 +238,43 @@
       trashDelete: (trashPath) =>
         fetchJSON(`/api/files/trash/${encodeURIComponent(trashPath)}`, { method: 'DELETE' }),
     },
+    metrics: {
+      current: () => fetchJSON('/api/metrics/current'),
+      history: (limit) => fetchJSON(`/api/metrics/history?limit=${encodeURIComponent(limit || 100)}`),
+      summary: (limit) => fetchJSON(`/api/metrics/summary?limit=${encodeURIComponent(limit || 100)}`),
+      clearHistory: () => fetchJSON('/api/metrics/history', { method: 'DELETE' }),
+    },
+
+    services: {
+      list: () => fetchJSON('/api/services'),
+      status: (id) => fetchJSON(`/api/services/${encodeURIComponent(id)}`),
+      logs: (id, lines) => fetchJSON(`/api/services/${encodeURIComponent(id)}/logs?lines=${encodeURIComponent(lines || 100)}`),
+      start: (id) => postJSON(`/api/services/${encodeURIComponent(id)}/start`, {}),
+      stop: (id) => postJSON(`/api/services/${encodeURIComponent(id)}/stop`, {}),
+      restart: (id) => postJSON(`/api/services/${encodeURIComponent(id)}/restart`, {}),
+    },
+
+    infrastructure: {
+      overview: () => fetchJSON('/api/infrastructure/overview'),
+      nodes: () => fetchJSON('/api/infrastructure/nodes'),
+      addNode: (data) => postJSON('/api/infrastructure/nodes', data),
+      updateNode: (id, data) => postJSON(`/api/infrastructure/nodes/${encodeURIComponent(id)}`, data, { method: 'PUT' }),
+      removeNode: (id) => fetchJSON(`/api/infrastructure/nodes/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+    },
+
+    notifications: {
+      list: () => fetchJSON('/api/notifications'),
+      add: (type, message, category) => postJSON('/api/notifications', { type, message, category }),
+      markRead: (id) => postJSON(`/api/notifications/${encodeURIComponent(id)}/read`, {}),
+      readAll: () => postJSON('/api/notifications/read-all', {}),
+      unread: () => fetchJSON('/api/notifications/unread'),
+      clear: () => fetchJSON('/api/notifications', { method: 'DELETE' }),
+      streamUrl: () => {
+        const token = (typeof localStorage !== 'undefined') ? (localStorage.getItem('brightieros-token') || '') : '';
+        return `/api/notifications/stream?token=${encodeURIComponent(token)}`;
+      },
+    },
+
   };
 
   window.api = api;

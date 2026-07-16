@@ -244,6 +244,22 @@ Expansão:
 * scripts de inicialização multiplataforma;
 * compatibilidade entre sistemas operacionais.
 
+## v0.8.0 — Infraestrutura e Serviços
+
+* **Dashboard expandido**: gráficos em tempo real (CPU/RAM/Rede), histórico de
+  utilização, armazenamento, uptime, processos, temperatura e rede.
+* **Histórico de métricas**: coletor periódico em background (CPU/RAM/Disco/Rede)
+  com endpoints dedicados e base para estatísticas futuras.
+* **Serviços**: iniciar, parar, reiniciar, status e logs (multiplataforma).
+* **Infraestrutura**: base preparada para múltiplos nós/servidores e conexões
+  remotas (registro CRUD + nó local).
+* **Notificações em tempo real** (SSE) com categorias e persistência.
+* **Auditoria** ampliada (ações em serviços, falhas, eventos críticos).
+* **APIs** organizadas para métricas, serviços, infraestrutura e histórico.
+* **Correções de bugs**: divisão por zero no dashboard, nome restaurado na
+  lixeira, `JSON.parse` sem proteção na loja.
+* Compatibilidade total com versões anteriores mantida.
+
 ## Futuro
 
 Possíveis melhorias:

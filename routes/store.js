@@ -5,6 +5,29 @@ const fs = require('fs');
 const path = require('path');
 const simpleGit = require('simple-git');
 
+// Leitura segura de JSON: nunca lança — retorna [] / null em caso de arquivo
+// ausente, corrompido ou vazio. Corrige travamentos por JSON.parse sem try/catch.
+function readJsonArray(file) {
+  try {
+    if (!fs.existsSync(file)) return [];
+    const c = fs.readFileSync(file, 'utf8').trim();
+    return c ? JSON.parse(c) : [];
+  } catch {
+    return [];
+  }
+}
+
+function readJson(file) {
+  try {
+    if (!fs.existsSync(file)) return null;
+    const c = fs.readFileSync(file, 'utf8').trim();
+    return c ? JSON.parse(c) : null;
+  } catch {
+    return null;
+  }
+}
+
+
 module.exports = (app) => {
   const storesFile = path.join(__dirname, '..', 'data', 'stores.json');
   const cachesRoot = path.join(__dirname, '..', 'data', 'community-stores');
@@ -28,7 +51,7 @@ module.exports = (app) => {
     if (!url.startsWith('https://')) {
       return res.status(400).json({ success: false, error: 'Only public HTTPS URLs are allowed.' });
     }
-    const stores = JSON.parse(fs.readFileSync(storesFile));
+    const stores = readJsonArray(storesFile);
     if (stores.find((s) => s.id === id)) {
       return res.status(409).json({ success: false, error: 'Store id already exists.' });
     }
@@ -44,14 +67,14 @@ module.exports = (app) => {
 
   // ---- List all registered stores ------------------------------------------
   app.get('/api/store', (req, res) => {
-    const stores = JSON.parse(fs.readFileSync(storesFile));
+    const stores = readJsonArray(storesFile);
     res.json(stores);
   });
 
   // ---- Get catalog (apps.json) for a store ---------------------------------
   app.get('/api/store/:id/catalog', async (req, res) => {
     const { id } = req.params;
-    const stores = JSON.parse(fs.readFileSync(storesFile));
+    const stores = readJsonArray(storesFile);
     const store = stores.find((s) => s.id === id);
     if (!store) return res.status(404).json({ success: false, error: 'Store not found.' });
     const cachePath = getCachePath(id);
@@ -68,14 +91,15 @@ module.exports = (app) => {
     if (!fs.existsSync(appsPath)) {
       return res.status(404).json({ success: false, error: 'apps.json not found in store.' });
     }
-    const apps = JSON.parse(fs.readFileSync(appsPath));
+    const apps = readJson(appsPath);
+    if (!apps) return res.status(404).json({ success: false, error: 'apps.json not found or invalid in store.' });
     res.json(apps);
   });
 
   // ---- Install a plugin from a store ---------------------------------------
   app.post('/api/store/:id/install/:pluginId', async (req, res) => {
     const { id, pluginId } = req.params;
-    const stores = JSON.parse(fs.readFileSync(storesFile));
+    const stores = readJsonArray(storesFile);
     const store = stores.find((s) => s.id === id);
     if (!store) return res.status(404).json({ success: false, error: 'Store not found.' });
     const cachePath = getCachePath(id);
@@ -91,8 +115,9 @@ module.exports = (app) => {
     if (!fs.existsSync(appsPath)) {
       return res.status(404).json({ success: false, error: 'apps.json not found in store.' });
     }
-    const apps = JSON.parse(fs.readFileSync(appsPath));
-    const appEntry = apps.find(a => a.id === pluginId);
+    const apps = readJson(appsPath);
+    if (!apps) return res.status(404).json({ success: false, error: 'apps.json not found or invalid in store.' });
+    const appEntry = (Array.isArray(apps) ? apps : []).find(a => a.id === pluginId);
     if (!appEntry || !appEntry.repository) {
       return res.status(404).json({ success: false, error: 'Plugin repository not found in store catalog.' });
     }
@@ -116,7 +141,11 @@ module.exports = (app) => {
       return res.status(400).json({ error: 'manifest.json missing in plugin repository.' });
     }
 
-    const manifest = JSON.parse(fs.readFileSync(manifestPath));
+    const manifest = readJson(manifestPath);
+    if (!manifest) {
+      fs.rmSync(dest, { recursive: true, force: true });
+      return res.status(400).json({ success: false, error: 'manifest.json missing or invalid in plugin repository.' });
+    }
     if (!manifest.id || (!manifest.backend && !manifest.entry)) {
       fs.rmSync(dest, { recursive: true, force: true });
       return res.status(400).json({ error: 'Invalid manifest (missing id or backend).' });
