@@ -26,12 +26,16 @@
       <section class="card">
         <div class="section-head">
           <h2>Serviços</h2>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <div class="seg" id="svcCategories" role="tablist" aria-label="Categoria de serviços">
+              <button class="btn ghost sm active" data-cat="brightieros" role="tab" aria-selected="true">BrightierOS</button>
+              <button class="btn ghost sm" data-cat="all" role="tab" aria-selected="false">Todos</button>
+            </div>
             <input id="svcSearch" type="text" placeholder="Filtrar serviços..." style="width:220px" />
             <button id="svcRefresh" class="btn ghost sm">↻ Atualizar</button>
           </div>
         </div>
-        <p class="muted" style="font-size:13px;margin-bottom:10px">Inicie, pare, reinicie e visualize o status e os logs dos serviços. O <b>BrightierOS</b> aparece como serviço virtual (reinício delegado ao launcher). Ações de controle exigem papel de administrador.</p>
+        <p class="muted" style="font-size:13px;margin-bottom:10px"><b>BrightierOS</b> mostra apenas os processos internos (a base e os plugins). <b>Todos</b> inclui também os serviços do sistema operacional. Ações de controle exigem papel de administrador.</p>
         <div id="services-list"><p class="muted">Carregando serviços...</p></div>
       </section>
     </div>

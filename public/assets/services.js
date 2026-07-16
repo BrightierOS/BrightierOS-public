@@ -1,5 +1,6 @@
 /* ============================================================
-   BrightierOS v0.8.0 — Serviços (listar, controlar, logs)
+   BrightierOS v0.8.5 — Serviços (listar, controlar, logs)
+   Categorias: 'BrightierOS' (base + plugins) e 'Todos' (+ sistema).
    ============================================================ */
 (function () {
   'use strict';
@@ -7,6 +8,8 @@
   const listEl = () => document.getElementById('services-list');
   const searchEl = () => document.getElementById('svcSearch');
   let allServices = [];
+  // v0.8.5 — categoria ativa: 'brightieros' (base + plugins) ou 'all' (tudo).
+  let currentCategory = 'brightieros';
 
   function statusBadge(status) {
     const s = String(status || 'unknown').toLowerCase();
@@ -40,8 +43,12 @@
   function render() {
     const el = listEl();
     const q = (searchEl() && searchEl().value || '').toLowerCase().trim();
-    const list = allServices.filter(s => !q || (s.name || s.id || '').toLowerCase().includes(q));
-    if (!list.length) { el.innerHTML = '<p class="muted">Nenhum serviço encontrado.</p>'; return; }
+    // v0.8.5: filtra por categoria antes do texto. 'all' mostra tudo; senão só
+    // os serviços cuja category bate com a aba ativa.
+    const list = allServices
+      .filter(s => currentCategory === 'all' || s.category === currentCategory)
+      .filter(s => !q || (s.name || s.id || '').toLowerCase().includes(q));
+    if (!list.length) { el.innerHTML = '<p class="muted">Nenhum serviço encontrado nesta categoria.</p>'; return; }
     const ctrl = canControl();
     el.innerHTML = `<div class="table-wrap"><table>
       <thead><tr><th>Serviço</th><th>ID</th><th>Gestor</th><th>Status</th><th></th></tr></thead>
@@ -111,9 +118,22 @@
     }
   }
 
+  function selectCategory(cat) {
+    currentCategory = cat;
+    document.querySelectorAll('#svcCategories [data-cat]').forEach(b => {
+      const on = b.getAttribute('data-cat') === cat;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    render();
+  }
+
   function init() {
     const r = searchEl(); if (r) r.addEventListener('input', render);
     const rb = document.getElementById('svcRefresh'); if (rb) rb.addEventListener('click', load);
+    document.querySelectorAll('#svcCategories [data-cat]').forEach(b => {
+      b.addEventListener('click', () => selectCategory(b.getAttribute('data-cat')));
+    });
     load();
   }
 

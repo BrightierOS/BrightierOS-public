@@ -42,3 +42,34 @@ test('_internals.run executa comando e captura stdout', async () => {
   const r = await services._internals.run('echo brightier');
   assert.match(r.stdout.trim(), /brightier/);
 });
+
+// v0.8.5 — categorias: base + plugins são 'brightieros'; serviços do SO 'system'.
+test('listServices: a base tem category "brightieros"', async () => {
+  const list = await services.listServices();
+  const bos = list.find((s) => s.id === services.BRIGHTIEROS_ID);
+  assert.equal(bos.category, 'brightieros');
+});
+
+test('listServices: todo serviço retorna com um campo category', async () => {
+  const list = await services.listServices();
+  assert.ok(list.length > 0);
+  for (const s of list) {
+    assert.ok(typeof s.category === 'string' && s.category.length, `serviço ${s.id} sem category`);
+  }
+});
+
+test('pluginServices() retorna array (vazio quando não há plugins instalados)', () => {
+  const plugins = services.pluginServices();
+  assert.ok(Array.isArray(plugins));
+});
+
+test('control: plugin não pode ser iniciado/parado (roda in-process)', async () => {
+  const r = await services.stopService('plugin:demo');
+  assert.equal(r.ok, false);
+});
+
+test('serviceStatus de um plugin retorna managed "plugin" e category "brightieros"', async () => {
+  const s = await services.serviceStatus('plugin:inexistente');
+  assert.equal(s.managed, 'plugin');
+  assert.equal(s.category, 'brightieros');
+});

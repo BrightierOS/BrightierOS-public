@@ -148,6 +148,12 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; }
 .btn.block { width: 100%; }
 .btn svg { width: 16px; height: 16px; }
 
+/* ---------- Segmented control (v0.8.5) ---------- */
+.seg { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: #0b0e14; }
+.seg .btn { padding: 6px 14px; font-size: 13px; box-shadow: none; transform: none; }
+.seg .btn:hover { transform: none; box-shadow: none; }
+.seg .btn.active { background: var(--accent-grad); color: #04121a; border-color: transparent; }
+
 .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
 
 .section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }

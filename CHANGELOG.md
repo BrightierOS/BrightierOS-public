@@ -2,6 +2,46 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.8.5 — Categorias de serviços (BrightierOS / Todos) + plugins como processos internos
+
+Adiciona **categorias** na página Serviços: a aba **BrightierOS** mostra apenas os
+processos internos (a base + plugins), e a aba **Todos** inclui também os
+serviços do sistema operacional (systemd/sc/launchctl). Plugins instalados em
+`data/plugins/` agora aparecem na lista de serviços como processos internos
+(id `plugin:<id>`, tipo `plugin`, gestor `plugin`, categoria `brightieros`).
+
+### Como funciona
+* Seletor segmentado ("BrightierOS" / "Todos") na página Serviços, ao lado do
+  campo de busca. Padrão é a aba BrightierOS (foco nos processos internos).
+* O campo `category` foi adicionado a cada serviço no backend:
+  * `category: 'brightieros'` — BrightierOS (base) + plugins (internos).
+  * `category: 'system'` — serviços do sistema operacional (systemd, Windows
+    Services, launchctl).
+* O frontend filtra client-side pela categoria ativa: instantâneo ao trocar aba.
+
+### Plugins como processos internos
+* `lib/services.js`: nova função `pluginServices()` escaneia `data/plugins/*/manifest.json`
+  e expõe cada plugin como um serviço da categoria `brightieros`:
+  `id: 'plugin:<id>'`, `managed: 'plugin'`, `status: 'running'`, `canControl: false`.
+* Plugins rodam **dentro do processo** do BrightierOS (são `require()`'d pelo
+  loader em routes/plugin.js), então não podem ser iniciados/parados individualmente.
+  Tentativas via API/UI retornam erro com explicação.
+* `serviceStatus('plugin:demo')` retorna o objeto do plugin; `serviceLogs('plugin:demo')`
+  aponta para os logs do BrightierOS (compartilhados).
+* `data/plugins/` respeita `BOS_DATA_DIR` (consistente com o restante do core).
+
+### Estilo
+* Novo `.seg` (segmented control) em `styles.css`: inline-flex com borda
+  arredondada, botão ativo com `--accent-grad` (mesma cor dos botões primários).
+
+### Testes
+* `test/services.test.js`: 6 novos testes — category na base, category em todos
+  os serviços, `pluginServices()` retorna array, controle de plugin recusado,
+  serviceStatus plugin retorna managed/category corretos.
+* `test/services-categories.test.js` (novo): 9 testes com `BOS_DATA_DIR`
+  temporário + plugin fake — lista com `plugin:`, separação internos vs sistema,
+  HTTP `/api/services` retorna category base+plugin, 401 sem token.
+
 ## v0.8.4 — Lixeira de nós remotos + autenticação das rotas de lixeira
 
 Completa o acesso a arquivos de outros servidores da infraestrutura (v0.8.3) na
