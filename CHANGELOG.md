@@ -2,6 +2,35 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.8.2.2 — Hotfix: diagnóstico de "offline" ao testar nós (fetch failed)
+
+Corrige o bug em que testar/adicionar um nó aparecia como **offline** mesmo quando
+o problema era apenas configuração (porta ausente/errada, host inválido) — a UI
+mostrava só "offline" e o backend gravava a mensagem opaca `fetch failed`, sem
+dizer ao usuário o que corrigir. Afetava principalmente nós apontando para a
+própria máquina (loopback) sem a porta certa.
+
+### Infraestrutura — Healthcheck com diagnóstico
+* **Mensagens de erro detalhadas** ao testar um nó: em vez de `fetch failed`, o
+  probe agora distingue e mostra **"porta não informada"**, **"conexão recusada
+  (host/porta inacessíveis)"** (`ECONNREFUSED`), **"host não encontrado (DNS
+  inválido)"** (`ENOTFOUND`), **"tempo esgotado (timeout)"**, **"HTTP 404 (o nó
+  respondeu, mas não é um /api/health válido)"**, etc.
+* **Porta obrigatória ao adicionar**: `addNode` agora exige uma porta válida
+  (1–65535). Antes a porta era opcional (`null`) e o probe batia na porta 80,
+  falhando com `fetch failed`.
+* **UI**: nova coluna **"Detalhe"** na tabela de nós exibe o motivo do status
+  (útil para diagnóstico). O toast ao testar mostra o motivo quando offline.
+  Campos Host/Porta ganharam placeholders (`ex.: 192.168.0.10`, `ex.: 3000`) e
+  validação `min/max` na porta.
+* **Nó local**: continua sempre `local` (ativo) — não passa pelo probe HTTP.
+
+### Testes
+* `test/infrastructure-probe.test.js` (novo): porta ausente → "porta não
+  informada"; porta fechada → "conexão recusada"; host inexistente → erro de
+  DNS; `addNode` rejeita porta inválida/ausente.
+* `test/infrastructure.test.js`: `addNode` agora exige porta.
+
 ## v0.8.2.1 — Hotfix multiplataforma: consistência do lockfile + documentação
 
 Hotfix de compatibilidade multiplataforma (Windows, Linux, macOS) sobre a v0.8.2.

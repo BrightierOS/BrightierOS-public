@@ -1,6 +1,6 @@
 /* ============================================================
-   BrightierOS v0.8.2 — Infraestrutura (nós/servidores)
-   Adicionar/remover nós + verificação de conectividade (healthcheck).
+   BrightierOS v0.8.2.2 — Infraestrutura (nós/servidores)
+   Adicionar/remover nós + verificação de conectividade com diagnóstico.
    ============================================================ */
 (function () {
   'use strict';
@@ -48,7 +48,7 @@
       if (!list.length) { el.innerHTML = '<p class="muted">Nenhum nó registrado.</p>'; return; }
       const manage = canManage();
       el.innerHTML = `<div class="table-wrap"><table>
-        <thead><tr><th>Nome</th><th>Host</th><th>Plataforma</th><th>Tipo</th><th>Status</th><th>Verificado</th><th>Tags</th><th></th></tr></thead>
+        <thead><tr><th>Nome</th><th>Host</th><th>Plataforma</th><th>Tipo</th><th>Status</th><th>Detalhe</th><th>Verificado</th><th>Tags</th><th></th></tr></thead>
         <tbody>${list.map(n => `
           <tr>
             <td style="font-weight:600">${ui.escapeHtml(n.name)}${n.id === 'local' ? ' <span class="muted" style="font-size:11px">(este)</span>' : ''}</td>
@@ -56,6 +56,7 @@
             <td class="muted" style="font-size:12px">${ui.escapeHtml(n.platform || '—')} · ${ui.escapeHtml(n.arch || '')}</td>
             <td>${ui.escapeHtml(n.kind || '—')}</td>
             <td>${statusPill(n.status)}</td>
+            <td class="muted" style="font-size:12px;max-width:260px">${ui.escapeHtml(n.lastDetail || (n.status === 'local' ? 'este nó' : '—'))}</td>
             <td class="muted" style="font-size:12px">${fmtChecked(n)}</td>
             <td class="muted" style="font-size:12px">${(n.tags || []).map(ui.escapeHtml).join(', ') || '—'}</td>
             <td class="row-actions">${manage ? `
@@ -82,9 +83,9 @@
       <label>Nome</label>
       <input data-f="name" value="${ui.escapeHtml((node && node.name) || '')}" />
       <label style="margin-top:10px">Host</label>
-      <input data-f="host" value="${ui.escapeHtml((node && node.host) || '')}" ${isLocal ? 'disabled' : ''} />
+      <input data-f="host" placeholder="ex.: 192.168.0.10 ou srv01.local" value="${ui.escapeHtml((node && node.host) || '')}" ${isLocal ? 'disabled' : ''} />
       <label style="margin-top:10px">Porta</label>
-      <input data-f="port" type="number" value="${ui.escapeHtml(String((node && node.port) || ''))}" ${isLocal ? 'disabled' : ''} />
+      <input data-f="port" type="number" min="1" max="65535" placeholder="ex.: 3000" value="${ui.escapeHtml(String((node && node.port) || ''))}" ${isLocal ? 'disabled' : ''} />
       <label style="margin-top:10px">Tags (vírgula)</label>
       <input data-f="tags" value="${ui.escapeHtml(((node && node.tags) || []).join(', '))}" />
       <label style="margin-top:10px">Nota</label>
@@ -136,7 +137,13 @@
     try {
       const d = await api.infrastructure.checkNode(id);
       const node = (d && d.data) || {};
-      ui.toast(`Nó "${node.name || id}": ${node.status === 'online' ? 'online' : 'offline'}.`, node.status === 'online' ? 'ok' : 'err');
+      if (node.status === 'online' || node.status === 'local') {
+        ui.toast(`Nó "${node.name || id}": ${node.status === 'local' ? 'local (ativo)' : 'online'}.`, 'ok');
+      } else {
+        // v0.8.2.2: mostra o motivo do offline (porta, host, timeout...) em vez
+        // de só "offline", para o usuário saber o que corrigir.
+        ui.toast(`Nó "${node.name || id}" offline: ${node.lastDetail || 'sem detalhe'}.`, 'err');
+      }
       loadOverview(); loadNodes();
     } catch (e) { ui.toast(e.message, 'err'); }
   }

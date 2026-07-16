@@ -41,7 +41,7 @@ test('não permite remover o nó local', () => {
 });
 
 test('overview agrega contagens', () => {
-  infra.addNode({ name: 'Nó B', host: '10.0.0.6' });
+  infra.addNode({ name: 'Nó B', host: '10.0.0.6', port: 3000 });
   const o = infra.overview();
   assert.ok(o.total >= 2);
   assert.ok(o.local >= 1);
@@ -51,4 +51,8 @@ test('overview agrega contagens', () => {
 test('addNode exige nome e host', () => {
   assert.throws(() => infra.addNode({ host: '1.2.3.4' }));
   assert.throws(() => infra.addNode({ name: 'x' }));
+});
+
+test('addNode exige porta (v0.8.2.2)', () => {
+  assert.throws(() => infra.addNode({ name: 'x', host: '1.2.3.4' }), /porta/i);
 });
