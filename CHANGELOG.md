@@ -2,6 +2,31 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.8.5.4 — Melhorias de responsividade (mobile/tablet)
+
+Refatoração completa das media queries e do layout para tornar o painel usável
+em telas pequenas, eliminando cortes de conteúdo, grids quebrados e elementos
+fora da viewport.
+
+### O que mudou
+* `public/assets/styles.css`:
+  * Novos breakpoints: 1024px, 900px, 768px, 520px e 380px.
+  * Topbar adaptativa: título trunca com ellipsis, ações se reorganizam.
+  * Dock com scroll horizontal (`touch-scroll`) e ícones sem texto em mobile.
+  * Grid `.cols-2`, `.cols-3`, `.cols-4` viram 1 coluna em mobile.
+  * Cards com `grid-column: span X` forçados a 1 coluna em mobile.
+  * Tabelas em `.table-wrap` com `min-width: 520px` e scroll horizontal.
+  * Toolbars quebram em múltiplas linhas; inputs ocupam 100% em mobile.
+  * Modais ocupam a tela em mobile e ficam alinhadas embaixo.
+  * Grid de arquivos se adapta de 150px até 3 colunas fixas.
+  * Ações dos arquivos visíveis como botões pequenos em mobile.
+  * Toasts e painel de notificações reposicionados para telas pequenas.
+  * Fonte 16px em inputs mobile para evitar zoom do iOS.
+  * Respeito a `prefers-reduced-motion`.
+* `public/assets/app.js`:
+  * Estrutura da topbar envolvida em `.topbar-start` e `.topbar-title`.
+  * Dock recebe a classe `.touch-scroll`.
+
 ## v0.8.5.3 — Hotfix: dados persistentes isolados em /var/lib/brightieros (Linux)
 
 Corrige o problema em que, após reiniciar o servidor Linux, todos os dados

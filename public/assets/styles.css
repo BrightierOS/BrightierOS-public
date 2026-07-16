@@ -89,6 +89,9 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; }
 .topbar h1 { font-size: clamp(22px, 3vw, 30px); font-family: "Doto", var(--font); letter-spacing: -1px; }
 .topbar .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
 .topbar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.topbar-start { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1 1 auto; }
+.topbar-title { min-width: 0; }
+.topbar-title h1, .topbar-title .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .clock {
   font-family: var(--mono); font-size: 13px; color: var(--muted);
   padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px;
@@ -170,7 +173,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
 label { display: block; color: var(--muted); font-size: 13px; margin-bottom: 6px; }
 
 /* ---------- Tables ---------- */
-.table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--radius-sm); border: 1px solid var(--line); }
+.table-wrap table { width: 100%; min-width: 520px; border: none; border-collapse: collapse; font-size: 14px; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--line-soft); }
 th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
@@ -273,31 +277,112 @@ tbody tr:hover { background: rgba(255, 255, 255, 0.025); }
 @keyframes slidein { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
 /* ---------- Responsive ---------- */
+@media (max-width: 1024px) {
+  .grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+  .stat-num { font-size: 22px; }
+}
+
 @media (max-width: 900px) {
-  .content { padding: 18px 16px 96px; }
-  .topbar { padding: 16px; }
-  .grid.cols-2, .grid.cols-3 { grid-template-columns: 1fr; }
-  .dock { gap: 2px; padding: 6px 8px; bottom: 12px; }
+  .content { padding: 18px 16px 100px; }
+  .topbar { padding: 14px 16px; }
+  .topbar h1 { font-size: clamp(18px, 5vw, 26px); }
+  .topbar .sub { font-size: 12px; }
+  .grid.cols-2, .grid.cols-3, .grid.cols-4 { grid-template-columns: 1fr; }
+  /* Sobrescreve spans inline em mobile para evitar cards enormes quebrando o grid */
+  .grid > [style*="grid-column: span"] { grid-column: span 1 !important; }
+  .dock { gap: 2px; padding: 6px 8px; bottom: 12px; max-width: calc(100vw - 24px); overflow-x: auto; }
   .dock a { padding: 6px 12px; min-width: 44px; }
   .section-head { align-items: flex-start; }
   table { font-size: 13px; }
   th, td { padding: 9px 10px; }
   .modal { padding: 18px; border-radius: 14px; }
+  .file-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  .file-item { padding: 12px; }
+  .file-item .ic { font-size: 26px; }
+  .auth-card { padding: 26px; }
 }
+
+@media (max-width: 768px) {
+  .topbar { flex-wrap: wrap; gap: 10px; }
+  .topbar-start { width: 100%; flex-wrap: wrap; gap: 8px; }
+  .topbar .brand { flex: 0 0 auto; }
+  .topbar-title { flex: 1 1 auto; min-width: 0; }
+  .topbar .brand .name { font-size: 18px; }
+  .topbar h1 { width: auto; font-size: 20px; }
+  .topbar-actions { width: 100%; justify-content: space-between; }
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .toolbar .btn, .toolbar input, .toolbar select {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .toolbar input { width: 100% !important; max-width: 100%; }
+  .section-head { flex-direction: column; align-items: stretch; gap: 10px; }
+  .section-head .btn { width: 100%; }
+  .row-actions { flex-direction: column; align-items: stretch; }
+  .row-actions .btn { width: 100%; }
+  .file-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+  .file-item .nm { font-size: 12px; }
+  .file-item .acts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .file-item .acts .btn { padding: 4px 6px; font-size: 11px; }
+  .file-item::after { display: none; }
+}
+
 @media (max-width: 520px) {
+  .dock { padding: 6px; bottom: 8px; border-radius: 16px; }
+  .dock a { padding: 8px 10px; min-width: 36px; }
   .dock a span.txt { display: none; }
-  .dock a { padding: 8px 12px; min-width: 40px; }
   .dock a svg { width: 22px; height: 22px; }
   .topbar-actions .btn span.txt { display: none; }
   .clock { display: none; }
-  .topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .topbar { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .topbar .brand .name { font-size: 16px; }
   .topbar-actions { width: 100%; justify-content: flex-end; }
-  .row-actions { flex-direction: column; align-items: stretch; }
-  .row-actions .btn { width: 100%; }
-  .toolbar { gap: 8px; }
+  .toolbar { gap: 6px; }
+  .toolbar .btn { flex: 1 1 100%; }
   .toolbar input { width: 100% !important; }
   .section-head { flex-direction: column; align-items: stretch; }
   .section-head .btn { width: 100%; }
+  .row-actions { flex-direction: column; align-items: stretch; }
+  .row-actions .btn { width: 100%; }
+  .card { padding: 16px; border-radius: 14px; }
+  .card > h2 { font-size: 12px; }
+  .btn { padding: 10px 14px; font-size: 13px; }
+  .btn.sm { padding: 8px 10px; font-size: 12px; }
+  .modal { width: 100%; max-height: 92vh; overflow-y: auto; border-radius: 16px; }
+  .modal-backdrop { padding: 10px; align-items: flex-end; }
+  .modal h3 { font-size: 16px; }
+  .editor-area { min-height: 180px; }
+  #toasts { right: 10px; left: 10px; bottom: 86px; max-width: none; }
+  .toast { font-size: 13px; }
+  .file-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; }
+  .file-item { padding: 10px; border-radius: 12px; }
+  .file-item .ic { font-size: 22px; }
+  .file-item .nm { font-size: 11px; }
+  .file-item .sz { font-size: 10px; }
+  .auth-card { padding: 22px 18px; border-radius: 18px; }
+  .auth-card h1 { font-size: 22px; }
+  .terminal { min-height: 240px; padding: 12px; font-size: 12px; }
+  .kv { flex-direction: column; gap: 2px; padding: 8px 0; }
+  .kv span:last-child { text-align: left; }
+  .stat-box { padding: 10px; }
+  .stat-num { font-size: 18px; }
+  .stat-lbl { font-size: 11px; }
+  .notif-panel { right: 8px; left: 8px; width: auto; top: 64px; max-height: calc(100vh - 140px); }
+  .svc-logs { max-height: 45vh; font-size: 11px; }
+  .chart-legend { flex-wrap: wrap; gap: 10px; }
+}
+
+@media (max-width: 380px) {
+  .dock a { padding: 7px 8px; min-width: 32px; }
+  .dock a svg { width: 20px; height: 20px; }
+  .topbar .brand img { width: 24px; height: 24px; }
+  .topbar .brand .name { font-size: 14px; }
+  .user-chip { padding: 4px 8px 4px 4px; }
+  .user-chip .avatar { width: 24px; height: 24px; font-size: 11px; }
+  .file-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 
@@ -362,6 +447,32 @@ tbody tr:hover { background: rgba(255, 255, 255, 0.025); }
 .spin { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent); animation: boot-spin .7s linear infinite; vertical-align: -2px; margin-right: 6px; }
 
 .grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* Scroll horizontal em containers (dock, toolbars, etc.) */
+.touch-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.touch-scroll::-webkit-scrollbar { display: none; }
+
+/* Força quebra de texto longo em qualquer lugar */
+.break-word { word-break: break-word; overflow-wrap: anywhere; }
+
+/* Mobile-friendly inputs */
+input, select, textarea, button { font-size: 16px; }
+@media (min-width: 521px) {
+  input, select, textarea, button { font-size: 14px; }
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 
 .kv { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line-soft); font-size: 13px; }
 .kv:last-child { border-bottom: none; }

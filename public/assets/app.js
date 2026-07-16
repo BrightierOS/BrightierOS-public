@@ -177,12 +177,12 @@
     shell.innerHTML = `
       <div class="main">
         <header class="topbar">
-          <div style="display:flex; align-items:center; gap:12px;">
+          <div class="topbar-start">
             <div class="brand">
               <img src="assets/BrightierOS.png" alt="BrightierOS" onerror="this.style.display='none'">
               <span class="name">Brightier<b>OS</b></span>
             </div>
-            <div>
+            <div class="topbar-title">
               <h1 id="pageTitle">BrightierOS</h1>
               <div class="sub" id="pageSub"></div>
             </div>
@@ -197,7 +197,7 @@
         </header>
         <section class="content"></section>
       </div>
-      <nav class="dock">${navHtml}</nav>`;
+      <nav class="dock touch-scroll">${navHtml}</nav>`;
 
     shell.querySelector('.content').appendChild(pageMain);
     document.body.insertBefore(shell, document.body.firstChild);
