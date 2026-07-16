@@ -30,6 +30,14 @@
     });
   }
 
+  // v0.8.3 — base de URLs de arquivos. Nó local usa /api/files; nós remotos
+  // passam pelo proxy /api/infrastructure/nodes/:id/proxy/files (o servidor
+  // local autentica no remoto e encaminha).
+  function fileBase(nodeId) {
+    if (!nodeId || nodeId === 'local') return '/api/files';
+    return '/api/infrastructure/nodes/' + encodeURIComponent(nodeId) + '/proxy/files';
+  }
+
   const ui = {
     escapeHtml(str) {
       return String(str == null ? '' : str)
@@ -215,28 +223,28 @@
     },
 
     files: {
-      list: (path = '') => fetchJSON(`/api/files/list?path=${encodeURIComponent(path)}`),
-      createFolder: (path) => postJSON('/api/files/create-folder', { path }),
-      createFile: (path) => postJSON('/api/files/create-file', { path }),
-      rename: (oldPath, newPath) => postJSON('/api/files/rename', { oldPath, newPath }),
-      remove: (path) => postJSON('/api/files/delete', { path }),
-      save: (path, content) => postJSON('/api/files/save', { path, content }),
-      upload: (file, path = '') => {
+      list: (path = '', nodeId) => fetchJSON(`${fileBase(nodeId)}/list?path=${encodeURIComponent(path)}`),
+      createFolder: (path, nodeId) => postJSON(`${fileBase(nodeId)}/create-folder`, { path }),
+      createFile: (path, nodeId) => postJSON(`${fileBase(nodeId)}/create-file`, { path }),
+      rename: (oldPath, newPath, nodeId) => postJSON(`${fileBase(nodeId)}/rename`, { oldPath, newPath }),
+      remove: (path, nodeId) => postJSON(`${fileBase(nodeId)}/delete`, { path }),
+      save: (path, content, nodeId) => postJSON(`${fileBase(nodeId)}/save`, { path, content }),
+      upload: (file, path = '', nodeId) => {
         const fd = new FormData();
         fd.append('file', file);
         if (path) fd.append('path', path);
-        return fetchJSON('/api/files/upload', { method: 'POST', body: fd });
+        return fetchJSON(`${fileBase(nodeId)}/upload`, { method: 'POST', body: fd });
       },
-      uploadFolder: (path, files) => postJSON('/api/files/upload-folder', { path, files }),
-      readUrl: (path) => `/api/files/read?path=${encodeURIComponent(path)}`,
-      downloadUrl: (path) => `/api/files/download?path=${encodeURIComponent(path)}`,
-      trash: (path) => postJSON('/api/files/trash', { path }),
-      trashList: () => fetchJSON('/api/files/trash'),
-      trashStats: () => fetchJSON('/api/files/trash/stats'),
-      restore: (trashPath) => postJSON('/api/files/trash/restore', { trashPath }),
-      emptyTrash: () => fetchJSON('/api/files/trash', { method: 'DELETE' }),
-      trashDelete: (trashPath) =>
-        fetchJSON(`/api/files/trash/${encodeURIComponent(trashPath)}`, { method: 'DELETE' }),
+      uploadFolder: (path, files, nodeId) => postJSON(`${fileBase(nodeId)}/upload-folder`, { path, files }),
+      readUrl: (path, nodeId) => `${fileBase(nodeId)}/read?path=${encodeURIComponent(path)}`,
+      downloadUrl: (path, nodeId) => `${fileBase(nodeId)}/download?path=${encodeURIComponent(path)}`,
+      trash: (path, nodeId) => postJSON(`${fileBase(nodeId)}/trash`, { path }),
+      trashList: (nodeId) => fetchJSON(`${fileBase(nodeId)}/trash`),
+      trashStats: (nodeId) => fetchJSON(`${fileBase(nodeId)}/trash/stats`),
+      restore: (trashPath, nodeId) => postJSON(`${fileBase(nodeId)}/trash/restore`, { trashPath }),
+      emptyTrash: (nodeId) => fetchJSON(`${fileBase(nodeId)}/trash`, { method: 'DELETE' }),
+      trashDelete: (trashPath, nodeId) =>
+        fetchJSON(`${fileBase(nodeId)}/trash/${encodeURIComponent(trashPath)}`, { method: 'DELETE' }),
     },
     metrics: {
       current: () => fetchJSON('/api/metrics/current'),
@@ -262,6 +270,9 @@
       removeNode: (id) => fetchJSON(`/api/infrastructure/nodes/${encodeURIComponent(id)}`, { method: 'DELETE' }),
       checkNode: (id) => postJSON(`/api/infrastructure/nodes/${encodeURIComponent(id)}/check`, {}),
       checkAllNodes: () => postJSON('/api/infrastructure/nodes/check', {}),
+      hasCredentials: (id) => fetchJSON(`/api/infrastructure/nodes/${encodeURIComponent(id)}/credentials`),
+      setCredentials: (id, data) => postJSON(`/api/infrastructure/nodes/${encodeURIComponent(id)}/credentials`, data),
+      clearCredentials: (id) => fetchJSON(`/api/infrastructure/nodes/${encodeURIComponent(id)}/credentials`, { method: 'DELETE' }),
     },
 
     notifications: {

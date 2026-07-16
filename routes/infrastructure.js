@@ -9,6 +9,27 @@ const notifications = require('../lib/notifications');
 const router = express.Router();
 const requireManage = users.requirePermission('infrastructure:control');
 
+// v0.8.3 — proxy de arquivos para nós remotos
+const { Readable } = require('stream');
+const PROXY_MAX_BYTES = 200 * 1024 * 1024; // 200 MB por upload via proxy
+
+// Lê o corpo bruto (multipart/outros) em buffer para reenviar ao nó remoto.
+function readRawBody(req, maxBytes) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    let done = false;
+    req.on('data', (c) => {
+      if (done) return;
+      size += c.length;
+      if (size > maxBytes) { done = true; req.destroy(); reject(new Error('Corpo da requisição excede o limite (' + Math.round(maxBytes / 1024 / 1024) + 'MB).')); return; }
+      chunks.push(c);
+    });
+    req.on('end', () => { if (!done) { done = true; resolve(Buffer.concat(chunks)); } });
+    req.on('error', (e) => { if (!done) { done = true; reject(e); } });
+  });
+}
+
 // GET /api/infrastructure/overview — visão geral da infraestrutura
 router.get('/overview', users.requirePermission(), (req, res) => {
   try {
@@ -79,6 +100,86 @@ router.put('/nodes/:id', requireManage, express.json(), (req, res) => {
     res.json({ success: true, data: node });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// ─── Credenciais para acesso a arquivos remotos (v0.8.3) ────────────
+// GET /api/infrastructure/nodes/:id/credentials — indica se há credenciais (admin)
+router.get('/nodes/:id/credentials', requireManage, (req, res) => {
+  res.json({ success: true, configured: infra.hasNodeCredentials(req.params.id) });
+});
+
+// POST /api/infrastructure/nodes/:id/credentials — define credenciais (admin)
+router.post('/nodes/:id/credentials', requireManage, express.json(), (req, res) => {
+  try {
+    infra.setNodeCredentials(req.params.id, req.body || {});
+    users.appendAdminLog({ actor: req.session.username, action: 'infra.node.credentials', target: req.params.id, detail: 'credenciais definidas' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/infrastructure/nodes/:id/credentials — remove credenciais (admin)
+router.delete('/nodes/:id/credentials', requireManage, (req, res) => {
+  try {
+    infra.clearNodeCredentials(req.params.id);
+    users.appendAdminLog({ actor: req.session.username, action: 'infra.node.credentials.clear', target: req.params.id });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// ─── Proxy de arquivos para nós remotos (v0.8.3) ────────────────────
+// Encaminha /api/files/* do nó remoto para o cliente, autenticando no remoto com
+// as credenciais configuradas. Permissão local por método: GET/HEAD = files:read,
+// demais = files:all. Restrito a files/* por segurança (não expõe outras APIs).
+router.use('/nodes/:id/proxy', (req, res, next) => {
+  const perm = (req.method === 'GET' || req.method === 'HEAD') ? 'files:read' : 'files:all';
+  users.requirePermission(perm)(req, res, next);
+}, async (req, res) => {
+  const id = req.params.id;
+  try {
+    if (id === infra.LOCAL_NODE_ID) return res.status(400).json({ success: false, error: 'Use os endpoints locais para o nó local.' });
+    const node = infra.findNode(id);
+    if (!node) return res.status(404).json({ success: false, error: 'Nó não encontrado.' });
+    if (node.kind !== 'remote') return res.status(400).json({ success: false, error: 'Proxy disponível apenas para nós remotos.' });
+    // req.path aqui é o resto após /proxy (ex.: /files/list)
+    const remPath = String(req.path || '').replace(/^\/+/, '');
+    if (!remPath.startsWith('files/')) return res.status(403).json({ success: false, error: 'Proxy restrito a /files/*.' });
+    if (!infra.hasNodeCredentials(id)) return res.status(400).json({ success: false, error: 'Credenciais não configuradas para este nó. Configure-as na página de Infraestrutura.' });
+
+    // Corpo: JSON já parseado -> reenvia como JSON; multipart/outros -> buffer bruto.
+    const ct = (req.headers['content-type'] || '').toLowerCase();
+    let body, headers = {};
+    if (req.method === 'GET' || req.method === 'HEAD') {
+      body = undefined;
+    } else if (ct.includes('application/json')) {
+      body = Buffer.from(JSON.stringify(req.body ?? {}));
+      headers['content-type'] = 'application/json';
+      headers['content-length'] = String(body.length);
+    } else {
+      body = await readRawBody(req, PROXY_MAX_BYTES);
+      headers['content-type'] = req.headers['content-type'] || 'application/octet-stream';
+      headers['content-length'] = String(body.length);
+    }
+
+    const remoteRes = await infra.remoteProxy(node, remPath, { method: req.method, query: req.query, headers, body });
+
+    // Encaminha status + headers relevantes + corpo (stream).
+    res.status(remoteRes.status);
+    for (const h of ['content-type', 'content-disposition', 'content-length', 'cache-control']) {
+      const v = remoteRes.headers.get(h);
+      if (v) res.setHeader(h, v);
+    }
+    if (remoteRes.body) {
+      Readable.fromWeb(remoteRes.body).on('error', () => { try { res.end(); } catch (_) {} }).pipe(res);
+    } else {
+      res.end();
+    }
+  } catch (err) {
+    res.status(502).json({ success: false, error: 'Falha no proxy: ' + (err && err.message || 'erro') });
   }
 });
 

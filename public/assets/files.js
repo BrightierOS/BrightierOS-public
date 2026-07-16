@@ -15,6 +15,85 @@
   function baseName(p) { const i = p.lastIndexOf('/'); return i < 0 ? p : p.slice(i + 1); }
   function extOf(name) { const i = name.lastIndexOf('.'); return i < 0 ? '' : name.slice(i + 1).toLowerCase(); }
 
+  // v0.8.3 — seletor de nó: acessa arquivos de outros servidores da infraestrutura
+  // via proxy. O nó local usa /api/files; nós remotos passam pelo proxy do servidor.
+  let currentNode = 'local';
+  const nodeSelect = document.getElementById('nodeSelect');
+
+  // fetch autenticado (Bearer) — necessário para ler/baixar via proxy remoto,
+  // já que read/download não passam pelo fetchJSON que injeta o token.
+  function authFetch(url, opts = {}) {
+    const token = (typeof localStorage !== 'undefined') ? localStorage.getItem('brightieros-token') : null;
+    const headers = { ...(opts.headers || {}) };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    return fetch(url, { ...opts, headers });
+  }
+
+  async function loadNodeSelector() {
+    if (!nodeSelect) return;
+    try {
+      const d = await api.infrastructure.nodes();
+      const nodes = (d && d.data) || [];
+      nodeSelect.innerHTML = nodes.map(n =>
+        `<option value="${ui.escapeHtml(n.id)}"${n.id === currentNode ? ' selected' : ''}>${ui.escapeHtml(n.name)}${n.id === 'local' ? ' (este)' : (n.credentialsConfigured ? '' : ' — sem credenciais')}</option>`
+      ).join('');
+    } catch (e) { nodeSelect.innerHTML = '<option value="local">Local (este)</option>'; }
+  }
+
+  function updateSub() {
+    const sub = document.getElementById('pageSub');
+    if (!sub || !nodeSelect) return;
+    const name = nodeSelect.options[nodeSelect.selectedIndex] ? nodeSelect.options[nodeSelect.selectedIndex].text : '';
+    sub.textContent = currentNode === 'local' ? 'Seus dados, organizados.' : `Arquivos de: ${name}`;
+  }
+
+  async function selectNode(id) {
+    currentNode = id;
+    currentPath = '';
+    renderBreadcrumb();
+    if (id !== 'local') {
+      try {
+        const d = await api.infrastructure.nodes();
+        const node = ((d && d.data) || []).find(n => n.id === id);
+        if (node && !node.credentialsConfigured) {
+          ui.toast('Configure as credenciais deste nó para acessar os arquivos.', 'info');
+          openCredentialsModal(node);
+        }
+      } catch (_) {}
+    }
+    updateSub();
+    load();
+  }
+  if (nodeSelect) nodeSelect.addEventListener('change', () => selectNode(nodeSelect.value));
+
+  function openCredentialsModal(node) {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `<div class="modal" role="dialog" aria-modal="true">
+      <h3>Credenciais — ${ui.escapeHtml(node.name)}</h3>
+      <p class="muted" style="font-size:13px">Informe uma conta de <b>administrador</b> (ou editor) deste nó remoto. Ela é usada apenas para acessar os arquivos dele a partir daqui.</p>
+      <label>Usuário</label>
+      <input data-f="username" />
+      <label style="margin-top:10px">Senha</label>
+      <input data-f="password" type="password" />
+      <div class="row"><button class="btn ghost" data-cancel>Cancelar</button><button class="btn" data-save>Salvar</button></div>
+    </div>`;
+    document.body.appendChild(backdrop);
+    const val = (f) => backdrop.querySelector(`[data-f="${f}"]`);
+    backdrop.querySelector('[data-cancel]').onclick = () => backdrop.remove();
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
+    backdrop.querySelector('[data-save]').onclick = async () => {
+      try {
+        await api.infrastructure.setCredentials(node.id, { username: val('username').value.trim(), password: val('password').value });
+        ui.toast('Credenciais salvas.', 'ok');
+        backdrop.remove();
+        await loadNodeSelector();
+        updateSub();
+        load();
+      } catch (e) { ui.toast(e.message, 'err'); }
+    };
+  }
+
   function renderBreadcrumb() {
     const parts = currentPath ? currentPath.split('/') : [];
     let html = `<span class="crumb ${parts.length ? '' : 'current'}" data-idx="-1">Home</span>`;
@@ -37,7 +116,7 @@
 
   async function load() {
     try {
-      const items = await api.files.list(currentPath);
+      const items = await api.files.list(currentPath, currentNode);
       items.sort((a, b) => {
         if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
         return a.name.localeCompare(b.name);
@@ -105,14 +184,14 @@
   document.getElementById('newFolderBtn').onclick = async () => {
     const name = await ui.prompt('Nome da nova pasta:', { title: 'Nova pasta' });
     if (!name) return;
-    try { await api.files.createFolder(joinPath(currentPath, name)); ui.toast('Pasta criada.', 'ok'); load(); }
+    try { await api.files.createFolder(joinPath(currentPath, name), currentNode); ui.toast('Pasta criada.', 'ok'); load(); }
     catch (e) { ui.toast('Erro: ' + e.message, 'err'); }
   };
 
   document.getElementById('newFileBtn').onclick = async () => {
     const name = await ui.prompt('Nome do novo arquivo:', { title: 'Novo arquivo' });
     if (!name) return;
-    try { await api.files.createFile(joinPath(currentPath, name)); ui.toast('Arquivo criado.', 'ok'); load(); }
+    try { await api.files.createFile(joinPath(currentPath, name), currentNode); ui.toast('Arquivo criado.', 'ok'); load(); }
     catch (e) { ui.toast('Erro: ' + e.message, 'err'); }
   };
 
@@ -122,7 +201,7 @@
     const files = Array.from(uploadInput.files || []);
     if (!files.length) return;
     for (const f of files) {
-      try { await api.files.upload(f, currentPath); }
+      try { await api.files.upload(f, currentPath, currentNode); }
       catch (e) { ui.toast('Falha em ' + f.name + ': ' + e.message, 'err'); }
     }
     uploadInput.value = '';
@@ -138,7 +217,7 @@
       const rel = f.webkitRelativePath || f.name;
       const segs = rel.split('/');
       const dir = segs.slice(0, -1).join('/');
-      try { await api.files.upload(f, joinPath(currentPath, dir)); }
+      try { await api.files.upload(f, joinPath(currentPath, dir), currentNode); }
       catch (e) { ui.toast('Falha em ' + rel + ': ' + e.message, 'err'); }
     }
     uploadFolderInput.value = '';
@@ -148,38 +227,43 @@
   async function doRename(path, oldName) {
     const name = await ui.prompt('Novo nome:', { title: 'Renomear', value: oldName });
     if (!name || name === oldName) return;
-    try { await api.files.rename(path, joinPath(dirName(path), name)); ui.toast('Renomeado.', 'ok'); load(); }
+    try { await api.files.rename(path, joinPath(dirName(path), name), currentNode); ui.toast('Renomeado.', 'ok'); load(); }
     catch (e) { ui.toast('Erro: ' + e.message, 'err'); }
   }
 
   async function doTrash(path) {
     const ok = await ui.confirm(`Mover "${baseName(path)}" para a lixeira?`, { title: 'Lixeira' });
     if (!ok) return;
-    try { await api.files.trash(path); ui.toast('Movido para a lixeira.', 'ok'); load(); }
+    try { await api.files.trash(path, currentNode); ui.toast('Movido para a lixeira.', 'ok'); load(); }
     catch (e) { ui.toast('Erro: ' + e.message, 'err'); }
   }
 
   async function doDelete(path) {
     const ok = await ui.confirm(`Excluir "${baseName(path)}" permanentemente?`, { title: 'Excluir', danger: true, okText: 'Excluir' });
     if (!ok) return;
-    try { await api.files.remove(path); ui.toast('Excluído.', 'ok'); load(); }
+    try { await api.files.remove(path, currentNode); ui.toast('Excluído.', 'ok'); load(); }
     catch (e) { ui.toast('Erro: ' + e.message, 'err'); }
   }
 
-  function downloadFile(path) {
-    const a = document.createElement('a');
-    a.href = api.files.downloadUrl(path);
-    a.download = baseName(path);
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+  async function downloadFile(path) {
+    try {
+      const res = await authFetch(api.files.downloadUrl(path, currentNode));
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = baseName(path);
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch (e) { ui.toast('Erro ao baixar: ' + e.message, 'err'); }
   }
 
   async function openFile(path) {
     const ext = extOf(baseName(path));
     if (!TEXT_EXT.includes(ext)) { downloadFile(path); return; }
     try {
-      const res = await fetch(api.files.readUrl(path));
+      const res = await authFetch(api.files.readUrl(path, currentNode));
+      if (!res.ok) throw new Error('HTTP ' + res.status);
       const text = await res.text();
       openEditor(path, text);
     } catch (e) { ui.toast('Erro ao abrir: ' + e.message, 'err'); }
@@ -205,13 +289,14 @@
     backdrop.querySelector('[data-act="save"]').onclick = async () => {
       const saveBtn = backdrop.querySelector('[data-act="save"]');
       saveBtn.disabled = true; saveBtn.textContent = 'Salvando...';
-      try { await api.files.save(path, ta.value); ui.toast('Salvo.', 'ok'); close(); }
+      try { await api.files.save(path, ta.value, currentNode); ui.toast('Salvo.', 'ok'); close(); }
       catch (e) { ui.toast('Erro ao salvar: ' + e.message, 'err'); saveBtn.disabled = false; saveBtn.textContent = 'Salvar'; }
     };
     backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
   }
 
   renderBreadcrumb();
+  loadNodeSelector();
   load();
 })();
 

@@ -2,6 +2,49 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.8.3 — Acessar arquivos de outros servidores da infraestrutura (proxy)
+
+Permite que a página **Arquivos** navegue nos arquivos de outros nós (servidores)
+da infraestrutura, não apenas do local. O BrightierOS local atua como **proxy**:
+encaminha as operações de arquivos ao nó remoto (`/api/files/*`) e autentica nele
+com credenciais configuradas por nó.
+
+### Como funciona
+* Na página Arquivos, um **seletor de servidor** lista o nó local e os remotos.
+* Ao escolher um nó remoto, todas as operações (listar, abrir, baixar, criar,
+  renomear, excluir, enviar, salvar, lixeira) vão via proxy
+  `/api/infrastructure/nodes/:id/proxy/files/*`.
+* O proxy autentica no nó remoto (login com as credenciais do nó), cachear o token
+  em memória (renova em caso de 401) e encaminha a requisição — incluindo uploads
+  multipart (buffer de até 200MB) e downloads (streaming do corpo).
+* **Segurança**: o proxy exige permissão local por método (GET/HEAD = `files:read`,
+  demais = `files:all`) e é **restrito a `files/*`** (não expõe outras APIs do
+  remoto, como usuários/admin). As credenciais ficam em `data/infrastructure.json`
+  (gitignored, local da instalação) e **nunca** são expostas nas respostas — apenas
+  um indicador `credentialsConfigured` (booleano).
+
+### Configuração
+* Para cada nó remoto, configure credenciais (usuário/senha de uma conta de
+  administrador ou editor **nesse nó**) na própria página Arquivos ao selecioná-lo
+  (modal de credenciais) ou via API
+  (`POST /api/infrastructure/nodes/:id/credentials`).
+
+### Endpoints novos
+* `GET /api/infrastructure/nodes/:id/credentials` — indica se há credenciais.
+* `POST /api/infrastructure/nodes/:id/credentials` — define credenciais.
+* `DELETE /api/infrastructure/nodes/:id/credentials` — remove credenciais.
+* `* /api/infrastructure/nodes/:id/proxy/files/*` — proxy de arquivos remotos.
+
+### Frontend
+* `api.files.*` ganhou parâmetro `nodeId`; `read`/`download` agora usam fetch
+  autenticado (Bearer) — também corrige a abertura/download local (que antes
+  não enviavam o token).
+
+### Testes
+* `test/infrastructure-proxy.test.js`: proxy lista/lê arquivos remotos, credenciais
+  erradas/não configuradas falham, sanitização não expõe a senha, nó local não
+  aceita credenciais.
+
 ## v0.8.2.3 — Hotfix: notificação dizia "offline" ao testar o nó local
 
 Corrige a contradição entre o **toast** e a **notificação** ao testar o nó local:
