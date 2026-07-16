@@ -2,6 +2,22 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.8.2.3 — Hotfix: notificação dizia "offline" ao testar o nó local
+
+Corrige a contradição entre o **toast** e a **notificação** ao testar o nó local:
+o toast dizia `Nó "X": local (ativo).` (correto), mas a notificação no sino
+dizia `Nó "X" offline.` (errado) — confundindo o usuário.
+
+### Causa
+* A rota `POST /api/infrastructure/nodes/:id/check` gerava a notificação com
+  `node.status === 'online' ? 'online' : 'offline'`. Como o nó local tem status
+  `'local'` (nem online nem offline), caía no `else` e rotulava como "offline".
+
+### Correção
+* A notificação agora trata os **3 estados**: `local (ativo)`, `online` e
+  `offline` — alinhada com o toast do frontend. O tipo também foi ajustado
+  (`warn` só para offline; `ok` para local/online).
+
 ## v0.8.2.2 — Hotfix: diagnóstico de "offline" ao testar nós (fetch failed)
 
 Corrige o bug em que testar/adicionar um nó aparecia como **offline** mesmo quando

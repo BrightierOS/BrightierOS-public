@@ -1,5 +1,5 @@
 // routes/infrastructure.js
-// BrightierOS v0.8.2 — Endpoints de infraestrutura (nós/servidores)
+// BrightierOS v0.8.2.3 — Endpoints de infraestrutura (nós/servidores)
 // CRUD de nós + verificação de conectividade (healthcheck via /api/health).
 const express = require('express');
 const infra = require('../lib/infrastructure');
@@ -58,7 +58,13 @@ router.post('/nodes/:id/check', requireManage, async (req, res) => {
   try {
     const node = await infra.checkNode(req.params.id);
     users.appendAdminLog({ actor: req.session.username, action: 'infra.node.check', target: req.params.id, detail: node.status });
-    notifications.add(node.status === 'online' ? 'ok' : 'warn', `Nó "${node.name || req.params.id}" ${node.status === 'online' ? 'online' : 'offline'}.`, { category: 'infrastructure' });
+    // v0.8.2.3: trata os 3 estados (local/online/offline). Antes a notificação
+    // usava `=== 'online' ? 'online' : 'offline'`, o que rotulava o nó LOCAL
+    // (status 'local') como "offline" — contradizendo o toast que dizia
+    // "local (ativo)". Agora a notificação bate com o toast.
+    const label = node.status === 'local' ? 'local (ativo)' : (node.status === 'online' ? 'online' : 'offline');
+    const type = node.status === 'offline' ? 'warn' : 'ok';
+    notifications.add(type, `Nó "${node.name || req.params.id}" ${label}.`, { category: 'infrastructure' });
     res.json({ success: true, data: node });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
