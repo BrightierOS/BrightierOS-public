@@ -15,9 +15,16 @@ const LOGS_DIR = process.env.BOS_LOGS_DIR
   ? path.resolve(process.env.BOS_LOGS_DIR)
   : path.join(ROOT, 'logs');
 
+function getToken() {
+  return process.env.BOS_TOKEN || '';
+}
+
 function getJSON(url) {
   return new Promise((resolve, reject) => {
-    http.get(url, (res) => {
+    const headers = {};
+    const token = getToken();
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    http.get(url, { headers }, (res) => {
       let data = '';
       res.on('data', (c) => (data += c));
       res.on('end', () => {
@@ -91,8 +98,11 @@ async function diagnose() {
 function uninstall(id) {
   return new Promise((resolve) => {
     if (!id) { console.log('  Informe o id do plugin.'); return resolve(); }
+    const headers = {};
+    const token = getToken();
+    if (token) headers['Authorization'] = 'Bearer ' + token;
     const req = http.request(
-      { hostname: 'localhost', port: PORT, path: '/api/plugins/' + encodeURIComponent(id), method: 'DELETE' },
+      { hostname: 'localhost', port: PORT, path: '/api/plugins/' + encodeURIComponent(id), method: 'DELETE', headers },
       (res) => {
         let d = '';
         res.on('data', (c) => (d += c));

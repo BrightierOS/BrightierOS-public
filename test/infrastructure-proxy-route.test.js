@@ -398,7 +398,8 @@ test('lixeira local: GET com admin -> 200 (lista vazia ou itens)', async () => {
     const token = adminToken();
     const r = await reqJSON(local, 'GET', '/api/files/trash', { token });
     assert.equal(r.status, 200, 'esperado 200, veio ' + r.status + ' body=' + r.body);
-    assert.ok(Array.isArray(r.json), 'esperado array');
+    assert.equal(r.json.success, true);
+    assert.ok(Array.isArray(r.json.data), 'esperado array em data');
   } finally {
     await new Promise((x) => local.close(x));
   }

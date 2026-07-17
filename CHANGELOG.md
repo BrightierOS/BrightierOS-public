@@ -2,6 +2,36 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.9.0 — Release Candidate (estabilidade, segurança e qualidade)
+
+Preparação para a primeira versão estável (**v1.0.0**). Esta release candidate
+prioriza estabilidade, confiabilidade e qualidade, sem adicionar grandes
+funcionalidades e sem mudanças incompatíveis.
+
+### O que mudou
+* **Segurança**: rotas anteriormente sem autenticação agora exigem login/admin:
+  `/api/users/reset`, `/api/notifications` (criação/limpeza), `/api/update/backups`,
+  `/api/store` e `/api/plugins`. Mantidas rotas públicas intencionais
+  (`/setup`, `/login`, `/invites/:token`).
+* **APIs**: respostas padronizadas em `{success, data|error}` nas rotas de arquivos,
+  lixeira, plugins, stores, update, core, admin, users, services, metrics e
+  infrastructure. Status HTTP mais corretos (400 para erros de cliente, 401/403
+  para auth, 404 para não encontrado, 500 apenas para erros internos inesperados).
+* **Estabilidade**: helpers compartilhados em `lib/data-utils.js` para reduzir
+  duplicação de `DATA_DIR`, leitura/escrita de JSON e helpers de resposta.
+  Validação de IDs simplificados anti-path-traversal em plugins/stores/backups.
+* **Arquivos e lixeira**: travessia de diretório bloqueada no client-side
+  (`resolvePath`) e validação adicional no server-side. Erros de FS mapeados para
+  mensagens claras.
+* **Testes**: nova suíte com 137 testes cobrindo auth de rotas críticas,
+  path traversal, consistência de API e comportamento da lixeira.
+* **Compatibilidade**: mantida 100% das permissões existentes; nenhuma remoção
+  de endpoint ou mudança de comportamento que quebre plugins atuais.
+* **Documentação**: atualizada para refletir as melhorias de qualidade.
+
+### Testes
+* 137/137 testes passam.
+
 ## v0.8.5.6 — Ajustes adicionais de responsividade
 
 Pequenos ajustes de CSS/HTML para reforçar a responsividade em telas pequenas,

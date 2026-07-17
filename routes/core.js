@@ -115,11 +115,17 @@ router.get('/api/metrics/history', (req, res) => {
 // Rotas de notificações
 const notifications = require('../lib/notifications');
 
-router.get('/api/notifications', (req, res) => {
+// v0.8.5.7 — notificações exigem autenticação. Leitura/marcação exigem login;
+// criação/limpeza exigem permissão de administrador (users:manage).
+const authAny = users.requirePermission();
+const authManage = users.requirePermission('users:manage');
+
+
+router.get('/api/notifications', authAny, (req, res) => {
   res.json({ success: true, data: notifications.list() });
 });
 
-router.post('/api/notifications', express.json(), (req, res) => {
+router.post('/api/notifications', authManage, express.json(), (req, res) => {
   const { type, message, category } = req.body || {};
   if (!type || !message) {
     return res.status(400).json({ success: false, error: 'Type and message required.' });
@@ -128,7 +134,7 @@ router.post('/api/notifications', express.json(), (req, res) => {
   res.json({ success: true, data: note });
 });
 
-router.post('/api/notifications/:id/read', (req, res) => {
+router.post('/api/notifications/:id/read', authAny, (req, res) => {
   notifications.markRead(req.params.id);
   res.json({ success: true });
 });
@@ -174,7 +180,7 @@ router.get('/api/notifications/stream', (req, res) => {
   req.on('error', cleanup);
 });
 
-router.delete('/api/notifications', (req, res) => {
+router.delete('/api/notifications', authManage, (req, res) => {
   notifications.clear();
   res.json({ success: true });
 });

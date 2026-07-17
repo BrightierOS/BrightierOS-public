@@ -4,12 +4,8 @@ const path = require("path");
 const multer = require("multer");
 const users = require("../lib/users");
 
-// Autenticação: qualquer usuário logado pode ler; só quem tem 'files:all'
-// (admin/editor) pode modificar. Visualizador (viewer) é somente-leitura.
 const authRead = users.requirePermission('files:read');
 const authWrite = users.requirePermission("files:all");
-
-
 
 function isTextFile(filePath) {
     const ext = path.extname(filePath).toLowerCase();
@@ -30,222 +26,139 @@ if (!fs.existsSync(ROOT)) {
 }
 
 const fileStorage = multer.diskStorage({
-
     destination(req, file, cb) {
-
         const folder = req.body.path || "";
-
         const destination = resolvePath(folder);
-
         fs.mkdirSync(destination, { recursive: true });
-
         cb(null, destination);
-
     },
-
     filename(req, file, cb) {
-
         cb(null, file.originalname);
-
     }
-
 });
 
 const upload = multer({
     storage: fileStorage
 });
 
-function resolvePath(relativePath = "") {
+function successResponse(res, data) {
+    if (data !== undefined) {
+        return res.json({ success: true, data });
+    }
+    return res.json({ success: true });
+}
 
+function errorResponse(res, status, message) {
+    return res.status(status).json({ success: false, error: message });
+}
+
+function classifyFsError(err) {
+    if (err && err.message === "Access denied.") {
+        return { status: 400, message: "Invalid path." };
+    }
+    if (err && err.code === "ENOENT") {
+        return { status: 404, message: "File or folder not found." };
+    }
+    return { status: 400, message: "Unable to process the request." };
+}
+
+function resolvePath(relativePath = "") {
     const target = path.normalize(
         path.join(ROOT, relativePath)
     );
 
-    if (!target.startsWith(ROOT)) {
+    if (target !== ROOT && !target.startsWith(ROOT + path.sep)) {
         throw new Error("Access denied.");
     }
 
     return target;
-
 }
 
 router.get("/list", authRead, (req, res) => {
-
     try {
-
         const folder = resolvePath(req.query.path || "");
-
-        const files = fs.readdirSync(folder, {
-            withFileTypes: true
-        });
-
+        const files = fs.readdirSync(folder, { withFileTypes: true });
         const result = files.map(file => ({
-
             name: file.name,
-
-            type: file.isDirectory()
-                ? "folder"
-                : "file",
-
-            size: file.isDirectory()
-                ? null
-                : fs.statSync(path.join(folder, file.name)).size
-
+            type: file.isDirectory() ? "folder" : "file",
+            size: file.isDirectory() ? null : fs.statSync(path.join(folder, file.name)).size
         }));
-
-        res.json(result);
-
+        return successResponse(res, result);
+    } catch (err) {
+        const { status, message } = classifyFsError(err);
+        return errorResponse(res, status, message);
     }
-
-    catch {
-
-        res.status(400).json({
-            error: "Unable to read folder."
-        });
-
-    }
-
 });
 
 router.get("/read", authRead, (req, res) => {
-
     try {
-
         const file = resolvePath(req.query.path);
-
-        res.sendFile(file);
-
+        if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
+            return errorResponse(res, 404, "File or folder not found.");
+        }
+        return res.sendFile(file);
+    } catch (err) {
+        const { status, message } = classifyFsError(err);
+        return errorResponse(res, status, message);
     }
-
-    catch {
-
-        res.status(404).json({
-            error: "File not found."
-        });
-
-    }
-
 });
 
 router.post("/create-folder", authWrite, express.json(), (req, res) => {
-
     try {
-
         const folder = resolvePath(req.body.path);
-
-        fs.mkdirSync(folder, {
-            recursive: true
-        });
-
-        res.json({
-            success: true
-        });
-
+        fs.mkdirSync(folder, { recursive: true });
+        return successResponse(res);
+    } catch (err) {
+        const { status, message } = classifyFsError(err);
+        return errorResponse(res, status, message);
     }
-
-    catch {
-
-        res.status(400).json({
-            success: false
-        });
-
-    }
-
 });
 
 router.post("/create-file", authWrite, express.json(), (req, res) => {
-
     try {
-
         const file = resolvePath(req.body.path);
-
         fs.writeFileSync(file, "");
-
-        res.json({
-            success: true
-        });
-
+        return successResponse(res);
+    } catch (err) {
+        const { status, message } = classifyFsError(err);
+        return errorResponse(res, status, message);
     }
-
-    catch {
-
-        res.status(400).json({
-            success: false
-        });
-
-    }
-
 });
 
 router.post("/rename", authWrite, express.json(), (req, res) => {
-
     try {
-
         const oldFile = resolvePath(req.body.oldPath);
-
         const newFile = resolvePath(req.body.newPath);
-
         fs.renameSync(oldFile, newFile);
-
-        res.json({
-            success: true
-        });
-
+        return successResponse(res);
+    } catch (err) {
+        const { status, message } = classifyFsError(err);
+        return errorResponse(res, status, message);
     }
-
-    catch {
-
-        res.status(400).json({
-            success: false
-        });
-
-    }
-
 });
 
 router.post("/delete", authWrite, express.json(), (req, res) => {
-
     try {
-
         const target = resolvePath(req.body.path);
-
-        fs.rmSync(target, {
-            recursive: true,
-            force: true
-        });
-
-        res.json({
-            success: true
-        });
-
+        fs.rmSync(target, { recursive: true, force: true });
+        return successResponse(res);
+    } catch (err) {
+        const { status, message } = classifyFsError(err);
+        return errorResponse(res, status, message);
     }
-
-    catch {
-
-        res.status(400).json({
-            success: false
-        });
-
-    }
-
 });
 
 router.post("/upload", authWrite, upload.single("file"), (req, res) => {
-
-    res.json({
-        success: true
-    });
-
+    if (!req.file) {
+        return errorResponse(res, 400, "No file uploaded.");
+    }
+    return successResponse(res);
 });
 
 router.post("/upload-folder", authWrite, express.json(), (req, res) => {
-
     try {
-
         const folder = resolvePath(req.body.path || "");
-
         fs.mkdirSync(folder, { recursive: true });
-
         if (Array.isArray(req.body.files)) {
             req.body.files.forEach((entry) => {
                 const entryPath = resolvePath(path.join(req.body.path || "", entry.path));
@@ -257,61 +170,37 @@ router.post("/upload-folder", authWrite, express.json(), (req, res) => {
                 }
             });
         }
-
-        res.json({ success: true });
-
+        return successResponse(res);
+    } catch (err) {
+        const { status, message } = classifyFsError(err);
+        return errorResponse(res, status, message);
     }
-
-    catch {
-
-        res.status(400).json({ success: false });
-
-    }
-
 });
-
 router.post("/save", authWrite, express.json(), (req, res) => {
-
     try {
-
         const filePath = resolvePath(req.body.path);
-
         if (!isTextFile(filePath)) {
-            return res.status(400).json({ success: false, error: "Only text files can be edited." });
+            return errorResponse(res, 400, "Only text files can be edited.");
         }
-
         fs.writeFileSync(filePath, req.body.content || "");
-
-        res.json({ success: true });
-
+        return successResponse(res);
+    } catch (err) {
+        const { status, message } = classifyFsError(err);
+        return errorResponse(res, status, message);
     }
-
-    catch {
-
-        res.status(400).json({ success: false });
-
-    }
-
 });
 
 router.get("/download", authRead, (req, res) => {
-
     try {
-
         const file = resolvePath(req.query.path);
-
-        res.download(file);
-
+        if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
+            return errorResponse(res, 404, "File or folder not found.");
+        }
+        return res.download(file);
+    } catch (err) {
+        const { status, message } = classifyFsError(err);
+        return errorResponse(res, status, message);
     }
-
-    catch {
-
-        res.status(404).json({
-            error: "File not found."
-        });
-
-    }
-
 });
 
 module.exports = router;

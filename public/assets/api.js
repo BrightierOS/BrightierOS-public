@@ -262,7 +262,7 @@
     },
 
     files: {
-      list: (path = '', nodeId) => fetchJSON(`${fileBase(nodeId)}/list?path=${encodeURIComponent(path)}`),
+      list: (path = '', nodeId) => fetchJSON(`${fileBase(nodeId)}/list?path=${encodeURIComponent(path)}`).then((d) => d && Array.isArray(d.data) ? d.data : (Array.isArray(d) ? d : [])),
       createFolder: (path, nodeId) => postJSON(`${fileBase(nodeId)}/create-folder`, { path }),
       createFile: (path, nodeId) => postJSON(`${fileBase(nodeId)}/create-file`, { path }),
       rename: (oldPath, newPath, nodeId) => postJSON(`${fileBase(nodeId)}/rename`, { oldPath, newPath }),
@@ -278,8 +278,8 @@
       readUrl: (path, nodeId) => `${fileBase(nodeId)}/read?path=${encodeURIComponent(path)}`,
       downloadUrl: (path, nodeId) => `${fileBase(nodeId)}/download?path=${encodeURIComponent(path)}`,
       trash: (path, nodeId) => postJSON(`${fileBase(nodeId)}/trash`, { path }),
-      trashList: (nodeId) => fetchJSON(`${fileBase(nodeId)}/trash`),
-      trashStats: (nodeId) => fetchJSON(`${fileBase(nodeId)}/trash/stats`),
+      trashList: (nodeId) => fetchJSON(`${fileBase(nodeId)}/trash`).then((d) => d && Array.isArray(d.data) ? d.data : (Array.isArray(d) ? d : [])),
+      trashStats: (nodeId) => fetchJSON(`${fileBase(nodeId)}/trash/stats`).then((d) => d && d.data ? d.data : d),
       restore: (trashPath, nodeId) => postJSON(`${fileBase(nodeId)}/trash/restore`, { trashPath }),
       emptyTrash: (nodeId) => fetchJSON(`${fileBase(nodeId)}/trash`, { method: 'DELETE' }),
       trashDelete: (trashPath, nodeId) =>

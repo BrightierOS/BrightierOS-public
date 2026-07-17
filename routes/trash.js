@@ -11,18 +11,36 @@ const router = express.Router();
 const ROOT = path.join(DATA_DIR, "home");
 const TRASH = path.join(DATA_DIR, "trash");
 
-// Autenticação da lixeira (v0.8.4): alinha com routes/files.js. Antes as rotas
-// de lixeira não exigiam login — um furo do sistema de arquivos (qualquer um na
-// rede podia listar/restaurar/excluir a lixeira local sem autenticar). Agora:
-// leitura (listar/stats) exige files:read; escrita (mover p/ lixeira, restaurar,
-// excluir, esvaziar) exige files:all. O proxy de nós remotos envia o Bearer do
-// nó remoto, então dois BrightierOS continuam interoperando.
 const authRead = users.requirePermission("files:read");
 const authWrite = users.requirePermission("files:all");
 
 if (!fs.existsSync(TRASH)) {
   fs.mkdirSync(TRASH, { recursive: true });
 }
+
+function successResponse(res, data) {
+    if (data !== undefined) {
+        return res.json({ success: true, data });
+    }
+    return res.json({ success: true });
+}
+
+function errorResponse(res, status, message) {
+    return res.status(status).json({ success: false, error: message });
+}
+function isValidSourcePath(relativePath) {
+    if (!relativePath || typeof relativePath !== "string") return false;
+    const resolved = path.normalize(path.join(ROOT, relativePath));
+    return resolved.startsWith(ROOT + path.sep);
+}
+
+function isValidTrashName(name) {
+    if (!name || typeof name !== "string") return false;
+    if (name.includes("..") || name.includes("/") || name.includes("\\")) return false;
+    return path.basename(name) === name;
+}
+
+
 
 function moveToTrash(relativePath) {
   const source = path.join(ROOT, relativePath);
@@ -62,13 +80,11 @@ function formatSize(size) {
   return `${size}`;
 }
 
-// Recupera o nome original a partir do nome seguro "{name}__{timestamp}{ext}".
-// Corrige o bug onde "report__1234567890.txt" era restaurado como "1234567890.txt".
 function recoverOriginalName(safeName) {
   const idx = String(safeName).lastIndexOf("__");
   if (idx < 0) return safeName;
   const name = safeName.slice(0, idx);
-  const rest = safeName.slice(idx + 2); // timestamp + extensão
+  const rest = safeName.slice(idx + 2);
   const ext = rest.replace(/^\d+/, "");
   return name + ext;
 }
@@ -76,12 +92,14 @@ function recoverOriginalName(safeName) {
 router.post("/trash", authWrite, express.json(), (req, res) => {
   try {
     const targetPath = req.body.path;
-    if (!targetPath) return res.status(400).json({ success: false });
+    if (!targetPath) return errorResponse(res, 400, "Path is required.");
+    if (!isValidSourcePath(targetPath)) return errorResponse(res, 400, "Invalid path.");
     const info = moveToTrash(targetPath);
-    if (!info) return res.status(404).json({ success: false, error: "Item not found." });
-    res.json({ success: true, info });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
+    if (!info) return errorResponse(res, 404, "Item not found.");
+    return successResponse(res, info);
+  } catch (err) {
+    console.error("[Trash] move error:", err);
+    return errorResponse(res, 500, "Unable to process the request.");
   }
 });
 
@@ -105,41 +123,46 @@ router.get("/trash", authRead, (req, res) => {
           deletedAt: stat.birthtime ? stat.birthtime.toISOString() : new Date().toISOString(),
         };
       });
-    res.json(items);
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
+    return successResponse(res, items);
+  } catch (err) {
+    console.error("[Trash] list error:", err);
+    return errorResponse(res, 500, "Unable to process the request.");
   }
 });
-
 router.post("/trash/restore", authWrite, express.json(), (req, res) => {
   try {
     const trashPath = req.body.trashPath;
+    if (!trashPath) return errorResponse(res, 400, "trashPath is required.");
+    if (!isValidTrashName(trashPath)) return errorResponse(res, 400, "Invalid trashPath.");
     const item = fs.readdirSync(TRASH, { withFileTypes: true }).find(
       (e) => e.name === trashPath
     );
-    if (!item) return res.status(404).json({ success: false, error: "Item not found in trash." });
+    if (!item) return errorResponse(res, 404, "Item not found in trash.");
     const source = path.join(TRASH, trashPath);
     const baseName = recoverOriginalName(item.name);
     const dest = path.join(ROOT, baseName);
     fs.renameSync(source, dest);
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
+    return successResponse(res);
+  } catch (err) {
+    console.error("[Trash] restore error:", err);
+    return errorResponse(res, 500, "Unable to process the request.");
   }
 });
 
 router.delete("/trash/:trashPath", authWrite, (req, res) => {
   try {
     const trashPath = req.params.trashPath;
+    if (!isValidTrashName(trashPath)) return errorResponse(res, 400, "Invalid trashPath.");
     const item = fs.readdirSync(TRASH, { withFileTypes: true }).find(
       (e) => e.name === trashPath
     );
-    if (!item) return res.status(404).json({ success: false, error: "Item not found." });
+    if (!item) return errorResponse(res, 404, "Item not found.");
     const target = path.join(TRASH, trashPath);
     fs.rmSync(target, { recursive: true, force: true });
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
+    return successResponse(res);
+  } catch (err) {
+    console.error("[Trash] delete error:", err);
+    return errorResponse(res, 500, "Unable to process the request.");
   }
 });
 
@@ -149,9 +172,10 @@ router.delete("/trash", authWrite, (req, res) => {
     for (const item of items) {
       fs.rmSync(path.join(TRASH, item.name), { recursive: true, force: true });
     }
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
+    return successResponse(res);
+  } catch (err) {
+    console.error("[Trash] empty error:", err);
+    return errorResponse(res, 500, "Unable to process the request.");
   }
 });
 
@@ -172,13 +196,14 @@ router.get("/trash/stats", authRead, (req, res) => {
       }
     };
     walk(TRASH);
-    res.json({
+    return successResponse(res, {
       count,
       size: totalBytes,
       sizeFormatted: formatSize(totalBytes),
     });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
+  } catch (err) {
+    console.error("[Trash] stats error:", err);
+    return errorResponse(res, 500, "Unable to process the request.");
   }
 });
 

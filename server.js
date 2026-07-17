@@ -92,7 +92,7 @@ app.use("/api/files", trashRouter);
 // Fallback 404
 app.use((req, res) => {
   if (req.path.startsWith("/api/")) {
-    res.status(404).json({ error: "Not found" });
+    res.status(404).json({ success: false, error: "Not found" });
   } else {
     res.status(404).sendFile(require("path").join(__dirname, "public", "404.html"));
   }

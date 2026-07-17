@@ -3,6 +3,14 @@ const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const hooks = require('../lib/hooks');
+const users = require('../lib/users');
+
+// v0.8.5.7 — gerenciamento de plugins exige permissão 'plugins:all'.
+const authPlugins = users.requirePermission('plugins:all');
+// Identificadores de plugin devem ser simples (sem path traversal).
+function isValidId(id) {
+  return typeof id === 'string' && /^[a-zA-Z0-9._-]+$/.test(id) && id !== '.' && id !== '..';
+}
 
 /**
  * Load all user‑generated plugins located in `data/plugins`.
@@ -90,7 +98,7 @@ module.exports = (app) => {
   });
 
   // API to list installed plugins
-  app.get('/api/plugins', (req, res) => {
+  app.get('/api/plugins', authPlugins, (req, res) => {
     const installed = [];
     if (fs.existsSync(pluginsRoot)) {
       const dirs = fs.readdirSync(pluginsRoot, { withFileTypes: true }).filter(d => d.isDirectory());
@@ -108,9 +116,12 @@ module.exports = (app) => {
   });
 
   // DELETE endpoint to uninstall a plugin
-  app.delete('/api/plugins/:id', (req, res) => {
+  app.delete('/api/plugins/:id', authPlugins, (req, res) => {
     try {
       const pluginId = req.params.id;
+      if (!isValidId(pluginId)) {
+        return res.status(400).json({ success: false, error: 'Invalid plugin id.' });
+      }
       const pluginPath = path.join(pluginsRoot, pluginId);
       if (!fs.existsSync(pluginPath)) {
         return res.status(404).json({ success: false, error: 'Plugin not found.' });

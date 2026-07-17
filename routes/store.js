@@ -4,6 +4,14 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const simpleGit = require('simple-git');
+const users = require('../lib/users');
+
+// v0.8.5.7 — gerenciamento de stores exige permissão 'store:all'.
+const authStore = users.requirePermission('store:all');
+// Identificadores devem ser simples (sem path traversal).
+function isValidId(id) {
+  return typeof id === 'string' && /^[a-zA-Z0-9._-]+$/.test(id) && id !== '.' && id !== '..';
+}
 
 // Leitura segura de JSON: nunca lança — retorna [] / null em caso de arquivo
 // ausente, corrompido ou vazio. Corrige travamentos por JSON.parse sem try/catch.
@@ -44,12 +52,21 @@ module.exports = (app) => {
     fs.mkdirSync(cachesRoot, { recursive: true });
   }
 
-  const getCachePath = (storeId) => path.join(cachesRoot, storeId);
+  const getCachePath = (storeId) => {
+    if (!isValidId(storeId)) throw new Error('Invalid store id.');
+    return path.join(cachesRoot, storeId);
+  };
 
   // ---- Register a new store -------------------------------------------------
-  app.post('/api/store', express.json(), (req, res) => {
+  app.post('/api/store', authStore, express.json(), (req, res) => {
     const { id, name, url } = req.body;
     if (!id || !name || !url) {
+      return res.status(400).json({ success: false, error: 'Missing id, name or url.' });
+    }
+    if (!isValidId(id)) {
+      return res.status(400).json({ success: false, error: 'Invalid store id.' });
+    }
+    if (!url.startsWith('https://')) {
       return res.status(400).json({ success: false, error: 'Missing id, name or url.' });
     }
     if (!url.startsWith('https://')) {
@@ -70,14 +87,17 @@ module.exports = (app) => {
   });
 
   // ---- List all registered stores ------------------------------------------
-  app.get('/api/store', (req, res) => {
+  app.get('/api/store', authStore, (req, res) => {
     const stores = readJsonArray(storesFile);
     res.json(stores);
   });
 
   // ---- Get catalog (apps.json) for a store ---------------------------------
-  app.get('/api/store/:id/catalog', async (req, res) => {
+  app.get('/api/store/:id/catalog', authStore, async (req, res) => {
     const { id } = req.params;
+    if (!isValidId(id)) {
+      return res.status(400).json({ success: false, error: 'Invalid store id.' });
+    }
     const stores = readJsonArray(storesFile);
     const store = stores.find((s) => s.id === id);
     if (!store) return res.status(404).json({ success: false, error: 'Store not found.' });
@@ -101,8 +121,11 @@ module.exports = (app) => {
   });
 
   // ---- Install a plugin from a store ---------------------------------------
-  app.post('/api/store/:id/install/:pluginId', async (req, res) => {
+  app.post('/api/store/:id/install/:pluginId', authStore, async (req, res) => {
     const { id, pluginId } = req.params;
+    if (!isValidId(id) || !isValidId(pluginId)) {
+      return res.status(400).json({ success: false, error: 'Invalid store or plugin id.' });
+    }
     const stores = readJsonArray(storesFile);
     const store = stores.find((s) => s.id === id);
     if (!store) return res.status(404).json({ success: false, error: 'Store not found.' });

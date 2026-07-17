@@ -266,7 +266,9 @@ router.post('/:id/password', users.requirePermission(), (req, res) => {
 });
 
 // Reset de sistema (mantido): apaga todo o diretório de dados.
-router.post('/reset', (req, res) => {
+// v0.8.5.7 — exige autenticação de administrador para evitar reset remoto
+// não-autorizado (o header x-confirmed-reset continua obrigatório).
+router.post('/reset', users.requirePermission('users:manage'), (req, res) => {
   if (req.headers['x-confirmed-reset'] !== 'true') {
     return res.status(403).json({ success: false, error: 'Reset não confirmado.' });
   }

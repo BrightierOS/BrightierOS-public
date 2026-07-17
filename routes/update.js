@@ -148,6 +148,12 @@ function ensureBackupsDir() {
   if (!fs.existsSync(BACKUPS_DIR)) fs.mkdirSync(BACKUPS_DIR, { recursive: true });
 }
 
+// v0.8.5.7 — valida o identificador de backup para impedir path traversal
+// (ex.: "../outro" ou caminhos absolutos).
+function validateBackupId(id) {
+  return typeof id === "string" && /^[a-zA-Z0-9._-]+$/.test(id) && id !== "." && id !== "..";
+}
+
 function listBackups() {
   ensureBackupsDir();
   try {
@@ -193,6 +199,7 @@ async function createBackup(label, opts = {}) {
 }
 
 async function restoreBackup(backupId) {
+  if (!validateBackupId(backupId)) throw new Error("ID de backup inválido.");
   const src = path.join(BACKUPS_DIR, backupId);
   if (!fs.existsSync(src)) throw new Error(`Backup não encontrado: ${backupId}`);
   // Segurança: preserva o estado atual antes de sobrescrever.
@@ -614,7 +621,7 @@ router.post("/backup", requireManage, async (req, res) => {
 });
 
 // GET /api/update/backups — Lista os backups disponíveis
-router.get("/backups", (req, res) => {
+router.get("/backups", requireManage, (req, res) => {
   try {
     res.json({ success: true, backups: listBackups() });
   } catch (err) {
@@ -686,6 +693,7 @@ router._internals = {
   updatePluginsTogether,
   summarizeLocalChanges,
   ensureDataDir,
+  validateBackupId,
   BACKUPS_DIR,
   DATA_DIR,
 };

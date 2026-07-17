@@ -244,6 +244,19 @@ Expansão:
 * scripts de inicialização multiplataforma;
 * compatibilidade entre sistemas operacionais.
 
+## v0.9.0 — Release Candidate (estabilidade, segurança e qualidade)
+
+Preparação para **v1.0.0**. Esta release candidate prioriza estabilidade,
+segurança, consistência de APIs e qualidade de código, sem grandes refatorações
+ou mudanças incompatíveis.
+
+* APIs com respostas padronizadas e status HTTP corretos.
+* Administração, arquivos, lixeira, plugins, stores, update e notificações
+  com validações reforçadas.
+* Novos helpers compartilhados e redução de duplicações.
+* 137 testes automatizados na suíte.
+* Compatibilidade total com instalações existentes.
+
 ## v0.8.0 — Infraestrutura e Serviços
 
 * **Dashboard expandido**: gráficos em tempo real (CPU/RAM/Rede), histórico de
@@ -292,8 +305,8 @@ Expansão:
 
 Possíveis melhorias:
 
-* mais aplicações nativas;
-* gerenciamento avançado de serviços;
+* v1.0.0 como primeira versão estável focada em confiabilidade e produção;
+* desempenho, monitoramento e backup/restore;
 * melhorias no sistema de plugins;
 * evolução da Community App Store;
 * novos recursos para servidores pessoais.
@@ -309,3 +322,4 @@ Desenvolvedores e usuários podem participar criando plugins, sugerindo melhoria
 **BrightierOS**
 
 > Um lugar onde servidores deixam de ser apenas máquinas e se tornam plataformas. 🌿
+
