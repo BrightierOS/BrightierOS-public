@@ -25,11 +25,11 @@
 
     <section class="card">
       <h2>Adicionar loja comunitária</h2>
-      <form id="storeForm" class="grid cols-3" style="gap:12px; align-items:end;">
+      <form id="storeForm" class="form-grid" style="margin-top:12px;">
         <div><label for="sid">ID</label><input id="sid" name="id" placeholder="minha-loja" required></div>
         <div><label for="sname">Nome</label><input id="sname" name="name" placeholder="Minha Loja" required></div>
-        <div><label for="surl">URL (HTTPS)</label><input id="surl" name="url" type="url" placeholder="https://github.com/usuario/repo" required></div>
-        <div class="row-actions" style="grid-column: span 3;"><button class="btn sm" type="submit">Adicionar</button></div>
+        <div class="full"><label for="surl">URL (HTTPS)</label><input id="surl" name="url" type="url" placeholder="https://github.com/usuario/repo" required></div>
+        <div class="actions"><button class="btn sm" type="submit">Adicionar</button></div>
       </form>
       <p class="msg" id="storeMsg"></p>
     </section>

@@ -2,6 +2,41 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v0.8.5.6 — Ajustes adicionais de responsividade
+
+Pequenos ajustes de CSS/HTML para reforçar a responsividade em telas pequenas,
+substituindo widths fixos por layouts fluidos.
+
+### O que mudou
+* `public/assets/styles.css`:
+  * Inputs, selects e textareas com `width: 100%` e `max-width: 100%`.
+  * Grid base usa `minmax(0, 1fr)` para evitar overflow.
+  * Novas classes `.form-grid` e `.w-full`.
+  * Breakpoints aprimorados (320px, 380px, 520px, 768px, 900px, 1024px).
+* `public/index.html`: input de versão alvo sem `width` fixo.
+* `public/services.html`: input de filtro sem `width` fixo.
+* `public/store.html`: formulário de loja usa `.form-grid`.
+
+## v0.8.5.5 — Refactor do Dashboard
+
+Reformula o layout do Dashboard para deixar a interface mais limpa, organizada
+e visualmente consistente, reduzindo a "bagunça" da versão anterior.
+
+### O que mudou
+* `public/index.html`:
+  * Novo topo com **4 cards de status principais**: CPU, Memória, Armazenamento e Rede.
+  * Gráfico de performance em card dedicado ao lado das informações do sistema.
+  * Seções claras e separadas: Processos, Atalhos, Plugins e Atualizações.
+  * Cards com títulos e ações organizados.
+* `public/assets/styles.css`:
+  * Novos estilos `.stat-card`, `.stat-value`, `.stat-bar`, `.stat-meta`.
+  * Grid responsivo para cards de plugins (`.plugin-grid`, `.plugin-card`).
+  * Ajustes de espaçamento e tipografia para o dashboard.
+* `public/assets/dashboard.js`:
+  * `loadMetrics()` agora preenche os 4 cards de status em tempo real.
+  * Helpers `setStatCard()` e `fmtNetSpeed()`.
+  * `loadPlugins()` renderiza plugins como cards em vez de tabela.
+
 ## v0.8.5.4 — Melhorias de responsividade (mobile/tablet)
 
 Refatoração completa das media queries e do layout para tornar o painel usável

@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/styles.css" />
 </head>
-<body data-page="dashboard" data-title="Dashboard" data-sub="Your infrastructure. Brighter.">
+<body data-page="dashboard" data-title="Dashboard" data-sub="Visão geral da infraestrutura">
   <div id="boot-loader" aria-hidden="true">
     <div class="boot-loader-inner">
       <div class="boot-logo">
@@ -22,69 +22,91 @@
   </div>
 
   <main class="page">
-    <div class="grid cols-3">
+    <section class="grid cols-4" id="status-cards">
+      <article class="card stat-card">
+        <div class="stat-header"><span class="stat-icon">🖥️</span><span class="stat-label">CPU</span></div>
+        <div class="stat-value" id="cpu-value">—</div>
+        <div class="stat-bar"><span id="cpu-bar"></span></div>
+        <div class="stat-meta" id="cpu-meta">Carregando...</div>
+      </article>
+      <article class="card stat-card">
+        <div class="stat-header"><span class="stat-icon">🧠</span><span class="stat-label">Memória</span></div>
+        <div class="stat-value" id="ram-value">—</div>
+        <div class="stat-bar"><span id="ram-bar"></span></div>
+        <div class="stat-meta" id="ram-meta">Carregando...</div>
+      </article>
+      <article class="card stat-card">
+        <div class="stat-header"><span class="stat-icon">💾</span><span class="stat-label">Armazenamento</span></div>
+        <div class="stat-value" id="storage-value">—</div>
+        <div class="stat-bar"><span id="storage-bar"></span></div>
+        <div class="stat-meta" id="storage-meta">Carregando...</div>
+      </article>
+      <article class="card stat-card">
+        <div class="stat-header"><span class="stat-icon">🌐</span><span class="stat-label">Rede</span></div>
+        <div class="stat-value" id="net-value">—</div>
+        <div class="stat-meta" id="net-meta">Carregando...</div>
+      </article>
+    </section>
 
-      <section class="card" style="grid-column: span 2;">
-        <h2>Performance</h2>
-        <div id="stats"><p class="muted">Carregando métricas...</p></div>
-        <h3 style="margin-top:16px;font-size:14px;color:var(--muted)">Histórico em tempo real</h3>
-        <div id="metrics-chart" style="height:140px;margin-top:6px"></div>
-      </section>
+    <section class="grid cols-3" style="margin-top:16px">
+      <article class="card" style="grid-column: span 2;">
+        <h2>Histórico de performance</h2>
+        <div id="metrics-chart" style="height:160px;margin-top:8px"></div>
+        <div class="chart-legend" style="margin-top:8px">
+          <span class="ld"><i style="background:var(--accent)"></i>CPU</span>
+          <span class="ld"><i style="background:#1f7cff"></i>Memória</span>
+          <span class="ld"><i style="background:#2ee6a6"></i>Download</span>
+        </div>
+      </article>
 
-      <section class="card">
+      <article class="card">
         <h2>Sistema</h2>
-        <div id="system-info"><p class="muted">Carregando...</p></div>
-      </section>
+        <div id="system-info" style="margin-top:10px"><p class="muted">Carregando...</p></div>
+      </article>
+    </section>
 
-      <section class="card" style="grid-column: span 2;">
-        <h2>Armazenamento</h2>
-        <div id="storage"><p class="muted">Carregando...</p></div>
-      </section>
-
-      <section class="card">
-        <h2>Rede</h2>
-        <div id="network"><p class="muted">Carregando...</p></div>
-      </section>
-
-      <section class="card" style="grid-column: span 2;">
-        <h2>Processos</h2>
+    <section class="grid cols-3" style="margin-top:16px">
+      <article class="card" style="grid-column: span 2;">
+        <h2>Processos em destaque</h2>
         <div id="processes"><p class="muted">Carregando...</p></div>
-      </section>
+      </article>
 
-      <section class="card">
+      <article class="card">
         <h2>Atalhos</h2>
-        <div class="grid" style="gap:10px;">
+        <div class="grid" style="gap:10px;margin-top:10px">
           <a class="btn ghost block" href="/files.html">📁 Arquivos</a>
           <a class="btn ghost block" href="/services.html">⚙️ Serviços</a>
           <a class="btn ghost block" href="/infrastructure.html">🖥️ Infraestrutura</a>
           <a class="btn ghost block" href="/store.html">🛒 Loja</a>
           <a class="btn ghost block" href="/trash.html">🗑️ Lixeira</a>
         </div>
-      </section>
+      </article>
+    </section>
 
-      <section class="card" style="grid-column: span 3;">
+    <section class="card" style="margin-top:16px">
+      <div class="section-head">
         <h2>Plugins instalados</h2>
-        <div id="installed-plugins-list"><p class="muted">Carregando plugins...</p></div>
-      </section>
+        <a class="btn ghost sm" href="/store.html">Ir para loja</a>
+      </div>
+      <div id="installed-plugins-list"><p class="muted">Carregando plugins...</p></div>
+    </section>
 
-      <section class="card" style="grid-column: span 3;">
-        <h2>Atualizações inteligentes</h2>
-        <div id="local-changes" style="display:none"></div>
-        <div id="update-status"></div>
-        <div class="toolbar">
-          <button id="checkUpdateBtn" class="btn sm">Verificar atualizações</button>
-          <input id="targetVersion" type="text" placeholder="Versão alvo (ex. 0.8.0)" style="width:260px" />
-          <button id="applyUpdateBtn" class="btn sm" style="display:none">Atualizar agora</button>
-        </div>
-        <div class="toolbar" style="margin-top:8px">
-          <button id="backupBtn" class="btn ghost sm">🗄 Backup</button>
-          <button id="changelogBtn" class="btn ghost sm">📝 Changelog</button>
-          <button id="restoreBtn" class="btn ghost sm">♻ Restaurar</button>
-        </div>
-        <div id="update-history"></div>
-      </section>
-
-    </div>
+    <section class="card" style="margin-top:16px">
+      <h2>Atualizações inteligentes</h2>
+      <div id="local-changes" style="display:none"></div>
+      <div id="update-status" style="margin-top:8px"></div>
+      <div class="toolbar" style="margin-top:12px">
+        <button id="checkUpdateBtn" class="btn sm">Verificar atualizações</button>
+        <input id="targetVersion" type="text" placeholder="Versão alvo (ex. 0.8.0)" />
+        <button id="applyUpdateBtn" class="btn sm" style="display:none">Atualizar agora</button>
+      </div>
+      <div class="toolbar" style="margin-top:8px">
+        <button id="backupBtn" class="btn ghost sm">🗄 Backup</button>
+        <button id="changelogBtn" class="btn ghost sm">📝 Changelog</button>
+        <button id="restoreBtn" class="btn ghost sm">♻ Restaurar</button>
+      </div>
+      <div id="update-history" style="margin-top:14px"></div>
+    </section>
   </main>
 
   <script src="assets/api.js"></script>

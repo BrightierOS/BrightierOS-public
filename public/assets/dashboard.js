@@ -14,20 +14,72 @@
     </div>`;
   }
 
+  function setStatCard(idSuffix, value, pct, meta, extraClass = '') {
+    const valueEl = document.getElementById(idSuffix + '-value');
+    const barEl = document.getElementById(idSuffix + '-bar');
+    const metaEl = document.getElementById(idSuffix + '-meta');
+    if (valueEl) {
+      valueEl.textContent = value;
+      valueEl.className = 'stat-value' + (extraClass ? ' ' + extraClass : '');
+    }
+    if (metaEl) metaEl.textContent = meta;
+    if (barEl) {
+      barEl.style.width = pct + '%';
+      const wrap = barEl.closest('.stat-bar');
+      if (wrap) {
+        wrap.classList.remove('warn', 'crit');
+        if (pct > 85) wrap.classList.add('crit');
+        else if (pct > 65) wrap.classList.add('warn');
+      }
+    }
+  }
+
+  function fmtNetSpeed(kbps) {
+    const n = Number(kbps) || 0;
+    if (n >= 1024) return (n / 1024).toFixed(2) + ' MB/s';
+    return n.toFixed(2) + ' KB/s';
+  }
+
   async function loadMetrics() {
     const el = document.getElementById('stats');
-    if (!el) return;
     try {
       const r = await api.stats();
       const d = r.data || {};
-      const parts = [];
-      parts.push(bar('CPU — ' + (d.cpu?.name || ''), d.cpu?.usage, ''));
-      if (d.cpu?.cores) parts.push(`<div class="metric"><div class="meta" style="font-size:12px"><span class="label">Cores</span><span class="val">${ui.escapeHtml(d.cpu.cores)}</span></div></div>`);
-      parts.push(bar('RAM', d.ram?.usage, `${d.ram?.used}/${d.ram?.total} GB · `));
-      (d.gpu || []).forEach((g, i) => parts.push(bar(`GPU ${i + 1} — ${g.name || ''}`, g.usage)));
-      el.innerHTML = parts.join('');
 
-      // Sistema (v0.8.0)
+      // Cards de status principais
+      const cpu = Math.max(0, Math.min(100, Number(d.cpu?.usage) || 0));
+      setStatCard('cpu', cpu.toFixed(1) + '%', cpu, d.cpu?.name || (d.cpu?.cores ? d.cpu.cores + ' cores' : 'Carregando...'));
+
+      const ram = Math.max(0, Math.min(100, Number(d.ram?.usage) || 0));
+      setStatCard('ram', ram.toFixed(1) + '%', ram, `${d.ram?.used || '—'}/${d.ram?.total || '—'} GB usados`);
+
+      const drives = d.storage || [];
+      if (drives.length) {
+        const main = drives[0];
+        const usage = Math.max(0, Math.min(100, Number(main.usage) || 0));
+        setStatCard('storage', usage.toFixed(1) + '%', usage, `${main.used || '—'}/${main.total || '—'} GB · ${main.drive || 'C:'}`);
+      } else {
+        setStatCard('storage', '—', 0, 'n/d');
+      }
+
+      const n = d.network || null;
+      if (n) {
+        setStatCard('net', fmtNetSpeed(n.rx), 0, `↓ ${fmtNetSpeed(n.rx)} · ↑ ${fmtNetSpeed(n.tx)}`, 'sm');
+      } else {
+        setStatCard('net', '—', 0, 'n/d', 'sm');
+      }
+
+      // Seção Performance legada (se ainda existir em alguma página antiga)
+      if (el) {
+        const parts = [];
+        parts.push(bar('CPU — ' + (d.cpu?.name || ''), d.cpu?.usage, ''));
+        if (d.cpu?.cores) parts.push(`<div class="metric"><div class="meta" style="font-size:12px"><span class="label">Cores</span><span class="val">${ui.escapeHtml(d.cpu.cores)}</span></div></div>`);
+        parts.push(bar('RAM', d.ram?.usage, `${d.ram?.used}/${d.ram?.total} GB · `));
+        (d.gpu || []).forEach((g, i) => parts.push(bar(`GPU ${i + 1} — ${g.name || ''}`, g.usage)));
+        el.innerHTML = parts.join('');
+      }
+
+      // Sistema
       const sys = document.getElementById('system-info');
       if (sys) {
         const osLine = d.os ? `${ui.escapeHtml(d.os.distro || '')} ${ui.escapeHtml(d.os.release || '')}` : '—';
@@ -40,22 +92,20 @@
           <div class="kv"><span class="muted">Temperatura</span><span>${d.temperature != null ? ui.escapeHtml(d.temperature) + ' °C' : 'n/d'}</span></div>
           <div class="kv"><span class="muted">Processos</span><span>${d.processes ? ui.escapeHtml(d.processes.all) + ' (' + ui.escapeHtml(d.processes.running) + ' ativos)' : 'n/d'}</span></div>`;
       }
-      // Armazenamento (v0.8.0)
+      // Armazenamento legado (se existir)
       const st = document.getElementById('storage');
-      if (st) {
-        const drives = d.storage || [];
+      if (st && !document.getElementById('storage-value')) {
         st.innerHTML = drives.length ? drives.map(s => bar(`Drive ${s.drive || ''}`, s.usage, `${s.used}/${s.total} GB · `)).join('') : '<p class="muted">n/d</p>';
       }
-      // Rede (v0.8.0)
+      // Rede legada (se existir)
       const net = document.getElementById('network');
-      if (net) {
-        const n = d.network || null;
+      if (net && !document.getElementById('net-value')) {
         net.innerHTML = n ? `
           <div class="kv"><span class="muted">Interface</span><span>${ui.escapeHtml(n.iface || '—')}</span></div>
           <div class="kv"><span class="muted">Download</span><span>${ui.escapeHtml(n.rx)} KB/s</span></div>
           <div class="kv"><span class="muted">Upload</span><span>${ui.escapeHtml(n.tx)} KB/s</span></div>` : '<p class="muted">n/d</p>';
       }
-      // Processos (v0.8.0)
+      // Processos
       const proc = document.getElementById('processes');
       if (proc) {
         const p = d.processes || null;
@@ -64,7 +114,7 @@
           <tbody>${p.top.map(x => `<tr><td>${ui.escapeHtml(x.name)}</td><td class="muted">${ui.escapeHtml(x.cpu)}</td><td class="muted">${ui.escapeHtml(x.mem)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">n/d</p>';
       }
     } catch (e) {
-      el.innerHTML = '<p class="muted">Erro ao carregar métricas.</p>';
+      if (el) el.innerHTML = '<p class="muted">Erro ao carregar métricas.</p>';
     }
   }
 
@@ -103,20 +153,17 @@
     try {
       const list = await api.plugins.list();
       if (!list.length) {
-        el.innerHTML = '<p class="muted">Nenhum plugin instalado. Explore a <a href="/store.html" style="color:var(--accent)">Loja</a>.</p>';
+        el.innerHTML = '<p class="empty-state">Nenhum plugin instalado. Explore a <a href="/store.html" style="color:var(--accent)">Loja</a>.</p>';
         return;
       }
-      el.innerHTML = `<div class="table-wrap"><table>
-        <thead><tr><th>Nome</th><th>ID</th><th>Versão</th><th></th></tr></thead>
-        <tbody>${list.map(p => `
-          <tr>
-            <td style="font-weight:600">${ui.escapeHtml(p.name || p.id)}</td>
-            <td class="muted">${ui.escapeHtml(p.id)}</td>
-            <td class="muted">${ui.escapeHtml(p.version || '—')}</td>
-            <td><div class="row-actions" style="justify-content:flex-end">
-              <button class="btn ghost sm" data-uninstall="${ui.escapeHtml(p.id)}">Desinstalar</button>
-            </div></td>
-          </tr>`).join('')}</tbody></table></div>`;
+      el.innerHTML = `<div class="plugin-grid">${list.map(p => `
+        <div class="plugin-card">
+          <div class="plugin-name">${ui.escapeHtml(p.name || p.id)}</div>
+          <div class="plugin-meta">${ui.escapeHtml(p.id)} · v${ui.escapeHtml(p.version || '—')}${p.author ? ' · por ' + ui.escapeHtml(p.author) : ''}</div>
+          <div class="plugin-actions">
+            <button class="btn ghost sm" data-uninstall="${ui.escapeHtml(p.id)}">Desinstalar</button>
+          </div>
+        </div>`).join('')}</div>`;
       el.querySelectorAll('[data-uninstall]').forEach(btn => {
         btn.addEventListener('click', async () => {
           const id = btn.getAttribute('data-uninstall');
