@@ -67,9 +67,6 @@ module.exports = (app) => {
       return res.status(400).json({ success: false, error: 'Invalid store id.' });
     }
     if (!url.startsWith('https://')) {
-      return res.status(400).json({ success: false, error: 'Missing id, name or url.' });
-    }
-    if (!url.startsWith('https://')) {
       return res.status(400).json({ success: false, error: 'Only public HTTPS URLs are allowed.' });
     }
     const stores = readJsonArray(storesFile);
@@ -182,3 +179,4 @@ module.exports = (app) => {
     return res.json({ message: 'Plugin installed successfully.' });
   });
 };
+

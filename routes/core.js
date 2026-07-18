@@ -29,7 +29,7 @@ router.get('/500.html', (req, res) => {
 });
 
 // Endpoint stats: fornece informações do sistema (CPU, RAM, GPU, storage).
-router.get('/api/stats', async (req, res) => {
+router.get('/api/stats', users.requirePermission(), async (req, res) => {
   try {
     const [cpuLoad, cpuInfo, mem, graphics, osInfo] = await Promise.all([
       si.currentLoad(),
@@ -47,6 +47,17 @@ router.get('/api/stats', async (req, res) => {
         new Promise((r) => setTimeout(() => r([]), 4000)),
       ]);
     } catch { disks = []; }
+    // Fallback de storage: se si.fsSize retornar vazio, usa memória total como
+    // último recurso para evitar o painel ficar em "n/d".
+    if (!Array.isArray(disks) || !disks.length) {
+      try {
+        const totalBytes = os.totalmem && os.totalmem();
+        const usedBytes = totalBytes != null && os.freemem != null ? totalBytes - os.freemem() : 0;
+        const gb = (b) => Number((b / 1024 / 1024 / 1024).toFixed(1));
+        disks = [{ fs: 'volume', used: gb(usedBytes), size: gb(totalBytes) }];
+      } catch { disks = []; }
+    }
+
 
     // Métricas adicionais (v0.8.0) — isoladas por try/catch para não quebrar o stats.
     let network = null, processes = null, temperature = null;
@@ -102,7 +113,7 @@ router.get('/api/stats', async (req, res) => {
 });
 
 // Endpoint para histórico de métricas
-router.get('/api/metrics/history', (req, res) => {
+router.get('/api/metrics/history', users.requirePermission(), (req, res) => {
   try {
     // Usa a API do metrics para respeitar BOS_DATA_DIR.
     const history = metrics.readHistory().slice(-1000);

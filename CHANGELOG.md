@@ -2,6 +2,18 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
+## v1.0.0 — Stable
+
+Primeira versão oficialmente estável do BrightierOS.
+
+### O que mudou
+* **Segurança**: rotas e endpoints protegidos contra acesso não autenticado.
+* **APIs**: respostas padronizadas, status HTTP corretos e tratamento consistente de exceções.
+* **Estabilidade**: fixes de condições de corrida, duplicações e erros silenciosos.
+* **Infraestrutura**: healthcheck com limitador de concorrência; correção no merge do nó local.
+* **Experiência**: polimento da interface, feedbacks de ações e validações reforçadas.
+* **Testes**: validação completa da suíte.
+
 ## v0.9.0 — Release Candidate (estabilidade, segurança e qualidade)
 
 Preparação para a primeira versão estável (**v1.0.0**). Esta release candidate

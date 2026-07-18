@@ -59,7 +59,7 @@
         const usage = Math.max(0, Math.min(100, Number(main.usage) || 0));
         setStatCard('storage', usage.toFixed(1) + '%', usage, `${main.used || '—'}/${main.total || '—'} GB · ${main.drive || 'C:'}`);
       } else {
-        setStatCard('storage', '—', 0, 'n/d');
+        setStatCard('storage', '—', 0, '—');
       }
 
       const n = d.network || null;

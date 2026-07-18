@@ -277,7 +277,7 @@ async function updatePluginsTogether() {
 // ─── Rotas ──────────────────────────────────────────────────────────
 
 // GET /api/update/check — Versão instalada vs versão disponível no GitHub
-router.get("/check", async (req, res) => {
+router.get("/check", usersLib.requirePermission(), async (req, res) => {
   try {
     const installed = getInstalledVersion();
     const git = simpleGit({ baseDir: path.join(__dirname, "..") });
@@ -503,7 +503,7 @@ router.post("/apply", requireManage, async (req, res) => {
 });
 
 // GET /api/update/history — Histórico de atualizações
-router.get("/history", (req, res) => {
+router.get("/history", usersLib.requirePermission(), (req, res) => {
   try {
     const history = readHistory();
     res.json({ success: true, history });
@@ -654,7 +654,7 @@ router.post("/restore", requireManage, async (req, res) => {
 });
 
 // GET /api/update/changelog — Changelog integrado (CHANGELOG.md)
-router.get("/changelog", (req, res) => {
+router.get("/changelog", usersLib.requirePermission(), (req, res) => {
   try {
     const text = getChangelog();
     res.json({ success: true, hasChangelog: !!text, changelog: text });

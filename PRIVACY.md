@@ -2,7 +2,7 @@
 
 
 
-\*\*Última atualização:\*\* 15 de julho de 2026
+\*\*Última atualização:\*\* 18 de julho de 2026
 
 
 

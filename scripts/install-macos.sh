@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# BrightierOS v0.3.0 — Instalação para macOS
+# BrightierOS v1.0.0 — Instalação para macOS
 set -euo pipefail
 
 APP_DIR="${APP_DIR:-/opt/brightieros}"

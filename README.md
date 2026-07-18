@@ -244,6 +244,22 @@ Expansão:
 * scripts de inicialização multiplataforma;
 * compatibilidade entre sistemas operacionais.
 
+## v1.0.0 — Stable
+
+Primeira versão oficialmente estável do BrightierOS. Foco total em qualidade,
+estabilidade, confiabilidade e experiência do usuário, sem adicionar grandes
+funcionalidades ou quebrar compatibilidade.
+
+* Autenticação, permissões e sessões auditadas e blindadas.
+* APIs com respostas padronizadas e códigos HTTP corretos.
+* Sistema de arquivos, lixeira, plugins, stores, atualizações e backups
+  com validações reforçadas e tratamento de erros consistente.
+* Infraestrutura e serviços multiplataforma (Windows, Linux, macOS).
+* Monitoramento em tempo real com histórico contínuo de métricas.
+* Notificações SSE (Server-Sent Events) com categorias e persistência.
+* 137+ testes automatizados na suíte.
+* Compatibilidade total com instalações existentes.
+
 ## v0.9.0 — Release Candidate (estabilidade, segurança e qualidade)
 
 Preparação para **v1.0.0**. Esta release candidate prioriza estabilidade,

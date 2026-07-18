@@ -85,6 +85,8 @@ function recoverOriginalName(safeName) {
   if (idx < 0) return safeName;
   const name = safeName.slice(0, idx);
   const rest = safeName.slice(idx + 2);
+  // O separador só é válido se o restante começar com dígitos (timestamp).
+  if (!/^\d+/.test(rest)) return safeName;
   const ext = rest.replace(/^\d+/, "");
   return name + ext;
 }

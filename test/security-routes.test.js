@@ -240,6 +240,50 @@ test('GET /api/update/backups admin -> 200', async () => {
   }
 });
 
+// ─── /api/stats e /api/metrics/history ─────────────────────────────────────
+
+test('GET /api/stats sem token -> 401', async () => {
+  const srv = await startApp();
+  try {
+    const r = await reqJSON(srv, 'GET', '/api/stats');
+    assert.equal(r.status, 401);
+  } finally {
+    await new Promise((x) => srv.close(x));
+  }
+});
+
+test('GET /api/metrics/history sem token -> 401', async () => {
+  const srv = await startApp();
+  try {
+    const r = await reqJSON(srv, 'GET', '/api/metrics/history');
+    assert.equal(r.status, 401);
+  } finally {
+    await new Promise((x) => srv.close(x));
+  }
+});
+
+test('GET /api/stats com admin -> 200', async () => {
+  const srv = await startApp();
+  try {
+    const r = await reqJSON(srv, 'GET', '/api/stats', { token: adminToken() });
+    assert.equal(r.status, 200);
+    assert.equal(r.json && r.json.success, true);
+  } finally {
+    await new Promise((x) => srv.close(x));
+  }
+});
+
+test('GET /api/metrics/history com admin -> 200', async () => {
+  const srv = await startApp();
+  try {
+    const r = await reqJSON(srv, 'GET', '/api/metrics/history', { token: adminToken() });
+    assert.equal(r.status, 200);
+    assert.equal(r.json && r.json.success, true);
+  } finally {
+    await new Promise((x) => srv.close(x));
+  }
+});
+
 // ─── Path traversal: /api/files ─────────────────────────────────────────────
 
 test('GET /api/files/list com path traversal -> 400', async () => {
