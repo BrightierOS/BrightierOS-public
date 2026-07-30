@@ -16,6 +16,8 @@ test('app.js não usa a variável solta "role" (só propriedades/.role)', () => 
     const suspicious = clean
       .replace(/currentRole/g, '')
       .replace(/userRole/g, '')
+      .replace(/\brole="/g, '')
+      .replace(/\brole='/g, '')
       .replace(/\.role\b/g, '')
       .replace(/role:/g, '')
       .replace(/role-\$\{/g, '')

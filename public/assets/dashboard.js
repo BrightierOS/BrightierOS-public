@@ -1,442 +1,392 @@
 /* ============================================================
-   BrightierOS — Dashboard page
-   v0.7.1 - UI traduzida + histórico de métricas
+   BrightierOS v1.1.0 — Dashboard
+   Registers all dashboard widgets and initializes the
+   customizable widget grid. Preserves legacy update functions.
    ============================================================ */
 (function () {
   'use strict';
 
-  function bar(label, pct, extra) {
-    pct = Math.max(0, Math.min(100, Number(pct) || 0));
-    const cls = pct > 85 ? 'crit' : (pct > 65 ? 'warn' : '');
-    return `<div class="metric">
-      <div class="meta"><span class="label">${ui.escapeHtml(label)}</span><span class="val">${ui.escapeHtml(extra || '')}${pct.toFixed(1)}%</span></div>
-      <div class="bar ${cls}"><span style="width:${pct}%"></span></div>
-    </div>`;
+  var refreshTimer = null;
+
+  function initDashboard() {
+    var container = document.getElementById('dashboard-content');
+    if (!container || !window.bosWidgets) return;
+
+    registerStatusCards();
+    registerPerformanceChart();
+    registerSystemInfo();
+    registerQuickShortcuts();
+    registerProcesses();
+    registerPlugins();
+    registerSmartUpdates();
+
+    window.bosWidgets.renderDashboard(container);
   }
 
-  function setStatCard(idSuffix, value, pct, meta, extraClass = '') {
-    const valueEl = document.getElementById(idSuffix + '-value');
-    const barEl = document.getElementById(idSuffix + '-bar');
-    const metaEl = document.getElementById(idSuffix + '-meta');
-    if (valueEl) {
-      valueEl.textContent = value;
-      valueEl.className = 'stat-value' + (extraClass ? ' ' + extraClass : '');
-    }
-    if (metaEl) metaEl.textContent = meta;
-    if (barEl) {
-      barEl.style.width = pct + '%';
-      const wrap = barEl.closest('.stat-bar');
-      if (wrap) {
-        wrap.classList.remove('warn', 'crit');
-        if (pct > 85) wrap.classList.add('crit');
-        else if (pct > 65) wrap.classList.add('warn');
-      }
-    }
-  }
+  function esc(s) { return window.ui ? window.ui.escapeHtml(s) : String(s == null ? '' : s); }
 
-  function fmtNetSpeed(kbps) {
-    const n = Number(kbps) || 0;
-    if (n >= 1024) return (n / 1024).toFixed(2) + ' MB/s';
-    return n.toFixed(2) + ' KB/s';
-  }
-
-  async function loadMetrics() {
-    const el = document.getElementById('stats');
-    try {
-      const r = await api.stats();
-      const d = r.data || {};
-
-      // Cards de status principais
-      const cpu = Math.max(0, Math.min(100, Number(d.cpu?.usage) || 0));
-      setStatCard('cpu', cpu.toFixed(1) + '%', cpu, d.cpu?.name || (d.cpu?.cores ? d.cpu.cores + ' cores' : 'Carregando...'));
-
-      const ram = Math.max(0, Math.min(100, Number(d.ram?.usage) || 0));
-      setStatCard('ram', ram.toFixed(1) + '%', ram, `${d.ram?.used || '—'}/${d.ram?.total || '—'} GB usados`);
-
-      const drives = d.storage || [];
-      if (drives.length) {
-        const main = drives[0];
-        const usage = Math.max(0, Math.min(100, Number(main.usage) || 0));
-        setStatCard('storage', usage.toFixed(1) + '%', usage, `${main.used || '—'}/${main.total || '—'} GB · ${main.drive || 'C:'}`);
-      } else {
-        setStatCard('storage', '—', 0, '—');
-      }
-
-      const n = d.network || null;
-      if (n) {
-        setStatCard('net', fmtNetSpeed(n.rx), 0, `↓ ${fmtNetSpeed(n.rx)} · ↑ ${fmtNetSpeed(n.tx)}`, 'sm');
-      } else {
-        setStatCard('net', '—', 0, 'n/d', 'sm');
-      }
-
-      // Seção Performance legada (se ainda existir em alguma página antiga)
-      if (el) {
-        const parts = [];
-        parts.push(bar('CPU — ' + (d.cpu?.name || ''), d.cpu?.usage, ''));
-        if (d.cpu?.cores) parts.push(`<div class="metric"><div class="meta" style="font-size:12px"><span class="label">Cores</span><span class="val">${ui.escapeHtml(d.cpu.cores)}</span></div></div>`);
-        parts.push(bar('RAM', d.ram?.usage, `${d.ram?.used}/${d.ram?.total} GB · `));
-        (d.gpu || []).forEach((g, i) => parts.push(bar(`GPU ${i + 1} — ${g.name || ''}`, g.usage)));
-        el.innerHTML = parts.join('');
-      }
-
-      // Sistema
-      const sys = document.getElementById('system-info');
-      if (sys) {
-        const osLine = d.os ? `${ui.escapeHtml(d.os.distro || '')} ${ui.escapeHtml(d.os.release || '')}` : '—';
-        sys.innerHTML = `
-          <div class="kv"><span class="muted">Sistema</span><span>${osLine}</span></div>
-          <div class="kv"><span class="muted">Arquitetura</span><span>${ui.escapeHtml(d.os?.arch || '—')}</span></div>
-          <div class="kv"><span class="muted">Hostname</span><span>${ui.escapeHtml(d.os?.hostname || '—')}</span></div>
-          <div class="kv"><span class="muted">Uptime</span><span>${ui.escapeHtml(d.uptime || '—')}</span></div>
-          <div class="kv"><span class="muted">Carga</span><span>${(d.cpu?.load || []).map(ui.escapeHtml).join(' · ') || '—'}</span></div>
-          <div class="kv"><span class="muted">Temperatura</span><span>${d.temperature != null ? ui.escapeHtml(d.temperature) + ' °C' : 'n/d'}</span></div>
-          <div class="kv"><span class="muted">Processos</span><span>${d.processes ? ui.escapeHtml(d.processes.all) + ' (' + ui.escapeHtml(d.processes.running) + ' ativos)' : 'n/d'}</span></div>`;
-      }
-      // Armazenamento legado (se existir)
-      const st = document.getElementById('storage');
-      if (st && !document.getElementById('storage-value')) {
-        st.innerHTML = drives.length ? drives.map(s => bar(`Drive ${s.drive || ''}`, s.usage, `${s.used}/${s.total} GB · `)).join('') : '<p class="muted">n/d</p>';
-      }
-      // Rede legada (se existir)
-      const net = document.getElementById('network');
-      if (net && !document.getElementById('net-value')) {
-        net.innerHTML = n ? `
-          <div class="kv"><span class="muted">Interface</span><span>${ui.escapeHtml(n.iface || '—')}</span></div>
-          <div class="kv"><span class="muted">Download</span><span>${ui.escapeHtml(n.rx)} KB/s</span></div>
-          <div class="kv"><span class="muted">Upload</span><span>${ui.escapeHtml(n.tx)} KB/s</span></div>` : '<p class="muted">n/d</p>';
-      }
-      // Processos
-      const proc = document.getElementById('processes');
-      if (proc) {
-        const p = d.processes || null;
-        proc.innerHTML = p && p.top ? `<div class="table-wrap"><table>
-          <thead><tr><th>Processo</th><th>CPU %</th><th>MEM %</th></tr></thead>
-          <tbody>${p.top.map(x => `<tr><td>${ui.escapeHtml(x.name)}</td><td class="muted">${ui.escapeHtml(x.cpu)}</td><td class="muted">${ui.escapeHtml(x.mem)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">n/d</p>';
-      }
-    } catch (e) {
-      if (el) el.innerHTML = '<p class="muted">Erro ao carregar métricas.</p>';
-    }
-  }
-
-  // Gráfico de histórico em tempo real (CPU/RAM/Rede). Corrige a divisão por zero
-  // quando o sistema está ocioso e agora atualiza automaticamente (v0.8.0).
-  async function loadMetricsHistory() {
-    const el = document.getElementById('metrics-chart');
-    if (!el) return;
-    try {
-      const r = await api.metrics.history(60);
-      const hist = (r && r.data) || [];
-      if (!hist.length) { el.innerHTML = '<p class="muted" style="font-size:12px;margin:0">Aguardando dados...</p>'; return; }
-      const vals = (key) => hist.map(p => Number(p[key])).filter(v => v != null && !isNaN(v));
-      const maxCpu = Math.max(1, ...vals('cpu')), maxRam = Math.max(1, ...vals('ram')), maxNet = Math.max(0.01, ...vals('netRx'));
-      const W = 100, H = 40, n = hist.length;
-      const x = (i) => (i / Math.max(1, n - 1)) * W;
-      const line = (key, maxv, color) => {
-        const pts = hist.map((p, i) => {
-          const v = Number(p[key]); if (v == null || isNaN(v)) return null;
-          return `${x(i).toFixed(2)},${(H - (v / maxv) * (H - 4) - 2).toFixed(2)}`;
-        }).filter(Boolean).join(' ');
-        return pts ? `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.2" opacity="0.9" />` : '';
-      };
-      el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:100%">
-        ${line('cpu', maxCpu, 'var(--accent)')}${line('ram', maxRam, '#1f7cff')}${line('netRx', maxNet, '#2ee6a6')}
-      </svg>
-      <div class="chart-legend"><span class="ld"><i style="background:var(--accent)"></i>CPU</span>
-        <span class="ld"><i style="background:#1f7cff"></i>RAM</span>
-        <span class="ld"><i style="background:#2ee6a6"></i>Rede</span></div>`;
-    } catch (e) { el.innerHTML = ''; }
-  }
-
-  async function loadPlugins() {
-    const el = document.getElementById('installed-plugins-list');
-    if (!el) return;
-    try {
-      const list = await api.plugins.list();
-      if (!list.length) {
-        el.innerHTML = '<p class="empty-state">Nenhum plugin instalado. Explore a <a href="/store.html" style="color:var(--accent)">Loja</a>.</p>';
-        return;
-      }
-      el.innerHTML = `<div class="plugin-grid">${list.map(p => `
-        <div class="plugin-card">
-          <div class="plugin-name">${ui.escapeHtml(p.name || p.id)}</div>
-          <div class="plugin-meta">${ui.escapeHtml(p.id)} · v${ui.escapeHtml(p.version || '—')}${p.author ? ' · por ' + ui.escapeHtml(p.author) : ''}</div>
-          <div class="plugin-actions">
-            <button class="btn ghost sm" data-uninstall="${ui.escapeHtml(p.id)}">Desinstalar</button>
-          </div>
-        </div>`).join('')}</div>`;
-      el.querySelectorAll('[data-uninstall]').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const id = btn.getAttribute('data-uninstall');
-          const ok = await ui.confirm(`Desinstalar o plugin "${id}"?`, { title: 'Remover plugin', danger: true });
-          if (!ok) return;
+  /* ── Widget: Status Cards (CPU, RAM, Storage, Network) ─ */
+  function registerStatusCards() {
+    window.bosWidgets.register({
+      id: 'status-cards',
+      title: 'Status do Sistema',
+      icon: '\u{1F4CA}',
+      description: 'CPU, memoria, armazenamento e rede em tempo real.',
+      defaultWidth: 4,
+      defaultHeight: 'auto',
+      category: 'monitoring',
+      defaultConfig: { refreshInterval: 5 },
+      configFields: [
+        { key: 'refreshInterval', label: 'Intervalo de atualizacao (s)', type: 'select', options: [
+          { value: 3, label: '3 segundos' }, { value: 5, label: '5 segundos' },
+          { value: 10, label: '10 segundos' }, { value: 30, label: '30 segundos' }
+        ] }
+      ],
+      render: function () {
+        return '<div class="status-cards-grid">' +
+          '<div class="stat-card" id="stat-cpu"><div class="stat-icon">\u{1F5A5}\uFE0F</div><div class="stat-label">CPU</div><div class="stat-value">--</div><div class="stat-bar"><div class="stat-bar-fill"></div></div></div>' +
+          '<div class="stat-card" id="stat-ram"><div class="stat-icon">\u{1F9E0}</div><div class="stat-label">Memoria</div><div class="stat-value">--</div><div class="stat-bar"><div class="stat-bar-fill"></div></div></div>' +
+          '<div class="stat-card" id="stat-disk"><div class="stat-icon">\u{1F4BE}</div><div class="stat-label">Armazenamento</div><div class="stat-value">--</div><div class="stat-bar"><div class="stat-bar-fill"></div></div></div>' +
+          '<div class="stat-card" id="stat-net"><div class="stat-icon">\u{1F310}</div><div class="stat-label">Rede</div><div class="stat-value">--</div><div class="stat-sub">\u2193 -- / \u2191 --</div></div>' +
+        '</div>';
+      },
+      init: function (el, cfg) {
+        var interval = Number(cfg.refreshInterval) || 5;
+        var load = async function () {
           try {
-            const r = await api.plugins.uninstall(id);
-            if (r.success) { ui.toast('Plugin removido.', 'ok'); loadPlugins(); }
-            else ui.toast(r.error || 'Erro ao remover.', 'err');
-          } catch (err) { ui.toast(err.message, 'err'); }
+            var r = await api.stats();
+            var d = (r && r.data) || r || {};
+            var cpuEl = el.querySelector('#stat-cpu');
+            if (cpuEl && d.cpu) {
+              cpuEl.querySelector('.stat-value').textContent = (d.cpu.usage || 0) + '%';
+              cpuEl.querySelector('.stat-bar-fill').style.width = (d.cpu.usage || 0) + '%';
+            }
+            var ramEl = el.querySelector('#stat-ram');
+            if (ramEl && d.ram) {
+              ramEl.querySelector('.stat-value').textContent = (d.ram.usage || 0) + '%';
+              ramEl.querySelector('.stat-bar-fill').style.width = (d.ram.usage || 0) + '%';
+            }
+            var diskEl = el.querySelector('#stat-disk');
+            if (diskEl && d.storage && d.storage.length) {
+              var s = d.storage[0];
+              diskEl.querySelector('.stat-value').textContent = (s.usage || 0) + '%';
+              diskEl.querySelector('.stat-bar-fill').style.width = (s.usage || 0) + '%';
+            }
+            var netEl = el.querySelector('#stat-net');
+            if (netEl && d.network) {
+              netEl.querySelector('.stat-value').textContent = esc(d.network.iface || '--');
+              netEl.querySelector('.stat-sub').textContent = '\u2193 ' + (d.network.rx || 0) + ' / \u2191 ' + (d.network.tx || 0) + ' KB/s';
+            }
+          } catch (e) { /* silencioso: mantem ultimo valor */ }
+        };
+        load();
+        if (refreshTimer) clearInterval(refreshTimer);
+        refreshTimer = setInterval(load, interval * 1000);
+      },
+    });
+  }
+  /* ── Widget: Performance Chart ───────────────────────── */
+  function registerPerformanceChart() {
+    window.bosWidgets.register({
+      id: 'performance-chart',
+      title: 'Performance',
+      icon: '\u{1F4C8}',
+      description: 'Grafico de historico de CPU e memoria.',
+      defaultWidth: 2,
+      defaultHeight: 'auto',
+      category: 'monitoring',
+      render: function () {
+        return '<div class="chart-container" id="perf-chart"><div class="widget-loading"><div class="skeleton skeleton-card"></div></div></div>';
+      },
+      init: function (el) {
+        var chartEl = el.querySelector('#perf-chart');
+        if (!chartEl) return;
+        api.metrics.history(30).then(function (r) {
+          var data = (r && r.data) || (r && r.history) || [];
+          if (!Array.isArray(data) || data.length === 0) {
+            chartEl.innerHTML = '<div class="widget-empty"><span>\u{1F4ED}</span><p>Sem dados de historico</p></div>';
+            return;
+          }
+          var recent = data.slice(-20);
+          var maxVal = 1;
+          for (var i = 0; i < recent.length; i++) {
+            maxVal = Math.max(maxVal, recent[i].cpu || 0, recent[i].ram || 0);
+          }
+          maxVal = Math.max(maxVal, 100);
+          var bars = recent.map(function (p) {
+            var cpuH = Math.max(2, ((p.cpu || 0) / maxVal) * 100);
+            var ramH = Math.max(2, ((p.ram || 0) / maxVal) * 100);
+            return '<div class="chart-bar-group" title="CPU: ' + (p.cpu || 0) + '% / RAM: ' + (p.ram || 0) + '%">' +
+              '<div class="chart-bar chart-cpu" style="height:' + cpuH + '%"></div>' +
+              '<div class="chart-bar chart-ram" style="height:' + ramH + '%"></div></div>';
+          }).join('');
+          chartEl.innerHTML = '<div class="chart-bars">' + bars + '</div>' +
+            '<div class="chart-legend"><span class="legend-cpu">CPU</span><span class="legend-ram">Memoria</span></div>';
+        }).catch(function () {
+          chartEl.innerHTML = '<div class="widget-empty"><span>\u{1F4ED}</span><p>Nao foi possível carregar</p></div>';
         });
-      });
-    } catch (e) {
-      el.innerHTML = '<p class="muted">Erro ao carregar plugins.</p>';
-    }
+      },
+    });
   }
 
-  // Aguarda o servidor voltar após um restart automático e recarrega a página.
-  async function waitForServerAndReload() {
-    if (updateStatusEl) updateStatusEl.innerHTML = '<p class="muted"><span class="spin"></span>Reiniciando o servidor, aguarde...</p>';
-    for (let i = 0; i < 40; i++) {
-      await new Promise((r) => setTimeout(r, 1500));
-      try {
-        const d = await api.update.check();
-        if (d && d.success) { window.location.reload(); return; }
-      } catch (_) { /* servidor ainda está subindo */ }
-    }
-    window.location.reload();
+  /* ── Widget: System Info ─────────────────────────────── */
+  function registerSystemInfo() {
+    window.bosWidgets.register({
+      id: 'system-info',
+      title: 'Informacoes do Sistema',
+      icon: '\u{2139}\uFE0F',
+      description: 'Sistema operacional, hostname, uptime e CPU.',
+      defaultWidth: 2,
+      defaultHeight: 'auto',
+      category: 'system',
+      render: function () {
+        return '<div class="info-list" id="sys-info"><div class="widget-loading"><div class="skeleton skeleton-text" style="width:80%"></div><div class="skeleton skeleton-text" style="width:60%"></div><div class="skeleton skeleton-text" style="width:70%"></div></div></div>';
+      },
+      init: function (el) {
+        var infoEl = el.querySelector('#sys-info');
+        if (!infoEl) return;
+        api.stats().then(function (r) {
+          var d = (r && r.data) || r || {};
+          var os = d.os || {};
+          var cpu = d.cpu || {};
+          infoEl.innerHTML =
+            '<div class="info-row"><span class="info-label">Sistema</span><span class="info-value">' + esc(os.distro || os.platform || '--') + '</span></div>' +
+            '<div class="info-row"><span class="info-label">Hostname</span><span class="info-value">' + esc(os.hostname || '--') + '</span></div>' +
+            '<div class="info-row"><span class="info-label">Kernel</span><span class="info-value">' + esc(os.release || '--') + '</span></div>' +
+            '<div class="info-row"><span class="info-label">Arquitetura</span><span class="info-value">' + esc(os.arch || '--') + '</span></div>' +
+            '<div class="info-row"><span class="info-label">Uptime</span><span class="info-value">' + esc(d.uptime || '--') + '</span></div>' +
+            '<div class="info-row"><span class="info-label">CPU</span><span class="info-value">' + esc(cpu.name || '--') + ' (' + (cpu.cores || '--') + ' cores)</span></div>';
+        }).catch(function () {
+          infoEl.innerHTML = '<div class="widget-empty"><span>\u{1F4ED}</span><p>Nao foi possível carregar</p></div>';
+        });
+      },
+    });
   }
 
-  const updateStatusEl = document.getElementById('update-status');
-  const localChangesEl = document.getElementById('local-changes');
-  const targetVersionEl = document.getElementById('targetVersion');
-  const checkBtn = document.getElementById('checkUpdateBtn');
-  const applyBtn = document.getElementById('applyUpdateBtn');
-  const backupBtn = document.getElementById('backupBtn');
-  const changelogBtn = document.getElementById('changelogBtn');
-  const restoreBtn = document.getElementById('restoreBtn');
-  const historyEl = document.getElementById('update-history');
+  /* ── Widget: Quick Shortcuts ─────────────────────────── */
+  function registerQuickShortcuts() {
+    window.bosWidgets.register({
+      id: 'quick-shortcuts',
+      title: 'Atalhos Rapidos',
+      icon: '\u{26A1}',
+      description: 'Acesso rapido as principais paginas.',
+      defaultWidth: 2,
+      defaultHeight: 'auto',
+      category: 'general',
+      render: function () {
+        var links = [
+          { href: '/files.html', icon: '\u{1F4C1}', label: 'Arquivos' },
+          { href: '/services.html', icon: '\u{1F527}', label: 'Servicos' },
+          { href: '/infrastructure.html', icon: '\u{1F5A5}\uFE0F', label: 'Infraestrutura' },
+          { href: '/store.html', icon: '\u{1F6D2}', label: 'Loja' },
+          { href: '/trash.html', icon: '\u{1F5D1}\uFE0F', label: 'Lixeira' },
+          { href: '/profile.html', icon: '\u{1F464}', label: 'Perfil' },
+        ];
+        return '<div class="shortcut-grid">' + links.map(function (l) {
+          return '<a href="' + l.href + '" class="shortcut-item"><span class="shortcut-icon">' + l.icon + '</span><span class="shortcut-label">' + esc(l.label) + '</span></a>';
+        }).join('') + '</div>';
+      },
+    });
+  }
+  /* ── Widget: Processes ───────────────────────────────── */
+  function registerProcesses() {
+    window.bosWidgets.register({
+      id: 'processes',
+      title: 'Processos',
+      icon: '\u{1F9EE}',
+      description: 'Principais processos em execucao por uso de CPU.',
+      defaultWidth: 2,
+      defaultHeight: 'auto',
+      category: 'monitoring',
+      render: function () {
+        return '<div id="proc-list"><div class="widget-loading"><div class="skeleton skeleton-text" style="width:90%"></div><div class="skeleton skeleton-text" style="width:70%"></div><div class="skeleton skeleton-text" style="width:80%"></div></div></div>';
+      },
+      init: function (el) {
+        var listEl = el.querySelector('#proc-list');
+        if (!listEl) return;
+        api.stats().then(function (r) {
+          var d = (r && r.data) || r || {};
+          var procs = (d.processes && d.processes.top) || [];
+          if (!procs.length) {
+            listEl.innerHTML = '<div class="widget-empty"><span>\u{1F4ED}</span><p>Nenhum processo disponivel</p></div>';
+            return;
+          }
+          listEl.innerHTML = '<table class="proc-table"><thead><tr><th>Nome</th><th>CPU</th><th>Mem</th></tr></thead><tbody>' +
+            procs.map(function (p) {
+              return '<tr><td>' + esc(p.name) + '</td><td>' + (p.cpu || 0) + '%</td><td>' + (p.mem || 0) + '%</td></tr>';
+            }).join('') + '</tbody></table>';
+        }).catch(function () {
+          listEl.innerHTML = '<div class="widget-empty"><span>\u{1F4ED}</span><p>Nao foi possivel carregar</p></div>';
+        });
+      },
+    });
+  }
 
-  async function checkUpdates() {
-    if (!updateStatusEl) return;
-    updateStatusEl.innerHTML = '<p class="muted"><span class="spin"></span>Verificando atualizações...</p>';
-    if (applyBtn) applyBtn.style.display = 'none';
-    try {
-      const d = await api.update.check();
-      if (d.success && d.hasUpdate) {
-        updateStatusEl.innerHTML = `<p style="color:var(--ok);font-weight:600">Atualização disponível: v${ui.escapeHtml(d.availableVersion)}</p><p class="muted">${ui.escapeHtml(d.changelog || '')}</p>`;
-        if (applyBtn) applyBtn.style.display = 'inline-flex';
-      } else if (d.success) {
-        updateStatusEl.innerHTML = `<p class="muted">Você está na versão mais recente (v${ui.escapeHtml(d.installedVersion || '')}).</p>`;
-      } else {
-        updateStatusEl.innerHTML = `<p class="muted" style="color:var(--danger)">Erro: ${ui.escapeHtml(d.error || 'Não foi possível verificar.')}</p>`;
+  /* ── Widget: Installed Plugins ───────────────────────── */
+  function registerPlugins() {
+    window.bosWidgets.register({
+      id: 'installed-plugins',
+      title: 'Plugins Instalados',
+      icon: '\u{1F9E9}',
+      description: 'Plugins atualmente instalados no sistema.',
+      defaultWidth: 2,
+      defaultHeight: 'auto',
+      category: 'system',
+      render: function () {
+        return '<div id="plugin-list"><div class="widget-loading"><div class="skeleton skeleton-card"></div></div></div>';
+      },
+      init: function (el) {
+        var listEl = el.querySelector('#plugin-list');
+        if (!listEl) return;
+        api.plugins.list().then(function (plugins) {
+          if (!Array.isArray(plugins) || plugins.length === 0) {
+            listEl.innerHTML = '<div class="widget-empty"><span>\u{1F4ED}</span><p>Nenhum plugin instalado</p></div>';
+            return;
+          }
+          listEl.innerHTML = '<div class="plugin-grid">' + plugins.map(function (p) {
+            return '<div class="plugin-card"><div class="plugin-card-header"><span class="plugin-icon">\u{1F9E9}</span>' +
+              '<strong>' + esc(p.name || p.id) + '</strong></div>' +
+              '<p class="muted sm">' + esc(p.description || 'Sem descricao') + '</p>' +
+              (p.version ? '<span class="badge">v' + esc(p.version) + '</span>' : '') + '</div>';
+          }).join('') + '</div>';
+        }).catch(function () {
+          listEl.innerHTML = '<div class="widget-empty"><span>\u{1F4ED}</span><p>Nao foi possivel carregar</p></div>';
+        });
+      },
+    });
+  }
+  /* ── Widget: Smart Updates ───────────────────────────── */
+  function registerSmartUpdates() {
+    window.bosWidgets.register({
+      id: 'smart-updates',
+      title: 'Atualizacoes',
+      icon: '\u{1F501}',
+      description: 'Verificacao e gestao de atualizacoes do sistema.',
+      defaultWidth: 2,
+      defaultHeight: 'auto',
+      category: 'system',
+      permissions: ['users:manage'],
+      roles: ['admin'],
+      render: function () {
+        return '<div id="update-panel"><div class="update-status"><div class="widget-loading"><div class="skeleton skeleton-text" style="width:60%"></div></div></div>' +
+          '<div class="update-actions" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">' +
+          '<button class="btn sm" id="btn-check-updates">Verificar</button>' +
+          '<button class="btn sm" id="btn-apply-update" disabled>Aplicar</button>' +
+          '<button class="btn ghost sm" id="btn-backup">Backup</button>' +
+          '<button class="btn ghost sm" id="btn-changelog">Changelog</button>' +
+          '<button class="btn ghost sm" id="btn-restore">Restaurar</button></div></div>';
+      },
+      init: function (el) {
+        var statusEl = el.querySelector('.update-status');
+        var checkBtn = el.querySelector('#btn-check-updates');
+        var applyBtn = el.querySelector('#btn-apply-update');
+        var backupBtn = el.querySelector('#btn-backup');
+        var changelogBtn = el.querySelector('#btn-changelog');
+        var restoreBtn = el.querySelector('#btn-restore');
+
+        function showStatus(info) {
+          if (!info) { statusEl.innerHTML = '<p class="muted">Clique em Verificar para checar atualizacoes.</p>'; return; }
+          if (info.error) { statusEl.innerHTML = '<p class="err-text">' + esc(info.error) + '</p>'; return; }
+          var html = '<div class="update-info">';
+          html += '<div class="info-row"><span class="info-label">Instalada</span><span class="info-value">v' + esc(info.installedVersion) + '</span></div>';
+          html += '<div class="info-row"><span class="info-label">Disponivel</span><span class="info-value">v' + esc(info.availableVersion) + '</span></div>';
+          if (info.hasUpdate) { html += '<div class="update-badge ok">Atualizacao disponivel!</div>'; if (applyBtn) applyBtn.disabled = false; }
+          else { html += '<div class="update-badge">Sistema atualizado</div>'; if (applyBtn) applyBtn.disabled = true; }
+          if (info.hasLocalChanges) html += '<div class="update-badge warn">Alteracoes locais detectadas</div>';
+          html += '</div>';
+          statusEl.innerHTML = html;
+        }
+
+        if (checkBtn) checkBtn.addEventListener('click', function () {
+          checkBtn.disabled = true; checkBtn.textContent = 'Verificando...';
+          api.update.check().then(function (r) {
+            checkBtn.disabled = false; checkBtn.textContent = 'Verificar'; showStatus(r);
+            if (window.ui && r.hasUpdate) window.ui.toast('Atualizacao disponivel: v' + r.availableVersion, 'info');
+          }).catch(function (e) { checkBtn.disabled = false; checkBtn.textContent = 'Verificar'; showStatus({ error: e.message }); });
+        });
+
+        if (applyBtn) applyBtn.addEventListener('click', function () {
+          var doApply = function () {
+            applyBtn.disabled = true; applyBtn.textContent = 'Aplicando...';
+            api.update.apply({}).then(function (r) { if (window.ui) window.ui.toast(r.message || 'Atualizacao aplicada! Reiniciando...', 'ok'); })
+              .catch(function (e) { applyBtn.disabled = false; applyBtn.textContent = 'Aplicar'; if (window.ui) window.ui.toast('Erro: ' + e.message, 'err'); });
+          };
+          if (window.ui && window.ui.confirm) {
+            window.ui.confirm('Aplicar atualizacao? O sistema sera reiniciado.', { title: 'Atualizar', danger: true }).then(function (ok) { if (ok) doApply(); });
+          } else { doApply(); }
+        });
+        if (backupBtn) backupBtn.addEventListener('click', function () {
+          backupBtn.disabled = true; backupBtn.textContent = 'Fazendo backup...';
+          api.update.backup().then(function (r) {
+            backupBtn.disabled = false; backupBtn.textContent = 'Backup';
+            if (window.ui) window.ui.toast(r.message || 'Backup concluido!', 'ok');
+          }).catch(function (e) { backupBtn.disabled = false; backupBtn.textContent = 'Backup'; if (window.ui) window.ui.toast('Erro: ' + e.message, 'err'); });
+        });
+
+        if (changelogBtn) changelogBtn.addEventListener('click', function () {
+          api.update.changelog().then(function (r) {
+            var text = (r && r.data) ? r.data : (typeof r === 'string' ? r : JSON.stringify(r, null, 2));
+            var backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop';
+            backdrop.innerHTML = '<div class="modal" role="dialog" aria-modal="true"><h3>Changelog</h3><pre class="changelog-pre">' + esc(String(text).substring(0, 5000)) + '</pre><div class="row"><button class="btn" data-act="close">Fechar</button></div></div>';
+            document.body.appendChild(backdrop);
+            backdrop.querySelector('[data-act="close"]').onclick = function () { backdrop.remove(); };
+            backdrop.addEventListener('click', function (e) { if (e.target === backdrop) backdrop.remove(); });
+          }).catch(function (e) { if (window.ui) window.ui.toast('Erro: ' + e.message, 'err'); });
+        });
+
+        if (restoreBtn) restoreBtn.addEventListener('click', function () {
+          api.update.backups().then(function (r) {
+            var backups = (r && r.data) || r || [];
+            if (!Array.isArray(backups) || backups.length === 0) { if (window.ui) window.ui.toast('Nenhum backup disponivel.', 'info'); return; }
+            var backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop';
+            backdrop.innerHTML = '<div class="modal" role="dialog" aria-modal="true"><h3>Restaurar Backup</h3><div class="backup-list">' +
+              backups.map(function (b) { return '<div class="backup-item"><span>' + esc(b.id || b.timestamp || 'backup') + '</span><button class="btn sm" data-backup="' + esc(b.id || b.timestamp || '') + '">Restaurar</button></div>'; }).join('') +
+              '</div><div class="row"><button class="btn ghost" data-act="close">Cancelar</button></div></div>';
+            document.body.appendChild(backdrop);
+            backdrop.querySelector('[data-act="close"]').onclick = function () { backdrop.remove(); };
+            backdrop.addEventListener('click', function (e) { if (e.target === backdrop) backdrop.remove(); });
+            var btns = backdrop.querySelectorAll('[data-backup]');
+            for (var i = 0; i < btns.length; i++) {
+              btns[i].addEventListener('click', function () {
+                var bid = this.getAttribute('data-backup');
+                api.update.restore(bid).then(function () { backdrop.remove(); if (window.ui) window.ui.toast('Restauracao iniciada! Reiniciando...', 'ok'); })
+                  .catch(function (e) { if (window.ui) window.ui.toast('Erro: ' + e.message, 'err'); });
+              });
+            }
+          }).catch(function (e) { if (window.ui) window.ui.toast('Erro: ' + e.message, 'err'); });
+        });
+
+        api.update.check().then(function (r) { showStatus(r); }).catch(function () { showStatus(null); });
+      },
+    });
+  }
+  /* ── Legacy global functions (backward compatibility) ── */
+  window.checkUpdates = function () {
+    if (window.ui) window.ui.toast('Verificando atualizacoes...', 'info');
+    return api.update.check().then(function (r) {
+      if (window.ui) {
+        if (r.hasUpdate) window.ui.toast('Atualizacao disponivel: v' + r.availableVersion, 'info');
+        else window.ui.toast('Sistema atualizado (v' + r.installedVersion + ')', 'ok');
       }
-      renderLocalChanges(d.hasLocalChanges, d.localChanges);
-    } catch (e) {
-      updateStatusEl.innerHTML = '<p class="muted" style="color:var(--danger)">Erro ao verificar.</p>';
-    }
+      return r;
+    }).catch(function (e) { if (window.ui) window.ui.toast('Erro: ' + e.message, 'err'); });
+  };
+  window.applyUpdate = function () { return api.update.apply({}); };
+  window.doBackup = function () {
+    return api.update.backup().then(function (r) {
+      if (window.ui) window.ui.toast(r.message || 'Backup concluido!', 'ok'); return r;
+    }).catch(function (e) { if (window.ui) window.ui.toast('Erro: ' + e.message, 'err'); });
+  };
+  window.showChangelog = function () { return api.update.changelog(); };
+  window.showRestore = function () { return api.update.backups(); };
+  window.loadHistory = function () { return api.update.history(); };
+
+  /* ── Initialize ──────────────────────────────────────── */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDashboard);
+  } else {
+    initDashboard();
   }
-
-  // Mostra um aviso quando há alterações locais não commitadas.
-  function renderLocalChanges(has, changes) {
-    if (!localChangesEl) return;
-    if (!has || !changes || !changes.length) {
-      localChangesEl.style.display = 'none';
-      localChangesEl.innerHTML = '';
-      return;
-    }
-    localChangesEl.style.display = 'block';
-    localChangesEl.innerHTML = `<div style="margin:10px 0;padding:10px 12px;border:1px solid var(--danger,#ff5470);border-radius:12px;background:rgba(255,84,112,.08)">
-      <div style="font-weight:600;color:var(--danger,#ff5470)">⚠️ Foram detectadas alterações locais</div>
-      <div class="muted" style="font-size:12px;margin-top:4px;white-space:pre-wrap">${ui.escapeHtml(changes.slice(0, 20).join('\n'))}</div>
-    </div>`;
-  }
-
-  async function applyUpdate() {
-    const target = targetVersionEl ? targetVersionEl.value.trim() : '';
-    const ok = await ui.confirm(
-      target
-        ? `Aplicar atualização incremental para v${target}? O servidor será reiniciado.`
-        : 'Aplicar a atualização? O servidor será reiniciado.',
-      { title: 'Atualizar' }
-    );
-    if (!ok) return;
-    applyBtn.disabled = true; applyBtn.textContent = 'Atualizando...';
-    try {
-      const d = await api.update.apply(target ? { targetVersion: target } : {});
-      if (d && d.code === 'LOCAL_CHANGES') {
-        // Não atualiza por cima de alterações locais sem confirmar.
-        const lista = (d.localChanges || []).map((c) => `• ${c}`).join('\n');
-        const force = await ui.confirm(
-          `⚠️ Foram detectadas alterações locais.\nAtualizar pode sobrescrever arquivos modificados.\nUm backup automático será criado antes de continuar.\n\n${lista}`,
-          { title: 'Alterações locais', okText: 'Atualizar mesmo assim', cancelText: 'Cancelar', danger: true }
-        );
-        if (!force) { ui.toast('Atualização cancelada.', 'info'); return; }
-        const d2 = await api.update.apply(target ? { targetVersion: target, force: true } : { force: true });
-        return finishApply(d2);
-      }
-      return finishApply(d);
-    } catch (e) { ui.toast(e.message, 'err'); }
-    finally {
-      applyBtn.disabled = false;
-      applyBtn.textContent = 'Atualizar agora';
-      loadHistory();
-      checkUpdates();
-    }
-  }
-
-  async function finishApply(d) {
-    if (!d) return;
-    if (d.success && d.restarted) {
-      ui.toast(d.message || 'Atualizado! Reiniciando o servidor...', 'ok');
-      await waitForServerAndReload();
-      return;
-    }
-    if (d.success) ui.toast(d.message || 'Atualizado!', 'ok');
-    else ui.toast(d.error || 'Falha ao atualizar.', 'err');
-  }
-
-  async function loadHistory() {
-    if (!historyEl) return;
-    try {
-      const d = await api.update.history();
-      const h = d.history || [];
-      if (!h.length) { historyEl.innerHTML = '<p class="muted" style="margin-top:10px">Nenhuma atualização registrada.</p>'; return; }
-      historyEl.innerHTML = h.map((e, i) => {
-        const date = e.timestamp ? new Date(e.timestamp).toLocaleString('pt-BR') : '';
-        const target = e.to || e.rolledBackTo || e.target || e.installedVersion;
-        const isCurrent = i === 0;
-        const typeLabel = e.type === 'rollback' ? 'Rollback'
-          : e.type === 'backup' ? 'Backup'
-          : e.type === 'restore' ? 'Restauração'
-          : 'Atualização';
-        const actionBtn = (e.type === 'rollback' && !isCurrent)
-          ? `<button class="btn ghost sm" data-rollback="${ui.escapeHtml(target || '')}">Voltar</button>`
-          : '';
-        return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-soft)">
-          <div style="flex:1"><div style="color:#fff;font-weight:600">${typeLabel}: ${ui.escapeHtml(target || '')}</div>
-          <div class="muted" style="font-size:12px">${ui.escapeHtml(date)}${e.message ? ' — ' + ui.escapeHtml(e.message) : ''}</div></div>
-          ${actionBtn}
-        </div>`;
-      }).join('');
-      historyEl.querySelectorAll('[data-rollback]').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const target = btn.getAttribute('data-rollback');
-          const ok = await ui.confirm(`Reverter para v${target}? O servidor será reiniciado.`, { title: 'Reverter versão', danger: true });
-          if (!ok) return;
-          btn.disabled = true; btn.textContent = 'Revertendo...';
-          try {
-            let d = await api.update.rollback({ targetVersion: target });
-            if (d && d.code === 'LOCAL_CHANGES') {
-              const lista = (d.localChanges || []).map((c) => `• ${c}`).join('\n');
-              const force = await ui.confirm(
-                `⚠️ Foram detectadas alterações locais.\nReverter pode sobrescrever arquivos modificados.\n\n${lista}`,
-                { title: 'Alterações locais', okText: 'Continuar', cancelText: 'Cancelar', danger: true }
-              );
-              if (!force) { ui.toast('Revertão cancelada.', 'info'); loadHistory(); return; }
-              d = await api.update.rollback({ targetVersion: target, force: true });
-            }
-
-            if (d && d.success && d.restarted) {
-              ui.toast(d.message || `Revertido para v${target}`, 'ok');
-              await waitForServerAndReload();
-              return;
-            }
-            if (d && d.success) ui.toast(d.message || `Revertido para v${target}`, 'ok');
-            else ui.toast((d && d.error) || 'Erro.', 'err');
-          } catch (err) { ui.toast(err.message, 'err'); }
-          finally { loadHistory(); }
-        });
-      });
-    } catch (e) {
-      historyEl.innerHTML = '<p class="muted" style="color:var(--danger)">Erro ao carregar histórico.</p>';
-    }
-  }
-
-  // ─── Backup / Changelog / Restore ─────────────────────────────────
-
-  function openModal({ title, bodyHtml, footerHtml }) {
-    const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop';
-    backdrop.innerHTML = `<div class="modal" role="dialog" aria-modal="true">
-      <h3>${ui.escapeHtml(title)}</h3>
-      <div class="modal-body">${bodyHtml}</div>
-      <div class="row">${footerHtml || ''}</div>
-    </div>`;
-    document.body.appendChild(backdrop);
-    return backdrop;
-  }
-
-  async function doBackup() {
-    try {
-      backupBtn.disabled = true; backupBtn.textContent = 'Salvando...';
-      const d = await api.update.backup();
-      if (d && d.success) ui.toast(`Backup criado: ${d.backup.id}`, 'ok');
-      else ui.toast((d && d.error) || 'Falha ao criar backup.', 'err');
-    } catch (e) { ui.toast(e.message, 'err'); }
-    finally {
-      backupBtn.disabled = false;
-      backupBtn.textContent = '🗄 Fazer backup';
-      loadHistory();
-    }
-  }
-
-  async function showChangelog() {
-    try {
-      const d = await api.update.changelog();
-      const text = d.success && d.changelog ? d.changelog : 'Changelog não disponível.';
-      const backdrop = openModal({
-        title: 'Changelog',
-        bodyHtml: `<pre style="white-space:pre-wrap;max-height:60vh;overflow:auto;font-size:13px;line-height:1.5;margin:0">${ui.escapeHtml(text)}</pre>`,
-        footerHtml: `<button class="btn" data-close>Fechar</button>`,
-      });
-      backdrop.querySelector('[data-close]').onclick = () => backdrop.remove();
-      backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
-    } catch (e) { ui.toast(e.message, 'err'); }
-  }
-
-  async function showRestore() {
-    try {
-      const d = await api.update.backups();
-      const backups = (d.success && d.backups) || [];
-      if (!backups.length) { ui.toast('Nenhum backup disponível.', 'info'); return; }
-      const rows = backups.map((b) => {
-        const when = b.timestamp ? new Date(b.timestamp).toLocaleString('pt-BR') : '';
-        const size = ui.formatBytes(b.size);
-        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line-soft)">
-          <div style="flex:1"><div style="color:#fff;font-weight:600">${ui.escapeHtml(b.label || 'backup')}</div>
-          <div class="muted" style="font-size:12px">v${ui.escapeHtml(b.version || '?')} · ${ui.escapeHtml(when)} · ${size}</div></div>
-          <button class="btn ghost sm" data-restore="${ui.escapeHtml(b.id)}">Restaurar</button>
-        </div>`;
-      }).join('');
-      const backdrop = openModal({
-        title: 'Restaurar backup',
-        bodyHtml: `<p class="muted" style="margin:0 0 8px">Escolha um backup para restaurar. Um backup de segurança do estado atual será criado automaticamente.</p>${rows}`,
-        footerHtml: `<button class="btn ghost" data-close>Cancelar</button>`,
-      });
-      backdrop.querySelector('[data-close]').onclick = () => backdrop.remove();
-      backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
-      backdrop.querySelectorAll('[data-restore]').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-          const id = btn.getAttribute('data-restore');
-          const ok = await ui.confirm(`Restaurar o backup "${id}"? O servidor será reiniciado.`, { title: 'Restaurar backup', danger: true });
-          if (!ok) return;
-          btn.disabled = true; btn.textContent = 'Restaurando...';
-          try {
-            const r = await api.update.restore(id);
-            if (r && r.success && r.restarted) {
-              ui.toast(r.message || 'Restaurando...', 'ok');
-              backdrop.remove();
-              await waitForServerAndReload();
-              return;
-            }
-            if (r && r.success) ui.toast(r.message || 'Backup restaurado.', 'ok');
-            else ui.toast((r && r.error) || 'Falha ao restaurar.', 'err');
-          } catch (e) { ui.toast(e.message, 'err'); }
-        });
-      });
-    } catch (e) { ui.toast(e.message, 'err'); }
-  }
-
-  // ─── Listeners ────────────────────────────────────────────────────
-
-  checkBtn && checkBtn.addEventListener('click', checkUpdates);
-  applyBtn && applyBtn.addEventListener('click', applyUpdate);
-  backupBtn && backupBtn.addEventListener('click', doBackup);
-  changelogBtn && changelogBtn.addEventListener('click', showChangelog);
-  restoreBtn && restoreBtn.addEventListener('click', showRestore);
-  loadMetrics();
-  setInterval(loadMetrics, 5000);
-  loadMetricsHistory();
-  setInterval(loadMetricsHistory, 5000);
-  loadPlugins();
-  loadHistory();
 })();
-

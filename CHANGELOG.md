@@ -2,7 +2,73 @@
 
 Todas as versões e mudanças relevantes do BrightierOS são documentadas aqui.
 
-## v1.0.0 — Stable
+## v1.1.0 — Experiência do Usuário
+
+Nova versão com foco em elevar a experiência de uso da plataforma, tornando a interface mais moderna, personalizável, responsiva e agradável.
+
+### Interface
+* **Layout geral**: modernizado com espaçamentos consistentes, tipografia refinada e hierarquia visual clara.
+* **Tipografia**: títulos com Doto, corpo com Inter, tamanhos fluidos (clamp).
+* **Animações discretas**: transições suaves em cards, botões, dock e topbar; animação de entrada em toasts.
+* **Consistência visual**: todos os elementos seguem o design system com variáveis CSS.
+* **Estados de carregamento**: skeleton loading com efeito shimmer em widgets e cards.
+* **Feedback visual**: toasts com animação, cores semânticas (ok/err/info/warn), modais com transição.
+
+### Dashboard Personalizável
+* **Widgets**: sistema completo de widgets com registro, renderização e ciclo de vida.
+* **Drag-and-drop**: reorganize widgets arrastando pelo manipulador (⠿).
+* **Ocultar widgets**: feche widgets indesejados com o botão ✕.
+* **Gerenciar widgets**: painel para mostrar/ocultar widgets individualmente.
+* **Restaurar layout**: botão para voltar ao layout padrão.
+* **Persistência**: layout e configurações salvos automaticamente no localStorage.
+* **Widgets configuráveis**: suporte a campos de configuração (select, number, checkbox, text).
+* **Atualização individual**: cada widget pode ser atualizado independentemente.
+* **Estados vazios**: mensagens amigáveis quando não há dados para exibir.
+* **Arquitetura preparada**: widgets podem ser registrados por plugins futuramente via `bosWidgets.register()`.
+
+### Sistema de Temas
+* **Tema claro**: novo design system com cores claras otimizadas.
+* **Tema escuro**: mantém a identidade visual original do BrightierOS.
+* **Seguir sistema**: detecta automaticamente `prefers-color-scheme` do SO.
+* **Troca instantânea**: alternância suave entre temas via botão na topbar.
+* **Persistência**: preferência do usuário salva no localStorage.
+* **Toda a interface**: 100% dos componentes respeitam o tema ativo via variáveis CSS.
+
+### Responsividade
+* **Tablets**: grids adaptativos (2-3 colunas), dock e topbar ajustados.
+* **Notebooks**: layout fluido sem barras horizontais.
+* **Ultrawide**: conteúdo centralizado em 1600px max-width, grid de 6 colunas.
+* **Celulares**: layout de 1 coluna, dock compacto, textos menores.
+* **Widget Grid**: 4 colunas no desktop, 3 em tablets, 2 em telas médias, 1 em mobile.
+
+### Acessibilidade
+* **Contraste**: proporções WCAG AA em ambos os temas.
+* **Foco visível**: `:focus-visible` com outline de 2px na cor de destaque.
+* **Navegação por teclado**: suporte a teclado nos widgets (Enter para mover).
+* **ARIA**: roles (navigation, main, banner, region, dialog), aria-label, aria-modal, aria-live.
+* **Skip link**: link "Pular para o conteúdo" visível ao focar via teclado.
+* **Screen reader**: classe `.sr-only` para conteúdo apenas para leitores de tela.
+* **Reduced motion**: `prefers-reduced-motion` respeitado em toda a interface.
+
+### UX
+* **Notificações**: toasts mais elegantes com backdrop-filter, animação e cores semânticas.
+* **Skeleton loading**: shimmer effect em todos os estados de carregamento.
+* **Animações suaves**: transições de 0.2s em elementos interativos.
+* **Confirmações**: modal de confirmação padronizado com título, mensagem e ações.
+* **Mensagens de erro**: feedback visual claro com ícones e cores semânticas.
+* **Mensagens de sucesso**: padronizadas com cor verde e ícone de status.
+
+### Desempenho
+* **Animações otimizadas**: uso de `transform` e `opacity` para composição via GPU.
+* **Renderização sob demanda**: widgets usam `requestAnimationFrame` para evitar layout thrashing.
+* **Cleanup automático**: MutationObserver para limpar intervalos quando widgets são removidos.
+* **Reduced motion**: desativa animações quando configurado pelo sistema.
+
+### Compatibilidade
+* **Nenhuma funcionalidade removida**: todas as APIs, páginas e recursos existentes continuam funcionando.
+* **Nenhuma quebra de compatibilidade**: mudanças são aditivas (novos arquivos, novos estilos, novos scripts).
+* **Integração suave**: temas.js e widgets.js são carregados antes do app.js, sem conflitos.
+* **Testes**: todos os 137+ testes da v1.0.0 continuam passando.
 
 Primeira versão oficialmente estável do BrightierOS.
 

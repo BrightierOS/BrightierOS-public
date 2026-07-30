@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#07080c" />
+  <meta name="description" content="BrightierOS — Dashboard de infraestrutura" />
   <title>BrightierOS — Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,95 +23,31 @@
     </div>
   </div>
 
-  <main class="page">
-    <section class="grid cols-4" id="status-cards">
-      <article class="card stat-card">
-        <div class="stat-header"><span class="stat-icon">🖥️</span><span class="stat-label">CPU</span></div>
-        <div class="stat-value" id="cpu-value">—</div>
-        <div class="stat-bar"><span id="cpu-bar"></span></div>
-        <div class="stat-meta" id="cpu-meta">Carregando...</div>
-      </article>
-      <article class="card stat-card">
-        <div class="stat-header"><span class="stat-icon">🧠</span><span class="stat-label">Memória</span></div>
-        <div class="stat-value" id="ram-value">—</div>
-        <div class="stat-bar"><span id="ram-bar"></span></div>
-        <div class="stat-meta" id="ram-meta">Carregando...</div>
-      </article>
-      <article class="card stat-card">
-        <div class="stat-header"><span class="stat-icon">💾</span><span class="stat-label">Armazenamento</span></div>
-        <div class="stat-value" id="storage-value">—</div>
-        <div class="stat-bar"><span id="storage-bar"></span></div>
-        <div class="stat-meta" id="storage-meta">Carregando...</div>
-      </article>
-      <article class="card stat-card">
-        <div class="stat-header"><span class="stat-icon">🌐</span><span class="stat-label">Rede</span></div>
-        <div class="stat-value" id="net-value">—</div>
-        <div class="stat-meta" id="net-meta">Carregando...</div>
-      </article>
-    </section>
-
-    <section class="grid cols-3" style="margin-top:16px">
-      <article class="card" style="grid-column: span 2;">
-        <h2>Histórico de performance</h2>
-        <div id="metrics-chart" style="height:160px;margin-top:8px"></div>
-        <div class="chart-legend" style="margin-top:8px">
-          <span class="ld"><i style="background:var(--accent)"></i>CPU</span>
-          <span class="ld"><i style="background:#1f7cff"></i>Memória</span>
-          <span class="ld"><i style="background:#2ee6a6"></i>Download</span>
-        </div>
-      </article>
-
-      <article class="card">
-        <h2>Sistema</h2>
-        <div id="system-info" style="margin-top:10px"><p class="muted">Carregando...</p></div>
-      </article>
-    </section>
-
-    <section class="grid cols-3" style="margin-top:16px">
-      <article class="card" style="grid-column: span 2;">
-        <h2>Processos em destaque</h2>
-        <div id="processes"><p class="muted">Carregando...</p></div>
-      </article>
-
-      <article class="card">
-        <h2>Atalhos</h2>
-        <div class="grid" style="gap:10px;margin-top:10px">
-          <a class="btn ghost block" href="/files.html">📁 Arquivos</a>
-          <a class="btn ghost block" href="/services.html">⚙️ Serviços</a>
-          <a class="btn ghost block" href="/infrastructure.html">🖥️ Infraestrutura</a>
-          <a class="btn ghost block" href="/store.html">🛒 Loja</a>
-          <a class="btn ghost block" href="/trash.html">🗑️ Lixeira</a>
-        </div>
-      </article>
-    </section>
-
-    <section class="card" style="margin-top:16px">
-      <div class="section-head">
-        <h2>Plugins instalados</h2>
-        <a class="btn ghost sm" href="/store.html">Ir para loja</a>
+  <main class="page" id="dashboard-content">
+    <!-- Widgets serão renderizados aqui pelo sistema de widgets -->
+    <div class="widget-grid" aria-label="Dashboard widgets">
+      <div class="widget-card skeleton">
+        <div class="widget-header"><span class="skeleton skeleton-text" style="width:40%"></span></div>
+        <div class="widget-body"><div class="skeleton skeleton-card"></div></div>
       </div>
-      <div id="installed-plugins-list"><p class="muted">Carregando plugins...</p></div>
-    </section>
-
-    <section class="card" style="margin-top:16px">
-      <h2>Atualizações inteligentes</h2>
-      <div id="local-changes" style="display:none"></div>
-      <div id="update-status" style="margin-top:8px"></div>
-      <div class="toolbar" style="margin-top:12px">
-        <button id="checkUpdateBtn" class="btn sm">Verificar atualizações</button>
-        <input id="targetVersion" type="text" placeholder="Versão alvo (ex. 0.8.0)" />
-        <button id="applyUpdateBtn" class="btn sm" style="display:none">Atualizar agora</button>
+      <div class="widget-card skeleton">
+        <div class="widget-header"><span class="skeleton skeleton-text" style="width:40%"></span></div>
+        <div class="widget-body"><div class="skeleton skeleton-card"></div></div>
       </div>
-      <div class="toolbar" style="margin-top:8px">
-        <button id="backupBtn" class="btn ghost sm">🗄 Backup</button>
-        <button id="changelogBtn" class="btn ghost sm">📝 Changelog</button>
-        <button id="restoreBtn" class="btn ghost sm">♻ Restaurar</button>
+      <div class="widget-card skeleton">
+        <div class="widget-header"><span class="skeleton skeleton-text" style="width:40%"></span></div>
+        <div class="widget-body"><div class="skeleton skeleton-card"></div></div>
       </div>
-      <div id="update-history" style="margin-top:14px"></div>
-    </section>
+      <div class="widget-card skeleton">
+        <div class="widget-header"><span class="skeleton skeleton-text" style="width:40%"></span></div>
+        <div class="widget-body"><div class="skeleton skeleton-card"></div></div>
+      </div>
+    </div>
   </main>
 
   <script src="assets/api.js"></script>
+  <script src="assets/themes.js"></script>
+  <script src="assets/widgets.js"></script>
   <script src="assets/app.js"></script>
   <script src="assets/dashboard.js"></script>
 </body>

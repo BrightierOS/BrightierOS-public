@@ -17,6 +17,7 @@
     services: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>',
     infra: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><circle cx="7" cy="7" r="1"/><circle cx="7" cy="17" r="1"/></svg>',
     bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>',
+    theme: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>',
   };
 
   const NAV = [
@@ -162,7 +163,7 @@
   function mountLayout(pageKey) {
     const pageMain = document.querySelector('main.page');
     const shell = document.createElement('div');
-    shell.className = 'layout';
+    shell.className = 'layout layout-' + pageKey;
 
     const userRaw = localStorage.getItem(STORAGE_KEY);
     const navHtml = NAV.filter(navVisible).map(item => `
@@ -175,8 +176,9 @@
     try { const u = JSON.parse(userRaw) || {}; username = u.username || username; userRole = u.role || userRole; } catch (_) {}
 
     shell.innerHTML = `
-      <div class="main">
-        <header class="topbar">
+      <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
+      <div class="main" id="main-content" role="main">
+        <header class="topbar" role="banner">
           <div class="topbar-start">
             <div class="brand">
               <img src="assets/BrightierOS.png" alt="BrightierOS" onerror="this.style.display='none'">
@@ -188,7 +190,8 @@
             </div>
           </div>
           <div class="topbar-actions">
-            <button class="btn ghost sm notif-btn" id="notifBtn" title="Notificações">${ICONS.bell}<span class="badge" id="notifBadge" style="display:none">0</span></button>
+            <button class="theme-btn" id="themeToggle" title="Alternar tema" aria-label="Alternar tema claro/escuro">${ICONS.theme}</button>
+            <button class="btn ghost sm notif-btn" id="notifBtn" title="Notificações" aria-label="Notificações">${ICONS.bell}<span class="badge" id="notifBadge" style="display:none">0</span></button>
             <span class="clock" id="clock">--:--:--</span>
             <span class="user-chip"><span class="avatar">${ui.escapeHtml(username.charAt(0).toUpperCase())}</span><span>${ui.escapeHtml(username)}</span>${userRole ? `<span class="role-badge role-${ui.escapeHtml(userRole)}">${ui.escapeHtml(userRole)}</span>` : ''}</span>
             <button class="btn ghost sm" id="resetBtn" title="Resetar sistema">${ICONS.reset}<span class="txt">Reset</span></button>
@@ -197,7 +200,7 @@
         </header>
         <section class="content"></section>
       </div>
-      <nav class="dock touch-scroll">${navHtml}</nav>`;
+      <nav class="dock touch-scroll" role="navigation" aria-label="Navegação principal">${navHtml}</nav>`;
 
     shell.querySelector('.content').appendChild(pageMain);
     document.body.insertBefore(shell, document.body.firstChild);
@@ -211,6 +214,16 @@
     shell.querySelector('#logoutBtn').addEventListener('click', logout);
     shell.querySelector('#resetBtn').addEventListener('click', resetSystem);
     startNotifications(shell);
+    // Theme toggle
+    const themeBtn = shell.querySelector('#themeToggle');
+    if (themeBtn && window.bosTheme) {
+      themeBtn.addEventListener('click', function() { window.bosTheme.cycle(); });
+      // Atualiza ícone quando tema muda
+      document.addEventListener('brightier:themechange', function() {
+        const theme = window.bosTheme.getSaved();
+        themeBtn.setAttribute('aria-label', 'Tema: ' + (theme === 'system' ? 'seguir sistema' : theme));
+      });
+    }
   }
 
   /* Helper global: verifica se o usuário logado tem a permissão. */
