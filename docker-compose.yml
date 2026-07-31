@@ -1,0 +1,7 @@
+services:
+  node:
+    build: .
+    container_name: meu-node
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
