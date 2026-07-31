@@ -1,7 +1,7 @@
 services:
   node:
     build: .
-    container_name: meu-node
+    container_name: brightieros
     ports:
       - "3000:3000"
     restart: unless-stopped
